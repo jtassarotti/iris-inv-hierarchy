@@ -36,6 +36,8 @@ theories/algebra/coPset.v
 theories/algebra/proofmode_classes.v
 theories/algebra/ufrac.v
 theories/algebra/namespace_map.v
+theories/algebra/auth_frac.v
+theories/algebra/mlist.v
 theories/algebra/lib/excl_auth.v
 theories/algebra/lib/frac_auth.v
 theories/algebra/lib/ufrac_auth.v
@@ -75,6 +77,7 @@ theories/base_logic/lib/own.v
 theories/base_logic/lib/saved_prop.v
 theories/base_logic/lib/wsat.v
 theories/base_logic/lib/invariants.v
+theories/base_logic/lib/fupd_level.v
 theories/base_logic/lib/fancy_updates.v
 theories/base_logic/lib/viewshifts.v
 theories/base_logic/lib/auth.v

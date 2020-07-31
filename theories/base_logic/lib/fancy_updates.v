@@ -8,7 +8,7 @@ Export invG.
 Import uPred.
 
 Definition uPred_fupd_def `{!invG Σ} (E1 E2 : coPset) (P : iProp Σ) : iProp Σ :=
-  wsat ∗ ownE E1 ==∗ ◇ (wsat ∗ ownE E2 ∗ P).
+  wsat_all ∗ ownE E1 ==∗ ◇ (wsat_all ∗ ownE E2 ∗ P).
 Definition uPred_fupd_aux `{!invG Σ} : seal uPred_fupd_def. Proof. by eexists. Qed.
 Definition uPred_fupd `{!invG Σ} : FUpd (iProp Σ):= uPred_fupd_aux.(unseal).
 Definition uPred_fupd_eq `{!invG Σ} : @fupd _ uPred_fupd = uPred_fupd_def :=
@@ -62,7 +62,7 @@ Qed.
 Lemma fupd_plain_soundness `{!invPreG Σ} E1 E2 (P: iProp Σ) `{!Plain P} :
   (∀ `{Hinv: !invG Σ}, ⊢ |={E1,E2}=> P) → ⊢ P.
 Proof.
-  iIntros (Hfupd). apply later_soundness. iMod wsat_alloc as (Hinv) "[Hw HE]".
+  iIntros (Hfupd). apply later_soundness. iMod wsat_alloc' as (Hinv) "[Hw HE]".
   iAssert (|={⊤,E2}=> P)%I as "H".
   { iMod fupd_intro_mask'; last iApply Hfupd. done. }
   rewrite uPred_fupd_eq /uPred_fupd_def.

@@ -1,14 +1,14 @@
 From stdpp Require Export namespaces.
 From iris.proofmode Require Import tactics.
 From iris.algebra Require Import gmap.
-From iris.base_logic.lib Require Export fancy_updates.
+From iris.base_logic.lib Require Export fancy_updates fupd_level.
 From iris.base_logic.lib Require Import wsat.
 Set Default Proof Using "Type".
 Import uPred.
 
 (** Semantic Invariants *)
 Definition inv_def `{!invG Σ} (N : namespace) (P : iProp Σ) : iProp Σ :=
-  □ ∀ E, ⌜↑N ⊆ E⌝ → |={E,E ∖ ↑N}=> ▷ P ∗ (▷ P ={E ∖ ↑N,E}=∗ True).
+  □ ∀ E, ⌜↑N ⊆ E⌝ → |0={E,E ∖ ↑N}=> ▷ P ∗ (▷ P -∗ |0={E ∖ ↑N,E}=> True).
 Definition inv_aux : seal (@inv_def). Proof. by eexists. Qed.
 Definition inv {Σ i} := inv_aux.(unseal) Σ i.
 Definition inv_eq : @inv = @inv_def := inv_aux.(seal_eq).
@@ -25,18 +25,28 @@ Section inv.
 
   (** ** Internal model of invariants *)
   Definition own_inv (N : namespace) (P : iProp Σ) : iProp Σ :=
-    ∃ i, ⌜i ∈ (↑N:coPset)⌝ ∧ ownI i P.
+    ∃ i, ⌜i ∈ (↑N:coPset)⌝ ∧ ownI O i (bi_sch_var_fixed O) (list_to_vec [P]).
 
-  Lemma own_inv_acc E N P :
-    ↑N ⊆ E → own_inv N P ={E,E∖↑N}=∗ ▷ P ∗ (▷ P ={E∖↑N,E}=∗ True).
+  Lemma own_inv_acc0 E N P :
+    ↑N ⊆ E → own_inv N P -∗ |0={E,E∖↑N}=> ▷ P ∗ (▷ P -∗ |O={E∖↑N,E}=> True).
   Proof.
-    rewrite uPred_fupd_eq /uPred_fupd_def. iDestruct 1 as (i) "[Hi #HiP]".
+    rewrite uPred_fupd_level_eq /uPred_fupd_level_def. iDestruct 1 as (i) "[Hi #HiP]".
     iDestruct "Hi" as % ?%elem_of_subseteq_singleton.
     rewrite {1 4}(union_difference_L (↑ N) E) // ownE_op; last set_solver.
     rewrite {1 5}(union_difference_L {[ i ]} (↑ N)) // ownE_op; last set_solver.
     iIntros "(Hw & [HE $] & $) !> !>".
-    iDestruct (ownI_open i with "[$Hw $HE $HiP]") as "($ & $ & HD)".
-    iIntros "HP [Hw $] !> !>". iApply (ownI_close _ P). by iFrame.
+    iDestruct (ownI_open O i with "[$Hw $HE $HiP]") as "($ & HI & HD)".
+    iDestruct "HI" as (? Ps_mut) "(Hinterp&Hmut)".
+    iEval (rewrite ?bi_schema_interp_unfold /=) in "Hinterp". iFrame "Hinterp".
+    iIntros "HP [Hw $] !> !>". iApply (ownI_close O _ _ (list_to_vec [P])). iFrame "# ∗".
+  Qed.
+
+  Lemma own_inv_acc E N P :
+    ↑N ⊆ E → own_inv N P ={E,E∖↑N}=∗ ▷ P ∗ (▷ P ={E∖↑N,E}=∗ True).
+  Proof.
+    iIntros (?) "Hown". iApply (fupd_level_fupd E _ _ O).
+    iMod (own_inv_acc0 E N with "Hown") as "($&Hcl)"; first auto.
+    iModIntro. iIntros "H". iSpecialize ("Hcl" with "H"). by iApply fupd_level_fupd.
   Qed.
 
   Lemma fresh_inv_name (E : gset positive) N : ∃ i, i ∉ E ∧ i ∈ (↑N:coPset).
@@ -48,20 +58,25 @@ Section inv.
     apply gset_to_coPset_finite.
   Qed.
 
-  Lemma own_inv_alloc N E P : ▷ P ={E}=∗ own_inv N P.
+  Lemma own_inv_alloc0 N E P : ▷ P -∗ |0={E}=> own_inv N P.
   Proof.
-    rewrite uPred_fupd_eq. iIntros "HP [Hw $]".
-    iMod (ownI_alloc (.∈ (↑N : coPset)) P with "[$HP $Hw]")
-      as (i ?) "[$ ?]"; auto using fresh_inv_name.
+    rewrite uPred_fupd_level_eq. iIntros "HP [Hw $]".
+    iMod (ownI_alloc (.∈ (↑N : coPset)) (bi_sch_var_fixed O) O (list_to_vec [P]) (list_to_vec [])
+            with "[$HP $Hw]")
+      as (i ?) "[$ [? ?]]"; auto using fresh_inv_name.
     do 2 iModIntro. iExists i. auto.
   Qed.
 
+  Lemma own_inv_alloc N E P : ▷ P ={E}=∗ own_inv N P.
+  Proof. iIntros "HP". iApply (fupd_level_fupd). by iApply own_inv_alloc0. Qed.
+
   (* This does not imply [own_inv_alloc] due to the extra assumption [↑N ⊆ E]. *)
-  Lemma own_inv_alloc_open N E P :
-    ↑N ⊆ E → ⊢ |={E, E∖↑N}=> own_inv N P ∗ (▷P ={E∖↑N, E}=∗ True).
+  Lemma own_inv_alloc_open0 N E P :
+    ↑N ⊆ E → ⊢ |0={E, E∖↑N}=> own_inv N P ∗ (▷P -∗ |0={E∖↑N, E}=> True).
   Proof.
-    rewrite uPred_fupd_eq. iIntros (Sub) "[Hw HE]".
-    iMod (ownI_alloc_open (.∈ (↑N : coPset)) P with "Hw")
+    rewrite uPred_fupd_level_eq. iIntros (Sub) "[Hw HE]".
+    iMod (ownI_alloc_open O (.∈ (↑N : coPset)) (bi_sch_var_fixed O) (list_to_vec [P]) (list_to_vec [])
+            with "Hw")
       as (i ?) "(Hw & #Hi & HD)"; auto using fresh_inv_name.
     iAssert (ownE {[i]} ∗ ownE (↑ N ∖ {[i]}) ∗ ownE (E ∖ ↑ N))%I
       with "[HE]" as "(HEi & HEN\i & HE\N)".
@@ -78,10 +93,18 @@ Section inv.
     rewrite assoc_L -!union_difference_L //; set_solver.
   Qed.
 
+  Lemma own_inv_alloc_open N E P :
+    ↑N ⊆ E → ⊢ |={E, E∖↑N}=> own_inv N P ∗ (▷P ={E∖↑N, E}=∗ True).
+  Proof.
+    iIntros (?). iApply (fupd_level_fupd E _ _ O).
+    iMod (own_inv_alloc_open0 N) as "($&Hcl)"; first auto.
+    iModIntro. iIntros "H". iSpecialize ("Hcl" with "H"). by iApply fupd_level_fupd.
+  Qed.
+
   Lemma own_inv_to_inv M P: own_inv M P -∗ inv M P.
   Proof.
     iIntros "#I". rewrite inv_eq. iIntros (E H).
-    iPoseProof (own_inv_acc with "I") as "H"; eauto.
+    iPoseProof (own_inv_acc0 with "I") as "H"; eauto.
   Qed.
 
   (** ** Public API of invariants *)
@@ -119,6 +142,13 @@ Section inv.
     iApply (own_inv_alloc N E with "HP").
   Qed.
 
+  Lemma inv_alloc_open0 N E P :
+    ↑N ⊆ E → ⊢ |0={E, E∖↑N}=> inv N P ∗ (▷P -∗ |0={E∖↑N, E}=> True).
+  Proof.
+    iIntros (?). iMod own_inv_alloc_open0 as "[HI $]"; first done.
+    iApply own_inv_to_inv. done.
+  Qed.
+
   Lemma inv_alloc_open N E P :
     ↑N ⊆ E → ⊢ |={E, E∖↑N}=> inv N P ∗ (▷P ={E∖↑N, E}=∗ True).
   Proof.
@@ -126,10 +156,18 @@ Section inv.
     iApply own_inv_to_inv. done.
   Qed.
 
+  Lemma inv_acc0 E N P :
+    ↑N ⊆ E → inv N P -∗ |0={E,E∖↑N}=> ▷ P ∗ (▷ P -∗ |0={E∖↑N,E}=> True).
+  Proof.
+    rewrite inv_eq /inv_def; iIntros (?) "#HI". by iApply "HI".
+  Qed.
+
   Lemma inv_acc E N P :
     ↑N ⊆ E → inv N P ={E,E∖↑N}=∗ ▷ P ∗ (▷ P ={E∖↑N,E}=∗ True).
   Proof.
-    rewrite inv_eq /inv_def; iIntros (?) "#HI". by iApply "HI".
+    iIntros (?) "Hi". iApply (fupd_level_fupd E _ _ O).
+    iMod (inv_acc0 E N P with "Hi") as "($&Hcl)"; first auto.
+    iModIntro. iIntros "H". iSpecialize ("Hcl" with "H"). by iApply fupd_level_fupd.
   Qed.
 
   Lemma inv_combine N1 N2 N P Q :
@@ -140,7 +178,7 @@ Section inv.
     rewrite inv_eq. iIntros (??) "#HinvP #HinvQ !>"; iIntros (E ?).
     iMod ("HinvP" with "[%]") as "[$ HcloseP]"; first set_solver.
     iMod ("HinvQ" with "[%]") as "[$ HcloseQ]"; first set_solver.
-    iMod (fupd_intro_mask' _ (E ∖ ↑N)) as "Hclose"; first set_solver.
+    iMod (fupd_level_intro_mask' _ (E ∖ ↑N)) as "Hclose"; first set_solver.
     iIntros "!> [HP HQ]".
     iMod "Hclose" as %_. iMod ("HcloseQ" with "HQ") as %_. by iApply "HcloseP".
   Qed.
@@ -160,13 +198,28 @@ Section inv.
   (** ** Proof mode integration *)
   Global Instance into_inv_inv N P : IntoInv (inv N P) N := {}.
 
+  Global Instance into_acc_inv_lvl k N P E:
+    IntoAcc (X := unit) (inv N P)
+            (↑N ⊆ E) True (uPred_fupd_level E (E ∖ ↑N) k) (uPred_fupd_level (E ∖ ↑N) E k)
+            (λ _ : (), (▷ P)%I) (λ _ : (), (▷ P)%I) (λ _ : (), None).
+  Proof.
+    rewrite inv_eq /IntoAcc /accessor bi.exist_unit.
+    iIntros (?) "#Hinv _". iApply (fupd_level_le _ _ O); first lia.
+    iMod ("Hinv" $! _ with "[//]") as "($&Hcl)".
+    iModIntro. iIntros "H". iSpecialize ("Hcl" with "H").
+    iApply (fupd_level_le with "Hcl"); first lia.
+  Qed.
+
   Global Instance into_acc_inv N P E:
     IntoAcc (X := unit) (inv N P)
             (↑N ⊆ E) True (fupd E (E ∖ ↑N)) (fupd (E ∖ ↑N) E)
             (λ _ : (), (▷ P)%I) (λ _ : (), (▷ P)%I) (λ _ : (), None).
   Proof.
     rewrite inv_eq /IntoAcc /accessor bi.exist_unit.
-    iIntros (?) "#Hinv _". iApply "Hinv"; done.
+    iIntros (?) "#Hinv _". iApply (fupd_level_fupd _ _ _ O).
+    iMod ("Hinv" $! _ with "[//]") as "($&Hcl)".
+    iModIntro. iIntros "H". iSpecialize ("Hcl" with "H").
+    iApply (fupd_level_fupd with "Hcl").
   Qed.
 
   (** ** Derived properties *)
