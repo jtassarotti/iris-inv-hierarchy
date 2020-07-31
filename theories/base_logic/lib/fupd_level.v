@@ -22,14 +22,18 @@ Reserved Notation "| k ={ E1 }=> Q"
 Reserved Notation "| k ={ E1 , E2 }=> Q"
   (at level 99, E1, E2, k at level 50, Q at level 200,
    format "| k ={ E1 , E2 }=>  Q").
+(*
 Reserved Notation "P = k ={ E1 , E2 }=∗ Q"
   (at level 99, E1,E2, k at level 50, Q at level 200,
    format "'[' P  '/' = k ={ E1 , E2 }=∗  Q ']'").
+*)
 
 Notation "| k ={ E1 , E2 }=> Q" := (uPred_fupd_level E1 E2 k Q) : bi_scope.
 Notation "| k ={ E1 }=> Q" := (uPred_fupd_level E1 E1 k Q) : bi_scope.
+(*
 Notation "P = k ={ E1 , E2 }=∗ Q" := (P -∗ |k={E1,E2}=> Q)%I : bi_scope.
 Notation "P = k ={ E1 , E2 }=∗ Q" := (P -∗ |k={E1,E2}=> Q) : stdpp_scope.
+*)
 
 Section fupd_level.
 Context `{!invG Σ}.
