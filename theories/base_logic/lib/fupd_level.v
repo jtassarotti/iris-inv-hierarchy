@@ -366,3 +366,42 @@ Proof.
 Qed.
  *)
 End fupd_level.
+
+Section schema_test_fupd.
+Context `{!invG Σ}.
+Implicit Types P : iProp Σ.
+
+Definition bi_sch_False : bi_schema := bi_sch_pure False.
+
+Definition bi_sch_except_0 (P: bi_schema) : bi_schema :=
+  bi_sch_or (bi_sch_later (bi_sch_False)) P.
+
+Definition bi_sch_bupd_wand (P1 P2: bi_schema) :=
+  bi_sch_wand P1 (bi_sch_bupd P2).
+
+Definition bi_sch_fupd E1 E2 (P: bi_schema) : bi_schema :=
+  bi_sch_bupd_wand
+    (bi_sch_sep (bi_sch_wsat) (bi_sch_ownE E1))
+    (bi_sch_except_0 (bi_sch_sep (bi_sch_wsat)
+                                (bi_sch_sep (bi_sch_ownE E2) P))).
+
+Lemma bi_sch_fupd_interp' E1 E2 lvl Qs Qs_mut Psch P:
+  bi_schema_interp lvl Qs Qs_mut Psch = P →
+  bi_schema_interp lvl Qs Qs_mut (bi_sch_fupd E1 E2 Psch) =
+    (wsat lvl ∗ ownE E1 ==∗ ◇ (wsat lvl ∗ ownE E2 ∗ P))%I.
+Proof.
+  intros Heq.
+  rewrite ?bi_schema_interp_unfold //=.
+  do 11 (rewrite {1}bi_schema_interp_unfold //=).
+  rewrite Heq. rewrite ?bi_schema_interp_unfold //=.
+Qed.
+
+Lemma bi_sch_fupd_interp E1 E2 lvl Qs Qs_mut Psch P:
+  bi_schema_interp (S lvl) Qs Qs_mut Psch = P →
+  bi_schema_interp (S lvl) Qs Qs_mut (bi_sch_fupd E1 E2 Psch) =
+  (|lvl={E1, E2}=> P)%I.
+Proof.
+  intros Heq. rewrite uPred_fupd_level_eq. by apply bi_sch_fupd_interp'.
+Qed.
+
+End schema_test_fupd.
