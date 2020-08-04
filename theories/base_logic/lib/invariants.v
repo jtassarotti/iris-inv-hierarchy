@@ -136,6 +136,13 @@ Section inv.
     - iIntros "HQ". by iApply "HPQ".
   Qed.
 
+  Lemma inv_alloc' k N E P : ▷ P -∗ |k={E}=> inv N P.
+  Proof.
+    iIntros "HP". iApply own_inv_to_inv.
+    iPoseProof (own_inv_alloc0 N E with "HP") as "H".
+    iApply (fupd_level_le with "H"). lia.
+  Qed.
+
   Lemma inv_alloc N E P : ▷ P ={E}=∗ inv N P.
   Proof.
     iIntros "HP". iApply own_inv_to_inv.
