@@ -29,6 +29,16 @@ Qed.
 
 Lemma AE'_disj n1 n2 : n1 ≠ n2 → AE' n1 ## AE' n2.
 Proof. solve_ndisj. Qed.
+Lemma AE'_disj_AE n1 n2 : n1 < n2 → AE' n2 ## AE n1.
+Proof.
+  revert n2. rewrite AE_eq.
+  induction n1 => n2 Hlt.
+  - rewrite //= right_id. apply AE'_disj. lia.
+  - rewrite //=.
+    feed pose proof (IHn1 n2); first lia.
+    feed pose proof (AE'_disj n2 (S n1)); first lia.
+    set_solver.
+Qed.
 Lemma AE_mono n1 n2 : n1 ≤ n2 → AE n1 ⊆ AE n2.
 Proof. rewrite AE_eq. induction 1; rewrite //=; set_solver. Qed.
 Lemma AE'_subset_AlwaysEn n : AE' n ⊆ AlwaysEn.
@@ -100,7 +110,12 @@ Proof.
   rewrite uPred_fupd_level_eq. iIntros (HPQ) "HP HwE". rewrite -HPQ. by iApply "HP".
 Qed.
 
-
+Lemma ownE_AE_split_current_rest k :
+  ownE (AE (S k)) ⊣⊢  ownE (AE' (S k)) ∗ ownE (AE k).
+Proof.
+  rewrite {1}AE_eq /AE_def -/AE_def -AE_eq ownE_op //.
+  apply AE'_disj_AE; lia.
+Qed.
 Lemma ownE_AE_le_acc k1 k2 :
   k1 ≤ k2 →
   ownE (AE k2) -∗ ownE (AE k1) ∗ (ownE (AE k1) -∗ ownE (AE k2)).
