@@ -9,7 +9,7 @@ Import uPred.
 (** Always Enabled Semantic Invariants *)
 Definition ae_inv_def `{!invG Σ} (k : nat) (P : iProp Σ) : iProp Σ :=
   □ ∀ Q E, (match k with
-            | O => ▷ P ==∗ ▷ P ∗ Q
+            | O => ▷ P ==∗ ◇ (▷ P ∗ Q)
             | S k' => ▷ P -∗ |k'={E}=> ▷ P ∗ Q
             end) -∗ |k={E}=> Q.
 Definition ae_inv_aux : seal (@ae_inv_def). Proof. by eexists. Qed.
@@ -35,7 +35,7 @@ Section ae_inv.
   Lemma own_ae_inv_acc_k E k P Q :
     own_ae_inv k P -∗
     (match k with
-     | O => ▷ P ==∗ ▷ P ∗ Q
+     | O => ▷ P ==∗ ◇ (▷ P ∗ Q)
      | S k' => ▷ P -∗ |k'={E}=> ▷ P ∗ Q
      end) -∗
     |k={E}=> Q.
@@ -49,7 +49,7 @@ Section ae_inv.
     iDestruct "HI" as (? Ps_mut) "(Hinterp&Hmut)".
     iEval (rewrite ?bi_schema_interp_unfold /=) in "Hinterp".
     destruct k.
-    - iMod ("Hshift" with "[$]") as "(HP&HQ)".
+    - iMod ("Hshift" with "[$]") as ">(HP&HQ)".
       iDestruct (ownI_close O i _ (list_to_vec [P]) with "[Hw Hmut HD HP]") as "H".
       { iFrame "# ∗". }
       iFrame. eauto.
@@ -65,7 +65,7 @@ Section ae_inv.
   Lemma own_ae_inv_acc E k P Q:
     own_ae_inv k P -∗
     (match k with
-     | O => ▷ P ==∗ ▷ P ∗ Q
+     | O => ▷ P ==∗ ◇ (▷ P ∗ Q)
      | S k' => ▷ P -∗ |k'={E}=> ▷ P ∗ Q
      end) -∗
     |={E}=> Q.
@@ -121,8 +121,8 @@ Section ae_inv.
     { destruct N.
       - iIntros.
         iDestruct ("HPQ" with "[$]") as "[HQ HQP]".
-        iMod ("Hshift" with "[$]") as "(HQ&$)".
-        iModIntro. iNext. by iApply ("HQP").
+        iMod ("Hshift" with "[$]") as ">(HQ&$)".
+        iModIntro. iModIntro. iNext. by iApply ("HQP").
       - iIntros.
         iDestruct ("HPQ" with "[$]") as "[HQ HQP]".
         iMod ("Hshift" with "[$]") as "(HQ&$)".
@@ -153,7 +153,7 @@ Section ae_inv.
   Lemma ae_inv_acc E k P Q :
     ae_inv k P -∗
     (match k with
-     | O => ▷ P ==∗ ▷ P ∗ Q
+     | O => ▷ P ==∗ ◇ (▷ P ∗ Q)
      | S k' => ▷ P -∗ |k'={E}=> ▷ P ∗ Q
      end) -∗
     |k={E}=> Q.
@@ -163,12 +163,12 @@ Section ae_inv.
 
   Lemma ae_inv_acc_bupd E k P Q :
     ae_inv k P -∗
-    (▷ P ==∗ ▷ P ∗ Q) -∗
+    (▷ P ==∗ ◇ (▷ P ∗ Q)) -∗
     |k={E}=> Q.
   Proof.
     rewrite ae_inv_eq /ae_inv_def. iIntros "#HI Hshift".
     iApply "HI".
-    { destruct k; eauto. iIntros. by iMod ("Hshift" with "[$]"). }
+    { destruct k; eauto. iIntros. by iMod ("Hshift" with "[$]") as ">$". }
   Qed.
 
   Lemma ae_inv_accS E k P Q :
