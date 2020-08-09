@@ -1,4 +1,5 @@
 From stdpp Require Export coPset.
+From stdpp Require Import namespaces.
 From iris.proofmode Require Import tactics.
 From iris.algebra Require Import gmap auth agree gset coPset.
 From iris.base_logic.lib Require Export own.
@@ -7,10 +8,47 @@ Set Default Proof Using "Type".
 Export invG.
 Import uPred.
 
-(* This is essentially fancy_updates.v from Iris, but replacing the use of except_0 with atleast *)
+Definition AE' (n: nat) : coPset := (↑(nroot.@(1%positive).@(n))).
+Fixpoint AE_def (n: nat) :=
+  AE' n ∪
+  match n with
+  | O => ∅
+  | S n' => AE_def n'
+  end.
+Definition AE_aux : seal AE_def. Proof. by eexists. Qed.
+Definition AE := AE_aux.(unseal).
+Definition AE_eq : AE = AE_def :=
+  AE_aux.(seal_eq).
+
+Lemma AlwaysEn_alt : AlwaysEn = ↑(nroot.@(1%positive)).
+Proof.
+  rewrite /AlwaysEn/coPset_inl ?nclose_eq /nclose_def/up_close.
+  rewrite /nroot ndot_eq /ndot_def/encode //=.
+  apply coPset_suffixes_of_top.
+Qed.
+
+Lemma AE'_disj n1 n2 : n1 ≠ n2 → AE' n1 ## AE' n2.
+Proof. solve_ndisj. Qed.
+Lemma AE_mono n1 n2 : n1 ≤ n2 → AE n1 ⊆ AE n2.
+Proof. rewrite AE_eq. induction 1; rewrite //=; set_solver. Qed.
+Lemma AE'_subset_AlwaysEn n : AE' n ⊆ AlwaysEn.
+Proof. rewrite AlwaysEn_alt. solve_ndisj. Qed.
+Lemma AE_subset_AlwaysEn n : AE n ⊆ AlwaysEn.
+Proof. rewrite AE_eq AlwaysEn_alt; induction n; solve_ndisj. Qed.
+Lemma AE_MaybeEn_disj n E : AE n ## MaybeEn E.
+Proof.
+  pose proof (AE_subset_AlwaysEn n).
+  cut (AlwaysEn ## MaybeEn E); last by apply coPset_inl_inr_disj.
+  { set_solver. }
+Qed.
+
+Opaque AE.
+
+Local Hint Extern 0 (AE _ ## MaybeEn _) => apply AE_MaybeEn_disj : core.
+Local Hint Extern 0 (AlwaysEn ## MaybeEn _) => apply coPset_inl_inr_disj : core.
 
 Definition uPred_fupd_level_def `{!invG Σ} (E1 E2 : coPset) (k : nat) (P : iProp Σ) : iProp Σ :=
-  wsat (S k) ∗ ownE E1 ==∗ ◇ (wsat (S k) ∗ ownE E2 ∗ P).
+  wsat (S k) ∗ ownE (AE (S k) ∪ MaybeEn E1) ==∗ ◇ (wsat (S k) ∗ ownE (AE (S k) ∪ MaybeEn E2) ∗ P).
 Definition uPred_fupd_level_aux `{!invG Σ} : seal uPred_fupd_level_def. Proof. by eexists. Qed.
 Definition uPred_fupd_level `{!invG Σ} := uPred_fupd_level_aux.(unseal).
 Definition uPred_fupd_level_eq `{!invG Σ} : uPred_fupd_level = uPred_fupd_level_def :=
@@ -47,8 +85,8 @@ Proof. rewrite uPred_fupd_level_eq. solve_proper. Qed.
 Lemma fupd_level_intro_mask E1 E2 k P : E2 ⊆ E1 → P ⊢ |k={E1,E2}=> |k={E2,E1}=> P.
 Proof.
   intros (E1''&->&?)%subseteq_disjoint_union_L.
-  rewrite uPred_fupd_level_eq /uPred_fupd_level_def ownE_op //.
-  by iIntros "$ ($ & $ & HE) !> !> [$ $] !> !>" .
+  rewrite uPred_fupd_level_eq /uPred_fupd_level_def ?ownE_op // ?ownE_op_MaybeEn //.
+  by iIntros "$ ($ & $ & $ & HE) !> !> [$ [$ $]] !> !>" .
 Qed.
 
 Lemma except_0_fupd_level E1 E2 k P : ◇ (|k={E1,E2}=> P) ⊢ |k={E1,E2}=> P.
@@ -62,24 +100,44 @@ Proof.
   rewrite uPred_fupd_level_eq. iIntros (HPQ) "HP HwE". rewrite -HPQ. by iApply "HP".
 Qed.
 
+
+Lemma ownE_AE_le_acc k1 k2 :
+  k1 ≤ k2 →
+  ownE (AE k2) -∗ ownE (AE k1) ∗ (ownE (AE k1) -∗ ownE (AE k2)).
+Proof. iIntros (?). iApply ownE_mono_le_acc. by apply AE_mono. Qed.
+
+Lemma ownE_AlwaysEn_le_acc k :
+  ownE (AlwaysEn) -∗ ownE (AE k) ∗ (ownE (AE k) -∗ ownE AlwaysEn).
+Proof. iApply ownE_mono_le_acc. by apply AE_subset_AlwaysEn. Qed.
+
 Lemma fupd_level_le E1 E2 k1 k2 P : k1 ≤ k2 → (|k1={E1,E2}=> P) ⊢ |k2={E1,E2}=> P.
 Proof.
   rewrite ?uPred_fupd_level_eq /uPred_fupd_level_def.
-  iIntros (Hle) "HP (Hw&HE)".
+  rewrite ?ownE_op //.
+  iIntros (Hle) "HP (Hw&HAE&HE)".
   iDestruct (wsat_le_acc (S k1) (S k2) with "Hw") as "(Hw&Hclo)".
   { lia. }
+  iDestruct (ownE_AE_le_acc (S k1) (S k2) with "HAE") as "(HAE&Hclo')".
+  { lia. }
   iMod ("HP" with "[$]") as "H". iModIntro.
-  iMod "H" as "(Hw&HE)". iFrame.
-  iModIntro. by iApply "Hclo".
+  iMod "H" as "(Hw&(HAE&HE)&HP)". iFrame.
+  iModIntro.
+  iDestruct ("Hclo" with "[$]") as "$".
+  iDestruct ("Hclo'" with "[$]") as "$".
 Qed.
 
 Lemma fupd_level_fupd E1 E2 P k : (|k={E1,E2}=> P) ⊢ |={E1,E2}=> P.
 Proof.
   rewrite ?uPred_fupd_level_eq /uPred_fupd_level_def.
   rewrite ?uPred_fupd_eq /uPred_fupd_def.
-  iIntros "HP (Hw&HE)". iMod (wsat_all_acc (S k) with "Hw") as "(Hw&Hclo)".
-  iMod ("HP" with "[$]") as ">(?&$&$)".
-  do 2 iModIntro. by iApply "Hclo".
+  rewrite ?ownE_op //.
+  iIntros "HP (Hw&HAE&HE)".
+  iMod (wsat_all_acc (S k) with "Hw") as "(Hw&Hclo)".
+  iDestruct (ownE_AlwaysEn_le_acc (S k) with "HAE") as "(HAE&Hclo')".
+  iMod ("HP" with "[$]") as ">(?&(?&$)&$)".
+  do 2 iModIntro.
+  iDestruct ("Hclo" with "[$]") as "$".
+  iDestruct ("Hclo'" with "[$]") as "$".
 Qed.
 
 Lemma fupd_level_trans E1 E2 E3 k P : (|k={E1,E2}=> |k={E2,E3}=> P) ⊢ |k={E1,E3}=> P.
@@ -91,11 +149,11 @@ Qed.
 Lemma fupd_level_mask_frame_r' E1 E2 Ef k P:
     E1 ## Ef → (|k={E1,E2}=> ⌜E2 ## Ef⌝ → P) ⊢ |k={E1 ∪ Ef,E2 ∪ Ef}=> P.
 Proof.
-  intros HE1Ef. rewrite uPred_fupd_level_eq /uPred_fupd_level_def ownE_op //.
-  iIntros "Hvs (Hw & HE1 &HEf)".
-  iMod ("Hvs" with "[Hw HE1]") as ">($ & HE2 & HP)"; first by iFrame.
-  iDestruct (ownE_op' with "[HE2 HEf]") as "[? $]"; first by iFrame.
-  iIntros "!> !>". by iApply "HP".
+  intros HE1Ef. rewrite uPred_fupd_level_eq /uPred_fupd_level_def ?ownE_op // ownE_op_MaybeEn //.
+  iIntros "Hvs (Hw & HAE & HE1 & HEf)".
+  iMod ("Hvs" with "[Hw HAE HE1]") as ">($ & (HAE & HE2) & HP)"; first by iFrame.
+  iDestruct (ownE_op_MaybeEn' with "[HE2 HEf]") as "[? $]"; first by iFrame.
+  iIntros "!> !>". iFrame. by iApply "HP".
 Qed.
 
 Lemma fupd_level_frame_r E1 E2 k P R:
@@ -334,7 +392,8 @@ Proof.
   iAssert (|k={⊤,E2}=> P)%I as "H".
   { iMod (fupd_level_intro_mask'); last iApply Hfupd_level. done. }
   rewrite uPred_fupd_level_eq /uPred_fupd_level_def.
-  iMod ("H" with "[$]") as "[Hw [HE >H']]"; iFrame.
+  iMod ("H" with "[$Hw HE]") as "[Hw [HE >H']]"; iFrame.
+  iApply (ownE_weaken with "HE"). set_solver.
 Qed.
 
 (*
@@ -381,14 +440,14 @@ Definition bi_sch_bupd_wand (P1 P2: bi_schema) :=
 
 Definition bi_sch_fupd E1 E2 (P: bi_schema) : bi_schema :=
   bi_sch_bupd_wand
-    (bi_sch_sep (bi_sch_wsat) (bi_sch_ownE E1))
+    (bi_sch_sep (bi_sch_wsat) (bi_sch_ownE (λ k, AE k ∪ MaybeEn E1)))
     (bi_sch_except_0 (bi_sch_sep (bi_sch_wsat)
-                                (bi_sch_sep (bi_sch_ownE E2) P))).
+                                (bi_sch_sep (bi_sch_ownE (λ k, AE k ∪ MaybeEn E2)) P))).
 
 Lemma bi_sch_fupd_interp' E1 E2 lvl Qs Qs_mut Psch P:
   bi_schema_interp lvl Qs Qs_mut Psch = P →
   bi_schema_interp lvl Qs Qs_mut (bi_sch_fupd E1 E2 Psch) =
-    (wsat lvl ∗ ownE E1 ==∗ ◇ (wsat lvl ∗ ownE E2 ∗ P))%I.
+    (wsat lvl ∗ ownE (AE lvl ∪ MaybeEn E1) ==∗ ◇ (wsat lvl ∗ ownE (AE lvl ∪ MaybeEn E2) ∗ P))%I.
 Proof.
   intros Heq.
   rewrite ?bi_schema_interp_unfold //=.
@@ -401,7 +460,7 @@ Lemma bi_sch_fupd_interp E1 E2 lvl Qs Qs_mut Psch P:
   bi_schema_interp (S lvl) Qs Qs_mut (bi_sch_fupd E1 E2 Psch) =
   (|lvl={E1, E2}=> P)%I.
 Proof.
-  intros Heq. rewrite uPred_fupd_level_eq. by apply bi_sch_fupd_interp'.
+  intros Heq. rewrite uPred_fupd_level_eq /uPred_fupd_level_def. by apply bi_sch_fupd_interp'.
 Qed.
 
 End schema_test_fupd.

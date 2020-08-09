@@ -21,7 +21,7 @@ Inductive bi_schema :=
 | bi_sch_var_fixed : nat → bi_schema
 | bi_sch_var_mut : nat → bi_schema
 | bi_sch_wsat : bi_schema
-| bi_sch_ownE : coPset → bi_schema.
+| bi_sch_ownE : (nat → coPset) → bi_schema.
 
 Canonical Structure bi_schemaO := leibnizO bi_schema.
 
@@ -109,19 +109,19 @@ Definition inv_cmra_fmap `{!invG Σ} (v: (list (iProp Σ) * bi_schema) * list (i
   let '((Ps, sch), Qs) := v in
   (invariant_unfold sch (list_to_vec Ps), inv_mut_unfold 1%Qp (list_to_vec Qs)).
 
-Fixpoint bi_schema_pre `{!invG Σ} (Ps Ps_mut: list (iProp Σ)) wsat (sch: bi_schema) :=
+Fixpoint bi_schema_pre `{!invG Σ} n (Ps Ps_mut: list (iProp Σ)) wsat (sch: bi_schema) :=
   match sch with
   | bi_sch_emp => emp
   | bi_sch_pure φ => ⌜φ⌝
-  | bi_sch_and sch1 sch2 => bi_schema_pre Ps Ps_mut wsat sch1 ∧ bi_schema_pre Ps Ps_mut wsat sch2
-  | bi_sch_or sch1 sch2 => bi_schema_pre Ps Ps_mut wsat sch1 ∨ bi_schema_pre Ps Ps_mut wsat sch2
-  | bi_sch_forall A sch => ∀ (a: A),  bi_schema_pre Ps Ps_mut wsat (sch a)
-  | bi_sch_exist A sch => ∃ (a: A),  bi_schema_pre Ps Ps_mut wsat (sch a)
-  | bi_sch_sep sch1 sch2 => bi_schema_pre Ps Ps_mut wsat sch1 ∗ bi_schema_pre Ps Ps_mut wsat sch2
-  | bi_sch_wand sch1 sch2 => bi_schema_pre Ps Ps_mut wsat sch1 -∗ bi_schema_pre Ps Ps_mut wsat sch2
-  | bi_sch_persistently sch => <pers> bi_schema_pre Ps Ps_mut wsat sch
-  | bi_sch_later sch => ▷ bi_schema_pre Ps Ps_mut wsat sch
-  | bi_sch_bupd sch => |==> bi_schema_pre Ps Ps_mut wsat sch
+  | bi_sch_and sch1 sch2 => bi_schema_pre n Ps Ps_mut wsat sch1 ∧ bi_schema_pre n Ps Ps_mut wsat sch2
+  | bi_sch_or sch1 sch2 => bi_schema_pre n Ps Ps_mut wsat sch1 ∨ bi_schema_pre n Ps Ps_mut wsat sch2
+  | bi_sch_forall A sch => ∀ (a: A),  bi_schema_pre n Ps Ps_mut wsat (sch a)
+  | bi_sch_exist A sch => ∃ (a: A),  bi_schema_pre n Ps Ps_mut wsat (sch a)
+  | bi_sch_sep sch1 sch2 => bi_schema_pre n Ps Ps_mut wsat sch1 ∗ bi_schema_pre n Ps Ps_mut wsat sch2
+  | bi_sch_wand sch1 sch2 => bi_schema_pre n Ps Ps_mut wsat sch1 -∗ bi_schema_pre n Ps Ps_mut wsat sch2
+  | bi_sch_persistently sch => <pers> bi_schema_pre n Ps Ps_mut wsat sch
+  | bi_sch_later sch => ▷ bi_schema_pre n Ps Ps_mut wsat sch
+  | bi_sch_bupd sch => |==> bi_schema_pre n Ps Ps_mut wsat sch
   | bi_sch_var_fixed i =>
     match (Ps !! i) with
     | None => emp
@@ -133,7 +133,7 @@ Fixpoint bi_schema_pre `{!invG Σ} (Ps Ps_mut: list (iProp Σ)) wsat (sch: bi_sc
     | Some P => P
     end
   | bi_sch_wsat => wsat
-  | bi_sch_ownE E => ownE E
+  | bi_sch_ownE E => ownE (E n)
   end%I.
 
 Definition wsat_pre `{!invG Σ} n bi_schema_interp :=
@@ -147,8 +147,8 @@ Definition wsat_pre `{!invG Σ} n bi_schema_interp :=
 
 Fixpoint bi_schema_interp `{!invG Σ} n (Ps Ps_mut: list (iProp Σ)) sch {struct n} :=
   match n with
-  | O => bi_schema_pre Ps Ps_mut True%I sch
-  | S n' => bi_schema_pre Ps Ps_mut (wsat_pre n' (bi_schema_interp n') ∗ wsat n')%I sch
+  | O => bi_schema_pre O Ps Ps_mut True%I sch
+  | S n' => bi_schema_pre (S n') Ps Ps_mut (wsat_pre n' (bi_schema_interp n') ∗ wsat n')%I sch
   end
   with
   wsat `{!invG Σ} n :=
@@ -208,7 +208,7 @@ Lemma bi_schema_interp_unfold `{!invG Σ} n Ps Ps_mut sch :
     | Some P => P
     end
   | bi_sch_wsat => wsat n
-  | bi_sch_ownE E => ownE E
+  | bi_sch_ownE E => ownE (E n)
   end%I.
 Proof. destruct n, sch => //=. Qed.
 

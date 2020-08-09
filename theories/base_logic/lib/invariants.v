@@ -15,6 +15,9 @@ Definition inv_eq : @inv = @inv_def := inv_aux.(seal_eq).
 Instance: Params (@inv) 3 := {}.
 Typeclasses Opaque inv.
 
+Local Hint Extern 0 (AE _ ## MaybeEn _) => apply AE_MaybeEn_disj : core.
+Local Hint Extern 0 (AlwaysEn ## MaybeEn _) => apply coPset_inl_inr_disj : core.
+
 (** * Invariants *)
 Section inv.
   Context `{!invG Σ}.
@@ -25,20 +28,22 @@ Section inv.
 
   (** ** Internal model of invariants *)
   Definition own_inv (N : namespace) (P : iProp Σ) : iProp Σ :=
-    ∃ i, ⌜i ∈ (↑N:coPset)⌝ ∧ ownI O i (bi_sch_var_fixed O) (list_to_vec [P]).
+    ∃ i, ⌜i ∈ MaybeEn (↑N:coPset)⌝ ∧ ownI O i (bi_sch_var_fixed O) (list_to_vec [P]).
 
   Lemma own_inv_acc0 E N P :
     ↑N ⊆ E → own_inv N P -∗ |0={E,E∖↑N}=> ▷ P ∗ (▷ P -∗ |O={E∖↑N,E}=> True).
   Proof.
     rewrite uPred_fupd_level_eq /uPred_fupd_level_def. iDestruct 1 as (i) "[Hi #HiP]".
     iDestruct "Hi" as % ?%elem_of_subseteq_singleton.
-    rewrite {1 4}(union_difference_L (↑ N) E) // ownE_op; last set_solver.
-    rewrite {1 5}(union_difference_L {[ i ]} (↑ N)) // ownE_op; last set_solver.
-    iIntros "(Hw & [HE $] & $) !> !>".
+    rewrite ?(ownE_op (AE _)) //.
+    rewrite {1 4}(union_difference_L (↑ N) E) // ownE_op_MaybeEn; last set_solver.
+    rewrite {1 2}(union_difference_L {[ i ]} (MaybeEn (↑ N))) // ownE_op; last set_solver.
+    iIntros "(Hw & HAE & [HE $] & $) !> !>".
     iDestruct (ownI_open O i with "[$Hw $HE $HiP]") as "($ & HI & HD)".
     iDestruct "HI" as (? Ps_mut) "(Hinterp&Hmut)".
     iEval (rewrite ?bi_schema_interp_unfold /=) in "Hinterp". iFrame "Hinterp".
-    iIntros "HP [Hw $] !> !>". iApply (ownI_close O _ _ (list_to_vec [P])). iFrame "# ∗".
+    iFrame "HAE".
+    iIntros "HP [Hw [$ $]] !> !>". iApply (ownI_close O _ _ (list_to_vec [P])). iFrame "# ∗".
   Qed.
 
   Lemma own_inv_acc E N P :
@@ -49,19 +54,19 @@ Section inv.
     iModIntro. iIntros "H". iSpecialize ("Hcl" with "H"). by iApply fupd_level_fupd.
   Qed.
 
-  Lemma fresh_inv_name (E : gset positive) N : ∃ i, i ∉ E ∧ i ∈ (↑N:coPset).
+  Lemma fresh_inv_name (E : gset positive) N : ∃ i, i ∉ E ∧ i ∈ MaybeEn (↑N:coPset).
   Proof.
-    exists (coPpick (↑ N ∖ gset_to_coPset E)).
+    exists (coPpick (MaybeEn (↑ N) ∖gset_to_coPset E)).
     rewrite -elem_of_gset_to_coPset (comm and) -elem_of_difference.
     apply coPpick_elem_of=> Hfin.
-    eapply nclose_infinite, (difference_finite_inv _ _), Hfin.
+    eapply (MaybeEn_infinite _ (nclose_infinite N)), (difference_finite_inv _ _), Hfin.
     apply gset_to_coPset_finite.
   Qed.
 
   Lemma own_inv_alloc0 N E P : ▷ P -∗ |0={E}=> own_inv N P.
   Proof.
     rewrite uPred_fupd_level_eq. iIntros "HP [Hw $]".
-    iMod (ownI_alloc (.∈ (↑N : coPset)) (bi_sch_var_fixed O) O (list_to_vec [P]) (list_to_vec [])
+    iMod (ownI_alloc (.∈ MaybeEn (↑N : coPset)) (bi_sch_var_fixed O) O (list_to_vec [P]) (list_to_vec [])
             with "[$HP $Hw]")
       as (i ?) "[$ [? ?]]"; auto using fresh_inv_name.
     do 2 iModIntro. iExists i. auto.
@@ -75,22 +80,30 @@ Section inv.
     ↑N ⊆ E → ⊢ |0={E, E∖↑N}=> own_inv N P ∗ (▷P -∗ |0={E∖↑N, E}=> True).
   Proof.
     rewrite uPred_fupd_level_eq. iIntros (Sub) "[Hw HE]".
-    iMod (ownI_alloc_open O (.∈ (↑N : coPset)) (bi_sch_var_fixed O) (list_to_vec [P]) (list_to_vec [])
+    iMod (ownI_alloc_open O (.∈ MaybeEn (↑N : coPset)) (bi_sch_var_fixed O) (list_to_vec [P]) (list_to_vec [])
             with "Hw")
       as (i ?) "(Hw & #Hi & HD)"; auto using fresh_inv_name.
-    iAssert (ownE {[i]} ∗ ownE (↑ N ∖ {[i]}) ∗ ownE (E ∖ ↑ N))%I
+    iEval (rewrite ownE_op //) in "HE". iDestruct "HE" as "(HAE&HE)".
+    assert (MaybeEn (↑N) ## MaybeEn (E ∖ ↑N)).
+    { rewrite -MaybeEn_disj. set_solver. }
+    iAssert (ownE {[i]} ∗ ownE (MaybeEn (↑ N) ∖ {[i]}) ∗ ownE (MaybeEn (E ∖ ↑ N)))%I
       with "[HE]" as "(HEi & HEN\i & HE\N)".
-    { rewrite -?ownE_op; [|set_solver..].
-      rewrite assoc_L -!union_difference_L //. set_solver. }
-    do 2 iModIntro. iFrame "HE\N". iSplitL "Hw HEi"; first by iApply "Hw".
+    { rewrite -?ownE_op; [| set_solver..].
+      rewrite assoc_L -!union_difference_L //; last set_solver.
+      rewrite -MaybeEn_union -!union_difference_L //.
+    }
+    do 2 iModIntro. rewrite ownE_op //. iFrame "HAE HE\N". iSplitL "Hw HEi"; first by iApply "Hw".
     iSplitL "Hi".
     { iExists i. auto. }
     iIntros "HP [Hw HE\N]".
+    rewrite ?ownE_op //.
+    iDestruct "HE\N" as "($&HE\N)".
     iDestruct (ownI_close with "[$Hw $Hi $HP $HD]") as "[$ HEi]".
-    do 2 iModIntro. iSplitL; [|done].
+    do 2 iModIntro. 
     iCombine "HEi HEN\i HE\N" as "HEN".
     rewrite -?ownE_op; [|set_solver..].
-    rewrite assoc_L -!union_difference_L //; set_solver.
+    rewrite assoc_L -!union_difference_L //; last set_solver.
+    rewrite -MaybeEn_union -!union_difference_L //.
   Qed.
 
   Lemma own_inv_alloc_open N E P :
