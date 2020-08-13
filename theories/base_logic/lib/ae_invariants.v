@@ -7,18 +7,23 @@ Set Default Proof Using "Type".
 Import uPred.
 
 (** Always Enabled Semantic Invariants *)
-Definition ae_inv_def `{!invG Σ} (k : nat) (P : iProp Σ) : iProp Σ :=
-  □ ∀ Q E, (match k with
-            | O => ▷ P ==∗ ◇ (▷ P ∗ Q)
-            | S k' => ▷ P -∗ |k'={E}=> ▷ P ∗ Q
-            end) -∗ |k={E}=> Q.
+Definition ae_inv_def `{!invG Σ} (k : nat) (mj: option nat) (P : iProp Σ) : iProp Σ :=
+  □ ∀ Q E, (match mj with
+            | None =>
+              match k with
+              | O => ▷ P ==∗ ◇ (▷ P ∗ Q)
+              | S k' => ▷ P -∗ |k',(Some O)={E}=> ▷ P ∗ Q
+              end
+            | Some j => ▷ P -∗ |k,(Some (S j))={E}=> ▷ P ∗ Q
+            end)
+             -∗ |k,mj={E}=> Q.
 Definition ae_inv_aux : seal (@ae_inv_def). Proof. by eexists. Qed.
 Definition ae_inv {Σ i} := ae_inv_aux.(unseal) Σ i.
 Definition ae_inv_eq : @ae_inv = @ae_inv_def := ae_inv_aux.(seal_eq).
 Instance: Params (@ae_inv) 3 := {}.
 Typeclasses Opaque ae_inv.
 
-Local Hint Extern 0 (AE _ ## MaybeEn _) => apply AE_MaybeEn_disj : core.
+Local Hint Extern 0 (AE _ _ ## MaybeEn _) => apply AE_MaybeEn_disj : core.
 Local Hint Extern 0 (AlwaysEn ## MaybeEn _) => apply coPset_inl_inr_disj : core.
 
 (** * Ae_Invariants *)
@@ -29,96 +34,121 @@ Section ae_inv.
   Implicit Types P Q R : iProp Σ.
 
   (** ** Internal model of ae_invariants *)
-  Definition own_ae_inv (k: nat) (P : iProp Σ) : iProp Σ :=
-    ∃ i, ⌜i ∈ AE' (S k)⌝ ∧ ownI k i (bi_sch_var_fixed O) (list_to_vec [P]).
+  Definition own_ae_inv (k: nat) (mj: option nat) (P : iProp Σ) : iProp Σ :=
+    ∃ i, ⌜i ∈ AE_next_diff (S k) mj⌝ ∧ ownI k i (bi_sch_var_fixed O) (list_to_vec [P]).
 
-  Lemma own_ae_inv_acc_k E k P Q :
-    own_ae_inv k P -∗
-    (match k with
-     | O => ▷ P ==∗ ◇ (▷ P ∗ Q)
-     | S k' => ▷ P -∗ |k'={E}=> ▷ P ∗ Q
+  Lemma own_ae_inv_acc_k E k mj P Q :
+    own_ae_inv k mj P -∗
+    (match mj with
+     | None =>
+       match k with
+       | O => ▷ P ==∗ ◇ (▷ P ∗ Q)
+       | S k' => ▷ P -∗ |k',(Some O)={E}=> ▷ P ∗ Q
+       end
+     | Some j => ▷ P -∗ |k,(Some (S j))={E}=> ▷ P ∗ Q
      end) -∗
-    |k={E}=> Q.
+    |k,mj={E}=> Q.
   Proof.
-    rewrite uPred_fupd_level_eq /uPred_fupd_level_def. iDestruct 1 as (i) "[Hi #HiP]".
+    rewrite uPred_fupd_split_level_eq /uPred_fupd_split_level_def. iDestruct 1 as (i) "[Hi #HiP]".
     iDestruct "Hi" as % ?%elem_of_subseteq_singleton. iIntros "Hshift".
-    rewrite ?(ownE_op (AE _)) // ?ownE_AE_split_current_rest.
-    rewrite {1 2}(union_difference_L {[ i ]} (AE' (S k))) // ownE_op; last set_solver.
+    rewrite ?(ownE_op (AE _ _)) // ownE_AE_split_current_rest.
+    rewrite {1 2}(union_difference_L {[ i ]} (AE_next_diff (S k) mj)) // ownE_op; last set_solver.
     iIntros "(Hw & ((Hi&HAE')&HAE) & HE)".
     iDestruct (ownI_open k i with "[$Hw $Hi $HiP]") as "(Hw & HI & HD)".
     iDestruct "HI" as (? Ps_mut) "(Hinterp&Hmut)".
     iEval (rewrite ?bi_schema_interp_unfold /=) in "Hinterp".
-    destruct k.
-    - iMod ("Hshift" with "[$]") as ">(HP&HQ)".
-      iDestruct (ownI_close O i _ (list_to_vec [P]) with "[Hw Hmut HD HP]") as "H".
-      { iFrame "# ∗". }
-      iFrame. eauto.
-    - iDestruct (wsat_le_acc (S k) with "Hw") as "(Hw&Hclo)"; first lia.
-      rewrite ownE_op //.
+    destruct mj; last first.
+    - { destruct k.
+        - iMod ("Hshift" with "[$]") as ">(HP&HQ)".
+          iDestruct (ownI_close O i _ (list_to_vec [P]) with "[Hw Hmut HD HP]") as "H".
+          { iFrame "# ∗". }
+          iFrame. eauto.
+        - iDestruct (wsat_le_acc (S k) with "Hw") as "(Hw&Hclo)"; first lia.
+          rewrite ownE_op //.
+          iMod ("Hshift" with "Hinterp [$Hw $HAE $HE]") as ">(Hw&(HAE&HE)&HP&HQ)".
+          iDestruct ("Hclo" with "[$]") as "Hw".
+          iDestruct (ownI_close (S k) i _ (list_to_vec [P]) with "[Hw Hmut HD HP]") as "H".
+          { iFrame "# ∗". }
+          iFrame. eauto.
+      }
+    - rewrite ownE_op //.
       iMod ("Hshift" with "Hinterp [$Hw $HAE $HE]") as ">(Hw&(HAE&HE)&HP&HQ)".
-      iDestruct ("Hclo" with "[$]") as "Hw".
-      iDestruct (ownI_close (S k) i _ (list_to_vec [P]) with "[Hw Hmut HD HP]") as "H".
-      { iFrame "# ∗". }
+      iDestruct (ownI_close k i _ (list_to_vec [P]) with "[Hw Hmut HD HP]") as "H".
+      { iFrame "# ∗". rewrite bi_schema_interp_unfold /=. eauto. }
       iFrame. eauto.
   Qed.
 
-  Lemma own_ae_inv_acc E k P Q:
-    own_ae_inv k P -∗
+  Lemma own_ae_inv_acc_simple E k mj P Q:
+    own_ae_inv k mj P -∗
     (match k with
      | O => ▷ P ==∗ ◇ (▷ P ∗ Q)
      | S k' => ▷ P -∗ |k'={E}=> ▷ P ∗ Q
      end) -∗
     |={E}=> Q.
   Proof.
-    iIntros "Hown Hshift". iApply (fupd_level_fupd E _ _ k).
-    iApply (own_ae_inv_acc_k E with "Hown Hshift").
+    iIntros "Hown Hshift". iApply (fupd_split_level_fupd E _ _ k mj).
+    iApply (own_ae_inv_acc_k E with "Hown [Hshift]").
+    { destruct k; destruct mj.
+      - iIntros. iMod ("Hshift" with "[$]") as ">?". iModIntro. eauto.
+      - iIntros. iMod ("Hshift" with "[$]") as ">?". iModIntro. eauto.
+      - iIntros. iSpecialize ("Hshift" with "[$]").
+        iApply (fupd_level_split_level with "Hshift"); lia.
+      - iIntros. iSpecialize ("Hshift" with "[$]").
+        iApply (fupd_level_split_level with "Hshift"); lia.
+    }
   Qed.
 
-  Lemma fresh_ae_inv_name (E : gset positive) k : ∃ i, i ∉ E ∧ i ∈ AE' k.
+  Lemma fresh_ae_inv_name (E : gset positive) k mj : ∃ i, i ∉ E ∧ i ∈ AE_next_diff (S k) mj.
   Proof.
-    exists (coPpick (AE' k ∖gset_to_coPset E)).
+    exists (coPpick (AE_next_diff (S k) mj ∖gset_to_coPset E)).
     rewrite -elem_of_gset_to_coPset (comm and) -elem_of_difference.
     apply coPpick_elem_of=> Hfin.
-    eapply nclose_infinite, (difference_finite_inv _ _), Hfin.
+    eapply AE_next_diff_inf, (difference_finite_inv _ _), Hfin.
     apply gset_to_coPset_finite.
   Qed.
 
-  Lemma own_ae_inv_alloc_k E k P : ▷ P -∗ |k={E}=> own_ae_inv k P.
+  Lemma own_ae_inv_alloc_k E k mj P : ▷ P -∗ |k,mj={E}=> own_ae_inv k mj P.
   Proof.
-    rewrite uPred_fupd_level_eq. iIntros "HP [Hw $]".
-    iMod (ownI_alloc (.∈ AE' (S k)) (bi_sch_var_fixed O) k (list_to_vec [P]) (list_to_vec [])
+    rewrite uPred_fupd_split_level_eq. iIntros "HP [Hw $]".
+    iMod (ownI_alloc (.∈ AE_next_diff (S k) mj) (bi_sch_var_fixed O) k (list_to_vec [P]) (list_to_vec [])
             with "[HP $Hw]") as (i ?) "[$ [? ?]]"; auto using fresh_ae_inv_name.
     { rewrite bi_schema_interp_unfold //=. }
     do 2 iModIntro. iExists i. auto.
   Qed.
 
-  Lemma own_ae_inv_alloc k E P : ▷ P ={E}=∗ own_ae_inv k P.
-  Proof. iIntros "HP". iApply (fupd_level_fupd). by iApply own_ae_inv_alloc_k. Qed.
+  Lemma own_ae_inv_alloc k mj E P : ▷ P ={E}=∗ own_ae_inv k mj P.
+  Proof. iIntros "HP". iApply (fupd_split_level_fupd). by iApply own_ae_inv_alloc_k. Qed.
 
-  Lemma own_ae_inv_to_ae_inv k P: own_ae_inv k P -∗ ae_inv k P.
+  Lemma own_ae_inv_to_ae_inv k mj P: own_ae_inv k mj P -∗ ae_inv k mj P.
   Proof.
     iIntros "#I". rewrite ae_inv_eq. iIntros (E H).
     iPoseProof (own_ae_inv_acc_k with "I") as "H"; eauto.
   Qed.
 
   (** ** Public API of ae_invariants *)
-  Global Instance ae_inv_contractive N : Contractive (ae_inv N).
+  Global Instance ae_inv_contractive n mj : Contractive (ae_inv n mj).
   Proof. rewrite ae_inv_eq. solve_contractive. Qed.
 
-  Global Instance ae_inv_ne N : NonExpansive (ae_inv N).
+  Global Instance ae_inv_ne n mj : NonExpansive (ae_inv n mj).
   Proof. apply contractive_ne, _. Qed.
 
-  Global Instance ae_inv_proper N : Proper (equiv ==> equiv) (ae_inv N).
+  Global Instance ae_inv_proper n mj : Proper (equiv ==> equiv) (ae_inv n mj).
   Proof. apply ne_proper, _. Qed.
 
-  Global Instance ae_inv_persistent N P : Persistent (ae_inv N P).
+  Global Instance ae_inv_persistent n mj P : Persistent (ae_inv n mj P).
   Proof. rewrite ae_inv_eq. apply _. Qed.
 
-  Lemma ae_inv_alter N P Q : ae_inv N P -∗ ▷ □ (P -∗ Q ∗ (Q -∗ P)) -∗ ae_inv N Q.
+  Lemma ae_inv_alter n mj P Q : ae_inv n mj P -∗ ▷ □ (P -∗ Q ∗ (Q -∗ P)) -∗ ae_inv n mj Q.
   Proof.
     rewrite ae_inv_eq. iIntros "#HI #HPQ !>" (Q' H). iIntros "Hshift".
     iMod ("HI" $! Q' H with "[Hshift]") as "$"; last done.
-    { destruct N.
+    { destruct mj.
+      { iIntros. 
+        iDestruct ("HPQ" with "[$]") as "[HQ HQP]".
+        iMod ("Hshift" with "[$]") as "(HQ&$)".
+        iModIntro. iModIntro. by iApply ("HQP").
+      }
+      destruct n.
       - iIntros.
         iDestruct ("HPQ" with "[$]") as "[HQ HQP]".
         iMod ("Hshift" with "[$]") as ">(HQ&$)".
@@ -130,7 +160,7 @@ Section ae_inv.
     }
   Qed.
 
-  Lemma ae_inv_iff N P Q : ae_inv N P -∗ ▷ □ (P ↔ Q) -∗ ae_inv N Q.
+  Lemma ae_inv_iff n mj P Q : ae_inv n mj P -∗ ▷ □ (P ↔ Q) -∗ ae_inv n mj Q.
   Proof.
     iIntros "#HI #HPQ". iApply (ae_inv_alter with "HI").
     iIntros "!> !> HP". iSplitL "HP".
@@ -138,44 +168,53 @@ Section ae_inv.
     - iIntros "HQ". by iApply "HPQ".
   Qed.
 
-  Lemma ae_inv_alloc' k E P : ▷ P -∗ |k={E}=> ae_inv k P.
+  Lemma ae_inv_alloc' k mj E P : ▷ P -∗ |k,mj={E}=> ae_inv k mj P.
   Proof.
     iIntros "HP". iApply own_ae_inv_to_ae_inv.
     iApply (own_ae_inv_alloc_k E k with "HP").
   Qed.
 
-  Lemma ae_inv_alloc k E P : ▷ P ={E}=∗ ae_inv k P.
+  Lemma ae_inv_alloc k mj E P : ▷ P ={E}=∗ ae_inv k mj P.
   Proof.
     iIntros "HP". iApply own_ae_inv_to_ae_inv.
-    iApply (own_ae_inv_alloc k E with "HP").
+    iApply (own_ae_inv_alloc k mj E with "HP").
   Qed.
 
-  Lemma ae_inv_acc E k P Q :
-    ae_inv k P -∗
-    (match k with
-     | O => ▷ P ==∗ ◇ (▷ P ∗ Q)
-     | S k' => ▷ P -∗ |k'={E}=> ▷ P ∗ Q
+  Lemma ae_inv_acc E k mj P Q :
+    ae_inv k mj P -∗
+    (match mj with
+     | None =>
+       match k with
+       | O => ▷ P ==∗ ◇ (▷ P ∗ Q)
+       | S k' => ▷ P -∗ |k',(Some O)={E}=> ▷ P ∗ Q
+       end
+     | Some j => ▷ P -∗ |k,(Some (S j))={E}=> ▷ P ∗ Q
      end) -∗
-    |k={E}=> Q.
+    |k,mj={E}=> Q.
   Proof.
     rewrite ae_inv_eq /ae_inv_def. iIntros "#HI"; by iApply "HI".
   Qed.
 
-  Lemma ae_inv_acc_bupd E k P Q :
-    ae_inv k P -∗
+  Lemma ae_inv_acc_bupd E k mj P Q :
+    ae_inv k mj P -∗
     (▷ P ==∗ ◇ (▷ P ∗ Q)) -∗
-    |k={E}=> Q.
+    |k,mj={E}=> Q.
   Proof.
     rewrite ae_inv_eq /ae_inv_def. iIntros "#HI Hshift".
     iApply "HI".
-    { destruct k; eauto. iIntros. by iMod ("Hshift" with "[$]") as ">$". }
+    { destruct mj, k; eauto; iIntros; by iMod ("Hshift" with "[$]") as ">$". }
   Qed.
 
-  Lemma ae_inv_accS E k P Q :
-    ae_inv (S k) P -∗
-    (▷ P -∗ |k={E}=> ▷ P ∗ Q) -∗
-    |(S k)={E}=> Q.
-  Proof. by iApply ae_inv_acc. Qed.
+  Lemma ae_inv_accS_simple E k mj P Q :
+    ae_inv (S k) mj P -∗
+    (▷ P -∗ |k,(Some O)={E}=> ▷ P ∗ Q) -∗
+    |(S k),mj={E}=> Q.
+  Proof.
+    iIntros "H Hshift".
+    iApply (ae_inv_acc with "[$] [Hshift]").
+    destruct mj; iIntros "HP"; iSpecialize ("Hshift" with "[$]");
+      iApply (fupd_split_level_le with "[$]"); naive_solver lia.
+  Qed.
 
   (** ** Proof mode integration *)
   (*

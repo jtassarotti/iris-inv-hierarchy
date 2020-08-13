@@ -15,7 +15,7 @@ Definition inv_eq : @inv = @inv_def := inv_aux.(seal_eq).
 Instance: Params (@inv) 3 := {}.
 Typeclasses Opaque inv.
 
-Local Hint Extern 0 (AE _ ## MaybeEn _) => apply AE_MaybeEn_disj : core.
+Local Hint Extern 0 (AE _ _ ## MaybeEn _) => apply AE_MaybeEn_disj : core.
 Local Hint Extern 0 (AlwaysEn ## MaybeEn _) => apply coPset_inl_inr_disj : core.
 
 (** * Invariants *)
@@ -33,9 +33,11 @@ Section inv.
   Lemma own_inv_acc0 E N P :
     ↑N ⊆ E → own_inv N P -∗ |0={E,E∖↑N}=> ▷ P ∗ (▷ P -∗ |O={E∖↑N,E}=> True).
   Proof.
-    rewrite uPred_fupd_level_eq /uPred_fupd_level_def. iDestruct 1 as (i) "[Hi #HiP]".
+    rewrite uPred_fupd_level_eq /uPred_fupd_level_def.
+    rewrite uPred_fupd_split_level_eq /uPred_fupd_split_level_def.
+    iDestruct 1 as (i) "[Hi #HiP]".
     iDestruct "Hi" as % ?%elem_of_subseteq_singleton.
-    rewrite ?(ownE_op (AE _)) //.
+    rewrite ?(ownE_op (AE _ _)) //.
     rewrite {1 4}(union_difference_L (↑ N) E) // ownE_op_MaybeEn; last set_solver.
     rewrite {1 2}(union_difference_L {[ i ]} (MaybeEn (↑ N))) // ownE_op; last set_solver.
     iIntros "(Hw & HAE & [HE $] & $) !> !>".
@@ -65,7 +67,9 @@ Section inv.
 
   Lemma own_inv_alloc0 N E P : ▷ P -∗ |0={E}=> own_inv N P.
   Proof.
-    rewrite uPred_fupd_level_eq. iIntros "HP [Hw $]".
+    rewrite uPred_fupd_level_eq /uPred_fupd_level_def.
+    rewrite uPred_fupd_split_level_eq /uPred_fupd_split_level_def.
+    iIntros "HP [Hw $]".
     iMod (ownI_alloc (.∈ MaybeEn (↑N : coPset)) (bi_sch_var_fixed O) O (list_to_vec [P]) (list_to_vec [])
             with "[$HP $Hw]")
       as (i ?) "[$ [? ?]]"; auto using fresh_inv_name.
@@ -79,7 +83,9 @@ Section inv.
   Lemma own_inv_alloc_open0 N E P :
     ↑N ⊆ E → ⊢ |0={E, E∖↑N}=> own_inv N P ∗ (▷P -∗ |0={E∖↑N, E}=> True).
   Proof.
-    rewrite uPred_fupd_level_eq. iIntros (Sub) "[Hw HE]".
+    rewrite uPred_fupd_level_eq /uPred_fupd_level_def.
+    rewrite uPred_fupd_split_level_eq /uPred_fupd_split_level_def.
+    iIntros (Sub) "[Hw HE]".
     iMod (ownI_alloc_open O (.∈ MaybeEn (↑N : coPset)) (bi_sch_var_fixed O) (list_to_vec [P]) (list_to_vec [])
             with "Hw")
       as (i ?) "(Hw & #Hi & HD)"; auto using fresh_inv_name.
@@ -99,7 +105,7 @@ Section inv.
     rewrite ?ownE_op //.
     iDestruct "HE\N" as "($&HE\N)".
     iDestruct (ownI_close with "[$Hw $Hi $HP $HD]") as "[$ HEi]".
-    do 2 iModIntro. 
+    do 2 iModIntro.
     iCombine "HEi HEN\i HE\N" as "HEN".
     rewrite -?ownE_op; [|set_solver..].
     rewrite assoc_L -!union_difference_L //; last set_solver.
