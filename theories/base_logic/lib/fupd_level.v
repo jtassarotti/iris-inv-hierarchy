@@ -787,14 +787,13 @@ Proof.
   by rewrite /ElimModal intuitionistically_if_elim
     fupd_split_level_frame_r wand_elim_r fupd_split_level_trans.
 Qed.
-(*
-Global Instance elim_modal_fupd_fupd_split_level p E1 E2 k mj P Q :
-  ElimModal True p false (|={E1,E2}=> P) P (|(S k)={E1,E3}=> Q) (|(S k)={E2,E3}=> Q).
+
+Global Instance elim_modal_fupd_level_fupd p E1 E2 k P Q :
+  ElimModal True p false (|(S k)={E1,E2}=> P) P (|={E1,E3}=> Q) (|={E2,E3}=> Q).
 Proof.
-  rewrite /ElimModal => ??. rewrite (fupd_fupd_split_level _ _ k) intuitionistically_if_elim
-    fupd_split_level_frame_r wand_elim_r fupd_split_level_trans //=.
+  rewrite /ElimModal => ??. rewrite (fupd_level_fupd) intuitionistically_if_elim /=.
+  iIntros "(>H&H2)". iApply ("H2" with "[$]").
 Qed.
-*)
 
 Global Instance elim_acc_fupd_split_level {X} E1 E2 E k mj α β mγ Q :
   ElimAcc (X:=X) (uPred_fupd_split_level E1 E2 k mj) (uPred_fupd_split_level E2 E1 k mj) α β mγ
