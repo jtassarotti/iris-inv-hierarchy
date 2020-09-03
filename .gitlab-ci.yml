@@ -27,31 +27,31 @@ variables:
 
 ## Build jobs
 
-build-coq.8.12.dev:
+build-coq.dev:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.12.dev"
-    CI_COQCHK: "1"
+    OPAM_PINS: "coq version dev"
 
-build-coq.8.11.2:
+build-coq.8.12.0:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.11.2"
+    OPAM_PINS: "coq version 8.12.0"
+    DENY_WARNINGS: "1"
     OPAM_PKG: "coq-iris"
     DOC_DIR: "coqdoc@center.mpi-sws.org:iris"
     DOC_OPTS: "--external https://plv.mpi-sws.org/coqdoc/stdpp/ stdpp"
   tags:
   - fp-timing
 
+build-coq.8.11.2:
+  <<: *template
+  variables:
+    OPAM_PINS: "coq version 8.11.2"
+
 build-coq.8.10.2:
   <<: *template
   variables:
     OPAM_PINS: "coq version 8.10.2"
-
-build-coq.8.9.1:
-  <<: *template
-  variables:
-    OPAM_PINS: "coq version 8.9.1"
 
 # Nightly job with a known-to-work Coq version
 # (so failures must be caused by std++)
@@ -65,11 +65,11 @@ build-stdpp.dev-coq.8.11.2:
   - schedules
   - api
 
-# Nightly job with Coq master
-build-stdpp.dev-coq.dev:
+# Nightly job with latest Coq branch
+build-stdpp.dev-coq.8.12.dev:
   <<: *template
   variables:
-    OPAM_PINS: "coq version dev   coq-stdpp.dev git git+https://gitlab.mpi-sws.org/iris/stdpp.git#$STDPP_REV"
+    OPAM_PINS: "coq version 8.12.dev   coq-stdpp.dev git git+https://gitlab.mpi-sws.org/iris/stdpp.git#$STDPP_REV"
     CI_COQCHK: "1"
   except:
   only:

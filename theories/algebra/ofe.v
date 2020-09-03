@@ -38,9 +38,9 @@ Tactic Notation "ofe_subst" :=
   end.
 
 Record OfeMixin A `{Equiv A, Dist A} := {
-  mixin_equiv_dist x y : x ≡ y ↔ ∀ n, x ≡{n}≡ y;
-  mixin_dist_equivalence n : Equivalence (dist n);
-  mixin_dist_S n x y : x ≡{S n}≡ y → x ≡{n}≡ y
+  mixin_equiv_dist (x y : A) : x ≡ y ↔ ∀ n, x ≡{n}≡ y;
+  mixin_dist_equivalence n : Equivalence (@dist A _ n);
+  mixin_dist_S n (x y : A) : x ≡{S n}≡ y → x ≡{n}≡ y
 }.
 
 (** Bundled version *)
@@ -315,7 +315,8 @@ Qed.
 Program Definition fixpoint_def `{Cofe A, Inhabited A} (f : A → A)
   `{!Contractive f} : A := compl (fixpoint_chain f).
 Definition fixpoint_aux : seal (@fixpoint_def). Proof. by eexists. Qed.
-Definition fixpoint {A AC AiH} f {Hf} := fixpoint_aux.(unseal) A AC AiH f Hf.
+Definition fixpoint := fixpoint_aux.(unseal).
+Arguments fixpoint {A _ _} f {_}.
 Definition fixpoint_eq : @fixpoint = @fixpoint_def := fixpoint_aux.(seal_eq).
 
 Section fixpoint.
@@ -704,6 +705,7 @@ Record oFunctor := OFunctor {
 Existing Instance oFunctor_map_ne.
 Instance: Params (@oFunctor_map) 9 := {}.
 
+Declare Scope oFunctor_scope.
 Delimit Scope oFunctor_scope with OF.
 Bind Scope oFunctor_scope with oFunctor.
 

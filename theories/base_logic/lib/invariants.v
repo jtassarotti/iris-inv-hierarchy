@@ -10,10 +10,10 @@ Import uPred.
 Definition inv_def `{!invG Σ} (N : namespace) (P : iProp Σ) : iProp Σ :=
   □ ∀ E, ⌜↑N ⊆ E⌝ → |0={E,E ∖ ↑N}=> ▷ P ∗ (▷ P -∗ |0={E ∖ ↑N,E}=> True).
 Definition inv_aux : seal (@inv_def). Proof. by eexists. Qed.
-Definition inv {Σ i} := inv_aux.(unseal) Σ i.
+Definition inv := inv_aux.(unseal).
+Arguments inv {Σ _} N P.
 Definition inv_eq : @inv = @inv_def := inv_aux.(seal_eq).
 Instance: Params (@inv) 3 := {}.
-Typeclasses Opaque inv.
 
 Local Hint Extern 0 (AE _ _ ## MaybeEn _) => apply AE_MaybeEn_disj : core.
 Local Hint Extern 0 (AlwaysEn ## MaybeEn _) => apply coPset_inl_inr_disj : core.

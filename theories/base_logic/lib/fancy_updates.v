@@ -58,10 +58,11 @@ Local Hint Extern 0 (AlwaysEn ## MaybeEn _) => apply coPset_inl_inr_disj : core.
 
 Definition uPred_fupd_def `{!invG Σ} (E1 E2 : coPset) (P : iProp Σ) : iProp Σ :=
   wsat_all ∗ ownE (AlwaysEn ∪ MaybeEn E1) ==∗ ◇ (wsat_all ∗ ownE (AlwaysEn ∪ MaybeEn E2) ∗ P).
-Definition uPred_fupd_aux `{!invG Σ} : seal uPred_fupd_def. Proof. by eexists. Qed.
-Definition uPred_fupd `{!invG Σ} : FUpd (iProp Σ):= uPred_fupd_aux.(unseal).
-Definition uPred_fupd_eq `{!invG Σ} : @fupd _ uPred_fupd = uPred_fupd_def :=
-  uPred_fupd_aux.(seal_eq).
+Definition uPred_fupd_aux : seal (@uPred_fupd_def). Proof. by eexists. Qed.
+Definition uPred_fupd := uPred_fupd_aux.(unseal).
+Arguments uPred_fupd {Σ _}.
+Lemma uPred_fupd_eq `{!invG Σ} : @fupd _ uPred_fupd = uPred_fupd_def.
+Proof. rewrite -uPred_fupd_aux.(seal_eq) //. Qed.
 
 Lemma coPset_suffixes_of_union p E1 E2 :
   coPset_suffixes_of p (E1 ∪ E2) = coPset_suffixes_of p E1 ∪ coPset_suffixes_of p E2.
