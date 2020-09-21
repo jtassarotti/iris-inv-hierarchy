@@ -39,7 +39,7 @@ Ltac solve_inG :=
   (* Try to turn singleton subG into inG; but also keep the subG for typeclass
      resolution -- to keep them, we put them onto the goal. *)
   repeat match goal with
-         | H : subG _ _ |- _ => move:(H); (apply subG_inG in H || clear H)
+         | H : subG _ _ |- _ => move:(H); ((apply subG_inG in H; simpl in H) || clear H)
          end;
   (* Again get all assumptions *)
   intros;

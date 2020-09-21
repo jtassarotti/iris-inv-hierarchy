@@ -71,7 +71,25 @@ Module invG.
 
   (* XXX: this is very slow for some reason. *)
   Instance subG_invΣ {Σ} : subG invΣ Σ → invPreG Σ.
-  Proof. solve_inG. Qed.
+  Proof.
+    rewrite /invΣ. intros.
+    (* Take apart subG for non-"atomic" lists *)
+    repeat match goal with
+           | H : subG (gFunctors.app _ _) _ |- _ => apply subG_inv in H; destruct H
+           end.
+    (* Try to turn singleton subG into inG; but also keep the subG for typeclass
+     resolution -- to keep them, we put them onto the goal. *)
+    repeat match goal with
+           | H : subG _ _ |- _ => move:(H); ((apply subG_inG in H) || clear H)
+           end.
+    (* Super hacky hack to guide Coq towards converting
+       things the right way so this does not take centuries. *)
+    let s_type := type of s in
+    let s_eval := (eval vm_compute in s_type) in
+    pose Hs := s:s_eval.
+    clearbody Hs. clear s.
+    done.
+  Qed.
 End invG.
 Import invG.
 
