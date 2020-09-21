@@ -19,6 +19,7 @@ difference:
 From Coq Require Import QArith Qcanon.
 From iris.algebra Require Export auth frac updates local_updates.
 From iris.algebra Require Import ufrac proofmode_classes.
+From iris Require Import options.
 
 Definition ufrac_authR (A : cmraT) : cmraT :=
   authR (optionUR (prodR ufracR A)).
@@ -79,7 +80,7 @@ Section ufrac_auth.
   Proof.
     intros. apply equiv_dist=> n. by eapply ufrac_auth_agreeN, cmra_valid_validN.
   Qed.
-  Lemma ufrac_auth_agreeL `{!LeibnizEquiv A} p a b : ✓ (●U{p} a ⋅ ◯U{p} b) → a = b.
+  Lemma ufrac_auth_agree_L `{!LeibnizEquiv A} p a b : ✓ (●U{p} a ⋅ ◯U{p} b) → a = b.
   Proof. intros. by eapply leibniz_equiv, ufrac_auth_agree. Qed.
 
   Lemma ufrac_auth_includedN n p q a b : ✓{n} (●U{p} a ⋅ ◯U{q} b) → Some b ≼{n} Some a.

@@ -1,6 +1,7 @@
 From iris.algebra Require Export cmra.
 From iris.algebra Require Import list.
 From iris.base_logic Require Import base_logic.
+From iris Require Import options.
 Local Arguments validN _ _ _ !_ /.
 Local Arguments valid _ _  !_ /.
 Local Arguments op _ _ _ !_ /.
@@ -50,7 +51,6 @@ Proof.
 Qed.
 
 Section agree.
-Local Set Default Proof Using "Type".
 Context {A : ofeT}.
 Implicit Types a b : A.
 Implicit Types x y : agree A.
@@ -237,10 +237,12 @@ Lemma agree_op_inv x y : ✓ (x ⋅ y) → x ≡ y.
 Proof.
   intros ?. apply equiv_dist=>n. by apply agree_op_invN, cmra_valid_validN.
 Qed.
-Lemma agree_op_inv' a b : ✓ (to_agree a ⋅ to_agree b) → a ≡ b.
+Lemma to_agree_op_invN a b n : ✓{n} (to_agree a ⋅ to_agree b) → a ≡{n}≡ b.
+Proof. by intros ?%agree_op_invN%(inj to_agree). Qed.
+Lemma to_agree_op_inv a b : ✓ (to_agree a ⋅ to_agree b) → a ≡ b.
 Proof. by intros ?%agree_op_inv%(inj to_agree). Qed.
-Lemma agree_op_invL' `{!LeibnizEquiv A} a b : ✓ (to_agree a ⋅ to_agree b) → a = b.
-Proof. by intros ?%agree_op_inv'%leibniz_equiv. Qed.
+Lemma to_agree_op_inv_L `{!LeibnizEquiv A} a b : ✓ (to_agree a ⋅ to_agree b) → a = b.
+Proof. by intros ?%to_agree_op_inv%leibniz_equiv. Qed.
 
 (** Internalized properties *)
 Lemma agree_equivI {M} a b : to_agree a ≡ to_agree b ⊣⊢@{uPredI M} (a ≡ b).
@@ -276,7 +278,7 @@ Section agree_map.
   Context {A B : ofeT} (f : A → B) {Hf: NonExpansive f}.
 
   Instance agree_map_ne : NonExpansive (agree_map f).
-  Proof.
+  Proof using Type*.
     intros n x y [H H']; split=> b /=; setoid_rewrite elem_of_list_fmap.
     - intros (a&->&?). destruct (H a) as (a'&?&?); auto. naive_solver.
     - intros (a&->&?). destruct (H' a) as (a'&?&?); auto. naive_solver.

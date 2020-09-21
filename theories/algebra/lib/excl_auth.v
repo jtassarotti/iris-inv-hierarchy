@@ -1,6 +1,7 @@
 From iris.algebra Require Export auth excl updates.
 From iris.algebra Require Import local_updates.
 From iris.base_logic Require Import base_logic.
+From iris Require Import options.
 
 (** Authoritative CMRA where the fragment is exclusively owned.
 This is effectively a single "ghost variable" with two views, the frament [◯E a]
@@ -56,7 +57,7 @@ Section excl_auth.
   Proof.
     intros. apply equiv_dist=> n. by apply excl_auth_agreeN, cmra_valid_validN.
   Qed.
-  Lemma excl_auth_agreeL `{!LeibnizEquiv A} a b : ✓ (●E a ⋅ ◯E b) → a = b.
+  Lemma excl_auth_agree_L `{!LeibnizEquiv A} a b : ✓ (●E a ⋅ ◯E b) → a = b.
   Proof. intros. by apply leibniz_equiv, excl_auth_agree. Qed.
 
   Lemma excl_auth_agreeI {M} a b : ✓ (●E a ⋅ ◯E b) ⊢@{uPredI M} (a ≡ b).

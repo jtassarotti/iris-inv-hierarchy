@@ -4,7 +4,7 @@ From iris.base_logic.lib Require Export invariants.
 From iris.program_logic Require Export weakestpre.
 From iris.heap_lang Require Export lang.
 From iris.heap_lang Require Import proofmode notation.
-Set Default Proof Using "Type".
+From iris Require Import options.
 
 Definition newcounter : val := λ: <>, ref #0.
 Definition incr : val := rec: "incr" "l" :=
@@ -159,7 +159,7 @@ Section contrib_spec.
   Proof.
     iIntros (Φ) "[#? Hγf] HΦ".
     rewrite /read /=. wp_lam. iInv N as (c) ">[Hγ Hl]". wp_load.
-    iDestruct (own_valid_2 with "Hγ Hγf") as % <-%frac_auth_agreeL.
+    iDestruct (own_valid_2 with "Hγ Hγf") as % <-%frac_auth_agree_L.
     iModIntro. iSplitL "Hl Hγ"; [iNext; iExists c; by iFrame|].
     by iApply "HΦ".
   Qed.

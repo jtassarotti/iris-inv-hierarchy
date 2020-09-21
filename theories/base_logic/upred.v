@@ -1,7 +1,7 @@
 From stdpp Require Import finite.
 From iris.bi Require Import notation.
 From iris.algebra Require Export cmra updates.
-Set Default Proof Using "Type".
+From iris Require Import options.
 Local Hint Extern 1 (_ ≼ _) => etrans; [eassumption|] : core.
 Local Hint Extern 1 (_ ≼ _) => etrans; [|eassumption] : core.
 Local Hint Extern 10 (_ ≤ _) => lia : core.
@@ -631,9 +631,7 @@ Proof. by unseal. Qed.
 
 Lemma prop_ext_2 P Q : ■ ((P -∗ Q) ∧ (Q -∗ P)) ⊢ P ≡ Q.
 Proof.
-  unseal; split=> n x ? /= HPQ. split=> n' x' ??.
-    move: HPQ=> [] /(_ n' x'); rewrite !left_id=> ?.
-    move=> /(_ n' x'); rewrite !left_id=> ?. naive_solver.
+  unseal; split=> n x ? /=. setoid_rewrite (left_id ε op). split; naive_solver.
 Qed.
 
 (* The following two laws are very similar, and indeed they hold not just for □
@@ -721,6 +719,14 @@ Lemma discrete_eq_1 {A : ofeT} (a b : A) : Discrete a → a ≡ b ⊢ ⌜a ≡ b
 Proof.
   unseal=> ?. split=> n x ?. by apply (discrete_iff n).
 Qed.
+
+(* This is really just a special case of an entailment
+between two [siProp], but we do not have the infrastructure
+to express the more general case. This temporary proof rule will
+be replaced by the proper one eventually. *)
+Lemma internal_eq_entails {A B : ofeT} (a1 a2 : A) (b1 b2 : B) :
+  (∀ n, a1 ≡{n}≡ a2 → b1 ≡{n}≡ b2) → a1 ≡ a2 ⊢ b1 ≡ b2.
+Proof. unseal=>Hsi. split=>n x ?. apply Hsi. Qed.
 
 (** Basic update modality *)
 Lemma bupd_intro P : P ⊢ |==> P.

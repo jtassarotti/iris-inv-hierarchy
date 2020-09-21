@@ -5,6 +5,7 @@
 # (https://github.com/coq/coq/issues/6294).
 -arg -w -arg -redundant-canonical-projection
 
+theories/options.v
 theories/algebra/monoid.v
 theories/algebra/cmra.v
 theories/algebra/big_op.v
@@ -37,6 +38,7 @@ theories/algebra/mlist.v
 theories/algebra/lib/excl_auth.v
 theories/algebra/lib/frac_auth.v
 theories/algebra/lib/ufrac_auth.v
+theories/algebra/lib/frac_agree.v
 theories/si_logic/siprop.v
 theories/si_logic/bi.v
 theories/bi/notation.v
@@ -86,6 +88,7 @@ theories/base_logic/lib/gen_heap.v
 theories/base_logic/lib/gen_inv_heap.v
 theories/base_logic/lib/fancy_updates_from_vs.v
 theories/base_logic/lib/proph_map.v
+theories/base_logic/lib/ghost_var.v
 theories/program_logic/adequacy.v
 theories/program_logic/lifting.v
 theories/program_logic/weakestpre.v

@@ -5,6 +5,22 @@ lemma.
 
 ## Iris master
 
+With this release, we dropped support for Coq 8.9.
+
+**Changes in `algebra`:**
+
+* Rename `agree_op_inv'` to `to_agree_op_inv`,
+  `agree_op_invL'` to `to_agree_op_inv_L`, and add
+  `to_agree_op_invN`.
+* Rename `auth_auth_frac_op_invL` to `auth_auth_frac_op_inv_L`,
+  `excl_auth_agreeL` to `excl_auth_agree_L`,
+  `frac_auth_agreeL` to `frac_auth_agree_L`, and
+  `ufrac_auth_agreeL` to `ufrac_auth_agree_L`.
+* Add constructions to define a camera through restriction of the validity predicate
+  (`iso_cmra_mixin_restrict`) and through an isomophism (`iso_cmra_mixin`).
+* Add a `frac_agree` library which encapsulates `frac * agree A` for some OFE
+  `A`, and provides some useful lemmas.
+
 **Changes in `proofmode`:**
 
 * The proofmode now preserves user-supplied names for existentials when using
@@ -19,6 +35,32 @@ lemma.
   existentials above. As part of this change, it now uses a base name of `H` for
   pure facts rather than the previous default of `a`. This also requires some
   changes if you were implementing `FromForall`, in order to forward names.
+
+**Changes in `base_logic`:**
+
+* Add a `ghost_var` library that provides (fractional) ownership of a ghost
+  variable of arbitrary `Type`.
+* Change type of some ghost state lemmas (mostly about allocation) to use `∗`
+  instead of `∧` (consistent with our usual style).  This affects the following
+  lemmas: `own_alloc_strong_dep`, `own_alloc_cofinite_dep`, `own_alloc_strong`,
+  `own_alloc_cofinite`, `own_updateP`, `saved_anything_alloc_strong`,
+  `saved_anything_alloc_cofinite`, `saved_prop_alloc_strong`,
+  `saved_prop_alloc_cofinite`, `saved_pred_alloc_strong`,
+  `saved_pred_alloc_cofinite`, `auth_alloc_strong`, `auth_alloc_cofinite`,
+  `auth_alloc`.
+
+The following `sed` script helps adjust your code to the renaming (on macOS,
+replace `sed` by `gsed`, installed via e.g. `brew install gnu-sed`).
+Note that the script is not idempotent, do not run it twice.
+```
+sed -i -E -f- $(find theories -name "*.v") <<EOF
+# agree and L suffix renames
+s/\bagree_op_inv'/to_agree_op_inv/g
+s/\bagree_op_invL'/to_agree_op_inv_L/g
+s/\bauth_auth_frac_op_invL\b/auth_auth_frac_op_inv_L/g
+s/\b(excl|frac|ufrac)_auth_agreeL/\1_auth_agree_L/g
+EOF
+```
 
 ## Iris 3.3.0 (released 2020-07-15)
 

@@ -2,7 +2,7 @@ From stdpp Require Export coPset.
 From iris.proofmode Require Import tactics.
 From iris.algebra Require Import gmap auth agree gset coPset list vector excl mlist.
 From iris.base_logic.lib Require Export own.
-Set Default Proof Using "Type".
+From iris Require Import options.
 
 (* An inductive grammar of "basic" BI expressions. *)
 Inductive bi_schema :=

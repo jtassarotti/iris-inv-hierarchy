@@ -1,7 +1,7 @@
 From iris.proofmode Require Import tactics.
 From iris.algebra Require Import lib.excl_auth gmap agree.
 From iris.base_logic.lib Require Export invariants.
-Set Default Proof Using "Type".
+From iris Require Import options.
 Import uPred.
 
 (** The CMRAs we need. *)
@@ -78,7 +78,7 @@ Lemma box_own_auth_agree γ b1 b2 :
   box_own_auth γ (●E b1) ∗ box_own_auth γ (◯E b2) ⊢ ⌜b1 = b2⌝.
 Proof.
   rewrite /box_own_prop -own_op own_valid prod_validI /= and_elim_l.
-  by iDestruct 1 as %?%excl_auth_agreeL.
+  by iDestruct 1 as %?%excl_auth_agree_L.
 Qed.
 
 Lemma box_own_auth_update γ b1 b2 b3 :

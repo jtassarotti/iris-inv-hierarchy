@@ -2,7 +2,7 @@ From stdpp Require Export list.
 From iris.algebra Require Export cmra.
 From iris.algebra Require Import updates local_updates.
 From iris.base_logic Require Import base_logic.
-Set Default Proof Using "Type".
+From iris Require Import options.
 
 Section cofe.
 Context {A : ofeT}.
@@ -93,6 +93,10 @@ Global Instance nil_discrete : Discrete (@nil A).
 Proof. inversion_clear 1; constructor. Qed.
 Global Instance cons_discrete x l : Discrete x → Discrete l → Discrete (x :: l).
 Proof. intros ??; inversion_clear 1; constructor; by apply discrete. Qed.
+
+(** Internalized properties *)
+Lemma list_equivI {M} l1 l2 : l1 ≡ l2 ⊣⊢@{uPredI M} ∀ i, l1 !! i ≡ l2 !! i.
+Proof. uPred.unseal; constructor=> n x ?. apply list_dist_lookup. Qed.
 End cofe.
 
 Arguments listO : clear implicits.
@@ -182,7 +186,7 @@ Proof.
   by intros ? A1 ? A2 ? B1 ? B2 ? n f g Hfg; apply listO_map_ne, oFunctor_map_contractive.
 Qed.
 
-(* CMRA *)
+(* CMRA. Only works if [A] has a unit! *)
 Section cmra.
   Context {A : ucmraT}.
   Implicit Types l : list A.
@@ -311,8 +315,6 @@ Section cmra.
   Proof. intros Hyp; by apply list_core_id'. Qed.
 
   (** Internalized properties *)
-  Lemma list_equivI {M} l1 l2 : l1 ≡ l2 ⊣⊢@{uPredI M} ∀ i, l1 !! i ≡ l2 !! i.
-  Proof. uPred.unseal; constructor=> n x ?. apply list_dist_lookup. Qed.
   Lemma list_validI {M} l : ✓ l ⊣⊢@{uPredI M} ∀ i, ✓ (l !! i).
   Proof. uPred.unseal; constructor=> n x ?. apply list_lookup_validN. Qed.
 End cmra.
@@ -569,3 +571,6 @@ Instance listURF_contractive F :
 Proof.
   by intros ? A1 ? A2 ? B1 ? B2 ? n f g Hfg; apply listO_map_ne, urFunctor_map_contractive.
 Qed.
+
+Definition listRF (F : urFunctor) : rFunctor :=
+  urFunctor_to_rFunctor (listURF F).

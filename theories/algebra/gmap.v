@@ -2,7 +2,7 @@ From stdpp Require Export list gmap.
 From iris.algebra Require Export cmra.
 From iris.algebra Require Import updates local_updates proofmode_classes.
 From iris.base_logic Require Import base_logic.
-Set Default Proof Using "Type".
+From iris Require Import options.
 
 Section cofe.
 Context `{Countable K} {A : ofeT}.
@@ -94,6 +94,10 @@ Global Instance gmap_singleton_discrete i x :
 Lemma insert_idN n m i x :
   m !! i ≡{n}≡ Some x → <[i:=x]>m ≡{n}≡ m.
 Proof. intros (y'&?&->)%dist_Some_inv_r'. by rewrite insert_id. Qed.
+
+(** Internalized properties *)
+Lemma gmap_equivI {M} m1 m2 : m1 ≡ m2 ⊣⊢@{uPredI M} ∀ i, m1 !! i ≡ m2 !! i.
+Proof. by uPred.unseal. Qed.
 End cofe.
 
 Arguments gmapO _ {_ _} _.
@@ -232,8 +236,6 @@ Qed.
 Canonical Structure gmapUR := UcmraT (gmap K A) gmap_ucmra_mixin.
 
 (** Internalized properties *)
-Lemma gmap_equivI {M} m1 m2 : m1 ≡ m2 ⊣⊢@{uPredI M} ∀ i, m1 !! i ≡ m2 !! i.
-Proof. by uPred.unseal. Qed.
 Lemma gmap_validI {M} m : ✓ m ⊣⊢@{uPredI M} ∀ i, ✓ (m !! i).
 Proof. by uPred.unseal. Qed.
 End cmra.
@@ -673,8 +675,11 @@ Next Obligation.
   intros K ?? F A1 ? A2 ? A3 ? B1 ? B2 ? B3 ? f g f' g' x. rewrite /= -map_fmap_compose.
   apply map_fmap_equiv_ext=>y ??; apply rFunctor_map_compose.
 Qed.
-Instance gmapRF_contractive K `{Countable K} F :
+Instance gmapURF_contractive K `{Countable K} F :
   rFunctorContractive F → urFunctorContractive (gmapURF K F).
 Proof.
   by intros ? A1 ? A2 ? B1 ? B2 ? n f g Hfg; apply gmapO_map_ne, rFunctor_map_contractive.
 Qed.
+
+Definition gmapRF K `{Countable K} (F : rFunctor) : rFunctor :=
+  urFunctor_to_rFunctor (gmapURF K F).

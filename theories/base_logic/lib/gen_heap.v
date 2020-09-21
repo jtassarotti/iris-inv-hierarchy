@@ -3,7 +3,7 @@ From iris.bi.lib Require Import fractional.
 From iris.proofmode Require Import tactics.
 From iris.algebra Require Import auth gmap frac agree namespace_map.
 From iris.base_logic.lib Require Export own.
-Set Default Proof Using "Type".
+From iris Require Import options.
 Import uPred.
 
 (** This file provides a generic mechanism for a point-to connective [l ↦{q} v]
@@ -17,7 +17,7 @@ of a location [l], this mechanism allows one to attach "meta" or "ghost" data to
 locations. This is done as follows:
 
 - When one allocates a location, in addition to the point-to connective [l ↦ v],
-  one also obtains the token [meta_token ⊤ l]. This token is an exclusive
+  one also obtains the token [meta_token l ⊤]. This token is an exclusive
   resource that denotes that no meta data has been associated with the
   namespaces in the mask [⊤] for the location [l].
 - Meta data tokens can be split w.r.t. namespace masks, i.e.
@@ -202,7 +202,7 @@ Section gen_heap.
     apply wand_intro_r.
     rewrite mapsto_eq /mapsto_def -own_op -auth_frag_op own_valid discrete_valid.
     f_equiv. rewrite auth_frag_valid singleton_op singleton_valid -pair_op.
-    by intros [_ ?%agree_op_invL'].
+    by intros [_ ?%to_agree_op_inv_L].
   Qed.
 
   Lemma mapsto_combine l q1 q2 v1 v2 :
@@ -264,7 +264,7 @@ Section gen_heap.
     iAssert ⌜ γm1 = γm2 ⌝%I as %->.
     { iDestruct (own_valid_2 with "Hγm1 Hγm2") as %Hγ; iPureIntro.
       move: Hγ. rewrite -auth_frag_op singleton_op=> /auth_frag_valid /=.
-      rewrite singleton_valid. apply: agree_op_invL'. }
+      rewrite singleton_valid. apply: to_agree_op_inv_L. }
     iDestruct (own_valid_2 with "Hm1 Hm2") as %?%namespace_map_token_valid_op.
     iExists γm2. iFrame "Hγm2". rewrite namespace_map_token_union //. by iSplitL "Hm1".
   Qed.
@@ -290,10 +290,10 @@ Section gen_heap.
     iAssert ⌜ γm1 = γm2 ⌝%I as %->.
     { iDestruct (own_valid_2 with "Hγm1 Hγm2") as %Hγ; iPureIntro.
       move: Hγ. rewrite -auth_frag_op singleton_op=> /auth_frag_valid /=.
-      rewrite singleton_valid. apply: agree_op_invL'. }
+      rewrite singleton_valid. apply: to_agree_op_inv_L. }
     iDestruct (own_valid_2 with "Hm1 Hm2") as %Hγ; iPureIntro.
     move: Hγ. rewrite -namespace_map_data_op namespace_map_data_valid.
-    move=> /agree_op_invL'. naive_solver.
+    move=> /to_agree_op_inv_L. naive_solver.
   Qed.
   Lemma meta_set `{Countable A} E l (x : A) N :
     ↑ N ⊆ E → meta_token l E ==∗ meta l N x.
