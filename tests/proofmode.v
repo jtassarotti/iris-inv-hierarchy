@@ -1104,6 +1104,13 @@ Proof.
   iIntros "HQ" (x). Fail iIntros (x).
 Abort.
 
+Check "iIntros_pure_not_forall".
+Lemma iIntros_pure_not_forall P Q :
+  P -∗ Q.
+Proof.
+  Fail iIntros (?).
+Abort.
+
 Check "iSplitL_one_of_many".
 Lemma iSplitL_one_of_many P :
   P -∗ P -∗ P ∗ P.
@@ -1210,7 +1217,12 @@ Proof. Fail iRevert "H". Abort.
 
 Check "iDestruct_fail".
 Lemma iDestruct_fail P : P -∗ <absorb> P.
-Proof. iIntros "HP". Fail iDestruct "HP" as "{HP}". Fail iDestruct "HP" as "[{HP}]". Abort.
+Proof.
+  iIntros "HP".
+  Fail iDestruct "HP" as "{HP}".
+  Fail iDestruct "HP" as "[{HP}]".
+  Fail iDestruct "HP" as "HP HQ HR".
+Abort.
 
 Check "iOrDestruct_fail".
 Lemma iOrDestruct_fail P : (P ∨ P) -∗ P -∗ P.
@@ -1225,6 +1237,18 @@ Proof. iIntros "HP". Fail iApply "HP". Abort.
 Check "iApply_fail_not_affine_1".
 Lemma iApply_fail_not_affine_1 P Q : P -∗ Q -∗ Q.
 Proof. iIntros "HP HQ". Fail iApply "HQ". Abort.
+
+Check "iIntros_fail_nonempty_spatial".
+Lemma iIntro_fail_nonempty_spatial P Q : P -∗ P → Q.
+Proof. Fail iIntros "? HP". Abort.
+
+Check "iIntros_fail_not_fresh".
+Lemma iIntro_fail_not_fresh P Q : P -∗ P -∗ Q.
+Proof. Fail iIntros "HP HP". Abort.
+
+Check "iIntros_fail_nothing_to_introduce".
+Lemma iIntro_fail_nothing_to_introduce P Q : P -∗ Q.
+Proof. Fail iIntros "HP HQ". Abort.
 
 Check "iApply_fail_not_affine_2".
 Lemma iApply_fail_not_affine_2 P Q R : P -∗ R -∗ (R -∗ Q) -∗ Q.

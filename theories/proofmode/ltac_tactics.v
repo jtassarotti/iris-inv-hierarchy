@@ -472,7 +472,7 @@ Local Tactic Notation "iIntro" "(" simple_intropattern(x) ")" :=
     | |- envs_entails _ _ =>
       eapply tac_forall_intro;
         [iSolveTC ||
-         let P := match goal with |- FromForall ?P _ => P end in
+         let P := match goal with |- FromForall ?P _ _ => P end in
          fail "iIntro: cannot turn" P "into a universal quantifier"
         |let name := lazymatch goal with
                      | |- let _ := (λ name, _) in _ => name
@@ -491,6 +491,7 @@ Local Tactic Notation "iIntro" constr(H) :=
       [iSolveTC
       |pm_reduce; iSolveTC ||
        let P := lazymatch goal with |- Persistent ?P => P end in
+       let H := pretty_ident H in
        fail 1 "iIntro: introducing non-persistent" H ":" P
               "into non-empty spatial context"
       |iSolveTC
@@ -512,7 +513,8 @@ Local Tactic Notation "iIntro" constr(H) :=
           fail 1 "iIntro:" H "not fresh"
         | _ => idtac (* subgoal *)
         end]
-  | fail 1 "iIntro: nothing to introduce" ].
+  | let H := pretty_ident H in
+    fail 1 "iIntro: could not introduce" H ", goal is not a wand or implication" ].
 
 Local Tactic Notation "iIntro" "#" constr(H) :=
   iStartProof;
@@ -1453,9 +1455,9 @@ Local Ltac iDestructHypFindPat Hgo pat found pats :=
   | ISimpl :: ?pats => simpl; iDestructHypFindPat Hgo pat found pats
   | IClear ?H :: ?pats => iClear H; iDestructHypFindPat Hgo pat found pats
   | IClearFrame ?H :: ?pats => iFrame H; iDestructHypFindPat Hgo pat found pats
-  | ?pat :: ?pats =>
+  | ?pat1 :: ?pats =>
      lazymatch found with
-     | false => iDestructHypGo Hgo pat; iDestructHypFindPat Hgo pat true pats
+     | false => iDestructHypGo Hgo pat1; iDestructHypFindPat Hgo pat true pats
      | true => fail "iDestruct:" pat "should contain exactly one proper introduction pattern"
      end
   end.
