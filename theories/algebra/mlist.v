@@ -216,7 +216,7 @@ Lemma fmlist_agree_2 γ q1 l1 l2 :
   fmlist γ q1 l1 -∗ fmlist_lb γ l2 -∗ ⌜ l2 `prefix_of` l1 ⌝.
 Proof.
   iIntros "Hγ1 Hγ2". iDestruct (own_valid_2 with "Hγ1 Hγ2") as %Hval.
-  by apply @auth_both_frac_valid in Hval as (?&Hle%mlist_included&?); last apply _.
+  by apply @auth_both_frac_valid_discrete in Hval as (?&Hle%mlist_included&?); last apply _.
 Qed.
 
 Lemma fmlist_lb_agree γ l1 l2 :
