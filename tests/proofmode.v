@@ -215,7 +215,7 @@ Proof.
   Show. auto.
 Qed.
 
-Lemma test_iIntros_pure_not : ⊢@{PROP} ⌜ ¬False ⌝.
+Lemma test_iIntros_pure_not `{!BiPureForall PROP} : ⊢@{PROP} ⌜ ¬False ⌝.
 Proof. by iIntros (?). Qed.
 
 Lemma test_fast_iIntros `{!BiInternalEq PROP} P Q :
@@ -454,6 +454,13 @@ Proof. iIntros "HP HQ". iFrame "HP HQ". Qed.
 
 Lemma test_iFrame_later `{!BiAffine PROP} P Q : P -∗ Q -∗ ▷ P ∗ Q.
 Proof. iIntros "H1 H2". by iFrame "H1". Qed.
+
+Lemma test_iFrame_affinely_1 P Q `{!Affine P} :
+  P -∗ <affine> Q -∗ <affine> (P ∗ Q).
+Proof. iIntros "HP HQ". iFrame "HQ". by iModIntro. Qed.
+Lemma test_iFrame_affinely_2 P Q `{!Affine P, !Affine Q} :
+  P -∗ Q -∗ <affine> (P ∗ Q).
+Proof. iIntros "HP HQ". iFrame "HQ". by iModIntro. Qed.
 
 Lemma test_iAssert_modality P : ◇ False -∗ ▷ P.
 Proof.

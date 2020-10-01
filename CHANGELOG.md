@@ -22,6 +22,9 @@ With this release, we dropped support for Coq 8.9.
   `A`, and provides some useful lemmas.
 * Fix direction of `auth_auth_validN` to make it consistent with similar lemmas,
   e.g., `auth_auth_valid`. The direction is now `✓{n} (● a) ↔ ✓{n} a`.
+* Rename `auth_both_valid` to `auth_both_valid_discrete` and
+  `auth_both_frac_valid` to `auth_both_frac_valid_discrete`. The old name is
+  used for new, stronger lemmas that do not assume discreteness.
 
 **Changes in `proofmode`:**
 
@@ -37,6 +40,17 @@ With this release, we dropped support for Coq 8.9.
   existentials above. As part of this change, it now uses a base name of `H` for
   pure facts rather than the previous default of `a`. This also requires some
   changes if you were implementing `FromForall`, in order to forward names.
+* Make `iFrame` "less" smart w.r.t. clean up of modalities. It now consistently
+  removes the modalities `<affine>`, `<absorbing>`, `<persistent>` and `□` only
+  if the result after framing is `True` or `emp`. In particular, it no longer
+  removes `<affine>` if the result after framing is affine, and it no longer
+  removes `□` if the result after framing is intuitionistic.
+* Allow framing below an `<affine>` modality if the hypothesis that is framed is
+  affine. (Previously, framing below `<affine>` was only possible if the
+  hypothesis that is framed resides in the intuitionistic context.)
+* Remove the laws `pure_forall_2 : (∀ a, ⌜ φ a ⌝) ⊢ ⌜ ∀ a, φ a ⌝` from the BI
+  interface and factor it into a type class `BiPureForall`.
+* Add notation `¬ P` for `P → False` to `bi_scope`.
 
 **Changes in `base_logic`:**
 
@@ -50,6 +64,13 @@ With this release, we dropped support for Coq 8.9.
   `saved_prop_alloc_cofinite`, `saved_pred_alloc_strong`,
   `saved_pred_alloc_cofinite`, `auth_alloc_strong`, `auth_alloc_cofinite`,
   `auth_alloc`.
+* Change `uPred_mono` to only require inclusion at the smaller step-index.
+
+**Changes in `program_logic`:**
+
+* `wp_strong_adequacy` now applies to an initial state with multiple
+  threads instead of only a single thread. The derived adequacy lemmas
+  are unchanged.
 
 The following `sed` script helps adjust your code to the renaming (on macOS,
 replace `sed` by `gsed`, installed via e.g. `brew install gnu-sed`).
@@ -61,6 +82,9 @@ s/\bagree_op_inv'/to_agree_op_inv/g
 s/\bagree_op_invL'/to_agree_op_inv_L/g
 s/\bauth_auth_frac_op_invL\b/auth_auth_frac_op_inv_L/g
 s/\b(excl|frac|ufrac)_auth_agreeL/\1_auth_agree_L/g
+# auth_both_valid
+s/\bauth_both_valid\b/auth_both_valid_discrete/g
+s/\bauth_both_frac_valid\b/auth_both_frac_valid_discrete/g
 EOF
 ```
 
