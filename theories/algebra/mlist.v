@@ -3,7 +3,7 @@ From iris.proofmode Require Import base tactics classes.
 From iris.algebra Require Import auth auth_frac gmap.
 From iris.base_logic Require Import lib.own.
 From iris.bi.lib Require Import fractional.
-Set Default Proof Using "Type".
+From iris Require Import options.
 
 (* Monotone list. Almost exactly the "mlist" construction code by Hai Dang from the sra-gps proof of RCU,
    just generalized slightly to operate over arbitrary lists instead of RCU data *)

@@ -1,7 +1,7 @@
 From iris.algebra Require Import auth updates local_updates.
 From iris.proofmode Require Import tactics.
 From iris.bi.lib Require Import fractional.
-Set Default Proof Using "Type".
+From iris Require Import options.
 
 (** XXX: TODO, upsteam, although this proof is a mess *)
 Lemma auth_frac_update {A: ucmraT} q (a b b': A) :

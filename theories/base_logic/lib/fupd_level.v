@@ -4,7 +4,7 @@ From iris.proofmode Require Import tactics.
 From iris.algebra Require Import gmap auth agree gset coPset.
 From iris.base_logic.lib Require Export own.
 From iris.base_logic.lib Require Import wsat fancy_updates.
-Set Default Proof Using "Type".
+From iris Require Import options.
 Export invG.
 Import uPred.
 
@@ -571,6 +571,7 @@ Proof. rewrite /FromSep =><-. apply fupd_level_sep. Qed.
 
 Global Instance from_or_fupd_level E1 E2 k P Q1 Q2 :
   FromOr P Q1 Q2 → FromOr (|k={E1,E2}=> P) (|k={E1,E2}=> Q1) (|k={E1,E2}=> Q2).
+Proof.
   rewrite /FromOr=><-. apply or_elim; apply fupd_level_mono;
                          [apply bi.or_intro_l|apply bi.or_intro_r].
 Qed.
@@ -746,6 +747,7 @@ Proof. rewrite /FromSep =><-. apply fupd_split_level_sep. Qed.
 
 Global Instance from_or_fupd_split_level E1 E2 k mj P Q1 Q2 :
   FromOr P Q1 Q2 → FromOr (|k,mj={E1,E2}=> P) (|k,mj={E1,E2}=> Q1) (|k,mj={E1,E2}=> Q2).
+Proof.
   rewrite /FromOr=><-. apply or_elim; apply fupd_split_level_mono;
                          [apply bi.or_intro_l|apply bi.or_intro_r].
 Qed.
