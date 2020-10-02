@@ -27,17 +27,17 @@ Lemma wp_lift_step_fupd s E Φ e1 :
   ⊢ WP e1 @ s; E {{ Φ }}.
 Proof.
   rewrite wp_unfold /wp_pre=>->.
-  iIntros "H". iIntros (????) "Hinterp".
+  iIntros "H". iIntros (?????) "Hinterp HNC".
   iMod ("H" with "[$]") as "($&H)".
   iModIntro. iIntros. iMod ("H" with "[//]") as "H".
-  iModIntro. iNext. iMod "H". iModIntro; eauto.
+  iModIntro. iNext. iMod "H". iModIntro; eauto. iFrame. eauto.
 Qed.
 Lemma wp_lift_stuck E Φ e :
   to_val e = None →
   (∀ σ κs n, state_interp σ κs n ={E,∅}=∗ ⌜stuck e σ⌝)
   ⊢ WP e @ E ?{{ Φ }}.
 Proof.
-  rewrite wp_unfold /wp_pre=>->. iIntros "H" (σ1 κ κs n) "Hσ".
+  rewrite wp_unfold /wp_pre=>->. iIntros "H" (q σ1 κ κs n) "Hσ HNC".
   iMod ("H" with "Hσ") as %[? Hirr]. iModIntro. iSplit; first done.
   iIntros (e2 σ2 efs ?). by case: (Hirr κ e2 σ2 efs).
 Qed.

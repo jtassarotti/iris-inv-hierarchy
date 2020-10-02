@@ -610,13 +610,13 @@ Proof.
   (* TODO we should try to use a generic lifting lemma (and avoid [wp_unfold])
      here, since this breaks the WP abstraction. *)
   iIntros (A He) "Hp WPe". rewrite !wp_unfold /wp_pre /= He. simpl in *.
-  iIntros (σ1 κ κs n) "[Hσ Hκ]". destruct κ as [|[p' [w' v']] κ' _] using rev_ind.
-  - iMod ("WPe" $! σ1 [] κs n with "[$Hσ $Hκ]") as "[Hs WPe]". iModIntro. iSplit.
+  iIntros (q σ1 κ κs n) "[Hσ Hκ] HNC". destruct κ as [|[p' [w' v']] κ' _] using rev_ind.
+  - iMod ("WPe" $! q σ1 [] κs n with "[$Hσ $Hκ] [$]") as "[Hs WPe]". iModIntro. iSplit.
     { iDestruct "Hs" as "%". iPureIntro. destruct s; [ by apply resolve_reducible | done]. }
     iIntros (e2 σ2 efs step). exfalso. apply step_resolve in step; last done.
     inversion step. match goal with H: ?κs ++ [_] = [] |- _ => by destruct κs end.
   - rewrite -app_assoc.
-    iMod ("WPe" $! σ1 _ _ n with "[$Hσ $Hκ]") as "[Hs WPe]". iModIntro. iSplit.
+    iMod ("WPe" $! q σ1 _ _ n with "[$Hσ $Hκ] [$]") as "[Hs WPe]". iModIntro. iSplit.
     { iDestruct "Hs" as %?. iPureIntro. destruct s; [ by apply resolve_reducible | done]. }
     iIntros (e2 σ2 efs step). apply step_resolve in step; last done.
     inversion step; simplify_list_eq.
@@ -625,7 +625,8 @@ Proof.
     iModIntro. iNext. iMod "WPe" as "[[$ Hκ] WPe]".
     iMod (proph_map_resolve_proph p' (w',v') κs with "[$Hκ $Hp]") as (vs' ->) "[$ HPost]".
     iModIntro. rewrite !wp_unfold /wp_pre /=. iDestruct "WPe" as "[HΦ $]".
-    iMod "HΦ". iModIntro. by iApply "HΦ".
+    iIntros.
+    iMod ("HΦ" with "[$]") as "(HΦ&$)". iModIntro. by iApply "HΦ".
 Qed.
 
 End lifting.
