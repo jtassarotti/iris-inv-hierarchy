@@ -16,23 +16,26 @@ union.
 
 Class ownPG (Λ : language) (Σ : gFunctors) := OwnPG {
   ownP_invG : invG Σ;
+  ownP_crashG : crashG Σ;
   ownP_inG :> inG Σ (excl_authR (stateO Λ));
   ownP_name : gname;
 }.
 
 Instance ownPG_irisG `{!ownPG Λ Σ} : irisG Λ Σ := {
   iris_invG := ownP_invG;
+  iris_crashG := ownP_crashG;
   state_interp σ κs _ := own ownP_name (●E σ)%I;
   fork_post _ := True%I;
 }.
 Global Opaque iris_invG.
 
 Definition ownPΣ (Λ : language) : gFunctors :=
-  #[invΣ;
+  #[invΣ; crashΣ;
     GFunctor (excl_authR (stateO Λ))].
 
 Class ownPPreG (Λ : language) (Σ : gFunctors) : Set := IrisPreG {
   ownPPre_invG :> invPreG Σ;
+  ownPPre_crashG :> crashPreG Σ;
   ownPPre_state_inG :> inG Σ (excl_authR (stateO Λ))
 }.
 
@@ -51,12 +54,12 @@ Theorem ownP_adequacy Σ `{!ownPPreG Λ Σ} s e σ φ :
   adequate s e σ (λ v _, φ v).
 Proof.
   intros Hwp. apply (wp_adequacy Σ _).
-  iIntros (? κs).
+  iIntros (?? κs).
   iMod (own_alloc (●E σ ⋅ ◯E σ)) as (γσ) "[Hσ Hσf]";
     first by apply excl_auth_valid.
   iModIntro. iExists (λ σ κs, own γσ (●E σ))%I, (λ _, True%I).
   iFrame "Hσ".
-  iApply (Hwp (OwnPG _ _ _ _ γσ)). rewrite /ownP. iFrame.
+  iApply (Hwp (OwnPG _ _ _ _ _ γσ)). rewrite /ownP. iFrame.
 Qed.
 
 Theorem ownP_invariance Σ `{!ownPPreG Λ Σ} s e σ1 t2 σ2 φ :
@@ -67,12 +70,12 @@ Theorem ownP_invariance Σ `{!ownPPreG Λ Σ} s e σ1 t2 σ2 φ :
   φ σ2.
 Proof.
   intros Hwp Hsteps. eapply (wp_invariance Σ Λ s e σ1 t2 σ2 _)=> //.
-  iIntros (? κs).
+  iIntros (?? κs).
   iMod (own_alloc (●E σ1 ⋅ ◯E σ1)) as (γσ) "[Hσ Hσf]";
     first by apply auth_both_valid_discrete.
   iExists (λ σ κs' _, own γσ (●E σ))%I, (λ _, True%I).
   iFrame "Hσ".
-  iMod (Hwp (OwnPG _ _ _ _ γσ) with "[Hσf]") as "[$ H]";
+  iMod (Hwp (OwnPG _ _ _ _ _ γσ) with "[Hσf]") as "[$ H]";
     first by rewrite /ownP; iFrame.
   iIntros "!> Hσ". iExists ∅. iMod "H" as (σ2') "[Hσf %]". rewrite /ownP.
   iDestruct (own_valid_2 with "Hσ Hσf")

@@ -12,11 +12,11 @@ Definition twp_pre `{!irisG Λ Σ} (s : stuckness)
       (wp : coPset → expr Λ → (val Λ → iProp Σ) → iProp Σ) :
     coPset → expr Λ → (val Λ → iProp Σ) → iProp Σ := λ E e1 Φ,
   match to_val e1 with
-  | Some v => |={E}=> Φ v
+  | Some v => |NC={E}=> Φ v
   | None => ∀ σ1 κs n,
-     state_interp σ1 κs n ={E,∅}=∗
+     state_interp σ1 κs n -∗ |NC={E,∅}=>
        ⌜if s is NotStuck then reducible_no_obs e1 σ1 else True⌝ ∗
-       ∀ κ e2 σ2 efs, ⌜prim_step e1 σ1 κ e2 σ2 efs⌝ ={∅,E}=∗
+       ∀ κ e2 σ2 efs, ⌜prim_step e1 σ1 κ e2 σ2 efs⌝ -∗ |NC={∅,E}=>
          ⌜κ = []⌝ ∗
          state_interp σ2 κs (length efs + n) ∗
          wp E e2 Φ ∗
@@ -105,19 +105,19 @@ Qed.
 
 Lemma twp_value' s E Φ v : Φ v -∗ WP of_val v @ s; E [{ Φ }].
 Proof. iIntros "HΦ". rewrite twp_unfold /twp_pre to_of_val. auto. Qed.
-Lemma twp_value_inv' s E Φ v : WP of_val v @ s; E [{ Φ }] ={E}=∗ Φ v.
+Lemma twp_value_inv' s E Φ v : WP of_val v @ s; E [{ Φ }] -∗ |NC={E}=> Φ v.
 Proof. by rewrite twp_unfold /twp_pre to_of_val. Qed.
 
 Lemma twp_strong_mono s1 s2 E1 E2 e Φ Ψ :
   s1 ⊑ s2 → E1 ⊆ E2 →
-  WP e @ s1; E1 [{ Φ }] -∗ (∀ v, Φ v ={E2}=∗ Ψ v) -∗ WP e @ s2; E2 [{ Ψ }].
+  WP e @ s1; E1 [{ Φ }] -∗ (∀ v, Φ v -∗ |NC={E2}=> Ψ v) -∗ WP e @ s2; E2 [{ Ψ }].
 Proof.
   iIntros (? HE) "H HΦ". iRevert (E2 Ψ HE) "HΦ"; iRevert (e E1 Φ) "H".
   iApply twp_ind; first solve_proper.
   iIntros "!>" (e E1 Φ) "IH"; iIntros (E2 Ψ HE) "HΦ".
   rewrite !twp_unfold /twp_pre. destruct (to_val e) as [v|] eqn:?.
-  { iApply ("HΦ" with "[> -]"). by iApply (fupd_mask_mono E1 _). }
-  iIntros (σ1 κs n) "Hσ". iMod (fupd_intro_mask' E2 E1) as "Hclose"; first done.
+  { iApply ("HΦ" with "[> -]"). by iApply (ncfupd_mask_mono E1 _). }
+  iIntros (σ1 κs n) "Hσ". iMod (ncfupd_intro_mask' E2 E1) as "Hclose"; first done.
   iMod ("IH" with "[$]") as "[% IH]".
   iModIntro; iSplit; [by destruct s1, s2|]. iIntros (κ e2 σ2 efs Hstep).
   iMod ("IH" with "[//]") as (?) "(Hσ & IH & IHefs)"; auto.
@@ -128,6 +128,12 @@ Proof.
     iApply "IH"; auto.
 Qed.
 
+Lemma ncfupd_twp s E e Φ : (|NC={E}=> WP e @ s; E [{ Φ }]) -∗ WP e @ s; E [{ Φ }].
+Proof.
+  rewrite twp_unfold /twp_pre. iIntros "H". destruct (to_val e) as [v|] eqn:?.
+  { by iMod "H". }
+  iIntros (σ1 κs n) "Hσ1". iMod "H". by iApply "H".
+Qed.
 Lemma fupd_twp s E e Φ : (|={E}=> WP e @ s; E [{ Φ }]) -∗ WP e @ s; E [{ Φ }].
 Proof.
   rewrite twp_unfold /twp_pre. iIntros "H". destruct (to_val e) as [v|] eqn:?.
@@ -135,7 +141,7 @@ Proof.
   iIntros (σ1 κs n) "Hσ1". iMod "H". by iApply "H".
 Qed.
 Lemma twp_fupd s E e Φ : WP e @ s; E [{ v, |={E}=> Φ v }] -∗ WP e @ s; E [{ Φ }].
-Proof. iIntros "H". iApply (twp_strong_mono with "H"); auto. Qed.
+Proof. iIntros "H". iApply (twp_strong_mono with "H"); auto. by iIntros (v) ">H". Qed.
 
 Lemma twp_atomic s E1 E2 e Φ `{!Atomic (stuckness_to_atomicity s) e} :
   (|={E1,E2}=> WP e @ s; E2 [{ v, |={E2,E1}=> Φ v }]) -∗ WP e @ s; E1 [{ Φ }].
@@ -164,7 +170,7 @@ Proof.
   iIntros (Φ') "H". iRevert (e E Φ') "H". iApply twp_ind; first solve_proper.
   iIntros "!>" (e E1 Φ') "IH". iIntros (Φ) "HΦ".
   rewrite /twp_pre. destruct (to_val e) as [v|] eqn:He.
-  { apply of_to_val in He as <-. iApply fupd_twp. by iApply "HΦ". }
+  { apply of_to_val in He as <-. iApply ncfupd_twp. by iApply "HΦ". }
   rewrite twp_unfold /twp_pre fill_not_val //.
   iIntros (σ1 κs n) "Hσ". iMod ("IH" with "[$]") as "[% IH]". iModIntro; iSplit.
   { iPureIntro. unfold reducible_no_obs in *.
@@ -202,8 +208,8 @@ Proof.
   rewrite wp_unfold twp_unfold /wp_pre /twp_pre. destruct (to_val e) as [v|]=>//.
   iIntros (σ1 κ κs n) "Hσ". iMod ("H" with "Hσ") as "[% H]". iIntros "!>". iSplitR.
   { destruct s; eauto using reducible_no_obs_reducible. }
-  iIntros (e2 σ2 efs) "Hstep". iMod ("H" with "Hstep") as (->) "(Hσ & H & Hfork)".
-  iApply step_fupd_intro; [set_solver+|]. iNext.
+  iIntros (e2 σ2 efs) "Hstep". iModIntro. iNext. iMod ("H" with "Hstep") as (->) "(Hσ & H & Hfork)".
+  iModIntro.
   iFrame "Hσ". iSplitL "H". by iApply "IH".
   iApply (@big_sepL_impl with "Hfork").
   iIntros "!>" (k ef _) "H". by iApply "IH".
@@ -235,13 +241,19 @@ Lemma twp_value_fupd' s E Φ v : (|={E}=> Φ v) -∗ WP of_val v @ s; E [{ Φ }]
 Proof. intros. by rewrite -twp_fupd -twp_value'. Qed.
 Lemma twp_value_fupd s E Φ e v : IntoVal e v → (|={E}=> Φ v) -∗ WP e @ s; E [{ Φ }].
 Proof. intros ?. rewrite -twp_fupd -twp_value //. Qed.
-Lemma twp_value_inv s E Φ e v : IntoVal e v → WP e @ s; E [{ Φ }] ={E}=∗ Φ v.
+Lemma twp_value_inv s E Φ e v : IntoVal e v → WP e @ s; E [{ Φ }] -∗ |NC={E}=> Φ v.
 Proof. intros <-. by apply twp_value_inv'. Qed.
 
 Lemma twp_frame_l s E e Φ R : R ∗ WP e @ s; E [{ Φ }] -∗ WP e @ s; E [{ v, R ∗ Φ v }].
-Proof. iIntros "[? H]". iApply (twp_strong_mono with "H"); auto with iFrame. Qed.
+Proof.
+  iIntros "[? H]". iApply (twp_strong_mono with "H"); auto with iFrame.
+  iIntros (?) "H !>". iFrame.
+Qed.
 Lemma twp_frame_r s E e Φ R : WP e @ s; E [{ Φ }] ∗ R -∗ WP e @ s; E [{ v, Φ v ∗ R }].
-Proof. iIntros "[H ?]". iApply (twp_strong_mono with "H"); auto with iFrame. Qed.
+Proof.
+  iIntros "[H ?]". iApply (twp_strong_mono with "H"); auto with iFrame.
+  iIntros (?) "H !>". iFrame.
+Qed.
 
 Lemma twp_wand s E e Φ Ψ :
   WP e @ s; E [{ Φ }] -∗ (∀ v, Φ v -∗ Ψ v) -∗ WP e @ s; E [{ Ψ }].

@@ -50,6 +50,7 @@ theories/bi/derived_laws_later.v
 theories/bi/plainly.v
 theories/bi/internal_eq.v
 theories/bi/big_op.v
+theories/bi/big_op_extra.v
 theories/bi/updates.v
 theories/bi/ascii.v
 theories/bi/bi.v
@@ -90,11 +91,12 @@ theories/base_logic/lib/gen_inv_heap.v
 theories/base_logic/lib/fancy_updates_from_vs.v
 theories/base_logic/lib/proph_map.v
 theories/base_logic/lib/ghost_var.v
+theories/base_logic/lib/crash_token.v
+theories/base_logic/lib/ncfupd.v
 theories/program_logic/adequacy.v
 theories/program_logic/lifting.v
 theories/program_logic/weakestpre.v
 theories/program_logic/total_weakestpre.v
-theories/program_logic/total_adequacy.v
 theories/program_logic/hoare.v
 theories/program_logic/language.v
 theories/program_logic/ectx_language.v
@@ -113,7 +115,6 @@ theories/heap_lang/derived_laws.v
 theories/heap_lang/notation.v
 theories/heap_lang/proofmode.v
 theories/heap_lang/adequacy.v
-theories/heap_lang/total_adequacy.v
 theories/heap_lang/proph_erasure.v
 theories/heap_lang/lib/spawn.v
 theories/heap_lang/lib/par.v

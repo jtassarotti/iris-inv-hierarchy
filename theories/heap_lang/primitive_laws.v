@@ -14,6 +14,7 @@ From iris Require Import options.
 
 Class heapG Σ := HeapG {
   heapG_invG : invG Σ;
+  heapG_crashG : crashG Σ;
   heapG_gen_heapG :> gen_heapG loc (option val) Σ;
   heapG_inv_heapG :> inv_heapG loc (option val) Σ;
   heapG_proph_mapG :> proph_mapG proph_id (val * val) Σ;
@@ -21,6 +22,7 @@ Class heapG Σ := HeapG {
 
 Instance heapG_irisG `{!heapG Σ} : irisG heap_lang Σ := {
   iris_invG := heapG_invG;
+  iris_crashG := heapG_crashG;
   state_interp σ κs _ :=
     (gen_heap_ctx σ.(heap) ∗ proph_map_ctx κs σ.(used_proph_id))%I;
   fork_post _ := True%I;

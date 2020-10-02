@@ -23,7 +23,13 @@ Lemma twp_lift_step s E Φ e1 :
       WP e2 @ s; E [{ Φ }] ∗
       [∗ list] ef ∈ efs, WP ef @ s; ⊤ [{ fork_post }])
   ⊢ WP e1 @ s; E [{ Φ }].
-Proof. by rewrite twp_unfold /twp_pre=> ->. Qed.
+Proof.
+  rewrite twp_unfold /twp_pre=>->.
+  iIntros "H". iIntros (???) "Hinterp".
+  iMod ("H" with "[$]") as "($&H)".
+  iModIntro. iIntros. iMod ("H" with "[//]") as "H".
+  iModIntro. eauto.
+Qed.
 
 (** Derived lifting lemmas. *)
 Lemma twp_lift_pure_step_no_fork `{!Inhabited (state Λ)} s E Φ e1 :
