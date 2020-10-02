@@ -15,7 +15,9 @@ Implicit Types P Q : iProp Σ.
 Implicit Types Φ : val Λ → iProp Σ.
 Implicit Types Φs : list (val Λ → iProp Σ).
 
-Local Notation "|={ Eo } [ Ei ]▷=> Q" := (|NC={Eo,Ei}=> ▷ |NC={Ei,Eo}=> Q)%I : bi_scope.
+Local Notation "|={ Eo } [ Ei ]▷=> Q" := (∀ q, NC q -∗ |={Eo,Ei}=> ▷ |={Ei,Eo}=> Q ∗ NC q)%I
+  (at level 99, Eo, Ei at level 50, Q at level 200,
+   format "|={ Eo } [ Ei ]▷=>  Q") : bi_scope.
 Local Notation "P ={ Eo } [ Ei ]▷=∗ Q" := (P -∗ |={Eo}[Ei]▷=> Q)%I : bi_scope.
 Local Notation "P ={ Eo } [ Ei ]▷=∗ Q" := (P -∗ |={Eo}[Ei]▷=> Q) (only parsing) : stdpp_scope.
 
@@ -37,9 +39,12 @@ Lemma wp_step s e1 σ1 κ κs e2 σ2 efs nt Φ :
 Proof.
   rewrite {1}wp_unfold /wp_pre. iIntros (?) "Hσ H".
   rewrite (val_stuck e1 σ1 κ e2 σ2 efs) //.
-  iMod ("H" $! σ1 with "Hσ") as "(_ & H)".
+  iIntros (q) "HNC".
+  iMod ("H" $! _ σ1 with "Hσ HNC") as "(_ & H)".
   iMod ("H" $! e2 σ2 efs with "[//]") as "H".
-  by rewrite Nat.add_comm big_sepL2_replicate_r.
+  iModIntro. iNext.
+  iMod "H" as "(H& ? & ? & HNC)". iFrame. iModIntro.
+  rewrite Nat.add_comm big_sepL2_replicate_r //. iFrame.
 Qed.
 
 Lemma wptp_step s es1 es2 κ κs σ1 σ2 Φs nt :
@@ -52,8 +57,8 @@ Proof.
   destruct Hstep as [e1' σ1' e2' σ2' efs t2' t3 Hstep]; simplify_eq/=.
   iDestruct (big_sepL2_app_inv_l with "Ht") as (Φs1 Φs2 ->) "[? Ht]".
   iDestruct (big_sepL2_cons_inv_l with "Ht") as (Φ Φs3 ->) "[Ht ?]".
-  iExists _. iMod (wp_step with "Hσ Ht") as "H"; first done.
-  iIntros "!> !>". iMod "H" as "($ & He2 & Hefs)". iIntros "!>".
+  iExists _. iPoseProof (wp_step with "Hσ Ht") as "H"; first done.
+  iApply (step_ncfupd_wand with "H"). iIntros "($ & He2 & Hefs)".
   rewrite -(assoc_L app) -app_comm_cons. iFrame.
 Qed.
 
@@ -69,8 +74,9 @@ Proof.
     rewrite Nat.add_0_r right_id_L. by iFrame. }
   iIntros (Hsteps) "Hσ He". inversion_clear Hsteps as [|?? [t1' σ1']].
   rewrite -(assoc_L (++)).
-  iDestruct (wptp_step with "Hσ He") as (nt') ">H"; first eauto; simplify_eq.
-  iIntros "!> !>". iMod "H" as "(Hσ & He)". iModIntro.
+  iDestruct (wptp_step with "Hσ He") as (nt') "H"; first eauto; simplify_eq.
+  iIntros (?) "HNC". iMod ("H" with "[$]") as "H".
+  iIntros "!> !>". iMod "H" as "((Hσ & He) & HNC)". iModIntro. iFrame "HNC".
   iApply (step_ncfupdN_wand with "[Hσ He]"); first by iApply (IH with "Hσ He").
   iDestruct 1 as (nt'') "[??]". rewrite -Nat.add_assoc -(assoc_L app) -replicate_plus.
   by eauto with iFrame.
@@ -81,8 +87,10 @@ Lemma wp_not_stuck κs nt e σ Φ :
 Proof.
   rewrite wp_unfold /wp_pre /not_stuck. iIntros "Hσ H".
   destruct (to_val e) as [v|] eqn:?; first by eauto.
-  iSpecialize ("H" $! σ [] κs with "Hσ"). rewrite sep_elim_l.
-  iMod (ncfupd_plain_mask with "H") as %?; eauto.
+  iApply ncfupd_plain_fupd.
+  iIntros (q) "HNC".
+  iSpecialize ("H" $! q σ [] κs with "Hσ HNC"). rewrite sep_elim_l.
+  iMod (fupd_plain_mask with "H") as %?; eauto.
 Qed.
 
 Lemma wptp_strong_adequacy Φs κs' s n es1 es2 κs σ1 σ2 nt:
@@ -97,19 +105,22 @@ Proof.
   iDestruct (wptp_steps with "Hσ He") as "Hwp"; first done.
   iApply (step_ncfupdN_wand with "Hwp").
   iDestruct 1 as (nt') "(Hσ & Ht)"; simplify_eq/=.
-  iMod (ncfupd_plain_keep_l ⊤
+  iIntros (q) "HNC".
+  iMod (fupd_plain_keep_l ⊤
     ⌜ ∀ e2, s = NotStuck → e2 ∈ es2 → not_stuck e2 σ2 ⌝%I
-    (state_interp σ2 κs' (nt + nt') ∗ wptp s es2 (Φs ++ replicate nt' fork_post))%I
-    with "[$Hσ $Ht]") as "(%&Hσ&Hwp)".
-  { iIntros "(Hσ & Ht)" (e' -> He').
+    (state_interp σ2 κs' (nt + nt') ∗ wptp s es2 (Φs ++ replicate nt' fork_post) ∗ NC q)%I
+    with "[$Hσ $Ht $HNC]") as "(%&Hσ&Hwp&HNC)".
+  { iIntros "(Hσ & Ht & HNC)" (e' -> He').
     move: He' => /(elem_of_list_split _ _)[?[?->]].
     iDestruct (big_sepL2_app_inv_l with "Ht") as (Φs1 Φs2 ?) "[? Hwp]".
     iDestruct (big_sepL2_cons_inv_l with "Hwp") as (Φ Φs3 ->) "[Hwp ?]".
-    iMod (wp_not_stuck with "Hσ Hwp") as "$"; auto. }
-  iApply step_ncfupd_ncfupd. iApply step_ncfupd_intro; first done. iNext.
-  iExists _. iSplitR; first done. iFrame "Hσ".
-  rewrite ncfupd_eq /ncfupd_def.
-  iIntros (q) "HNC".
+    iPoseProof (wp_not_stuck with "Hσ Hwp") as "H"; auto.
+    rewrite ncfupd_eq. by iMod ("H" with "[$]") as "($&_)".
+  }
+  rewrite step_fupd_fupd.
+  iApply step_fupd_intro; first done. iNext.
+   rewrite sep_exist_r.
+  iExists _. rewrite -?assoc. iSplitR; first done. iFrame "Hσ".
   rewrite sep_comm.
   iApply (big_sepL2_mono_with_fupd_inv with "HNC Hwp").
   iIntros (? e Φ ??) "(HNC&Hwp)".
@@ -159,8 +170,10 @@ Proof.
   eapply (step_ncfupdN_soundness' _ (S (S n)))=> Hinv Hcrash. rewrite Nat_iter_S.
   iMod Hwp as (s stateI Φ fork_post) "(Hσ & Hwp & Hφ)".
   iDestruct (big_sepL2_length with "Hwp") as %Hlen1.
-  iApply step_ncfupd_intro; [done|]; iModIntro.
-  iApply step_ncfupdN_S_ncfupd. iApply (step_ncfupdN_wand with "[-Hφ]").
+  iApply step_ncfupdN_S_ncfupd.
+  rewrite Nat_iter_S.
+  iIntros (?) "$". iApply step_fupd_intro; eauto. iNext.
+  iApply (step_ncfupdN_wand with "[-Hφ]").
   { iApply (@wptp_strong_adequacy _ _ (IrisG _ _ Hinv Hcrash stateI fork_post) _ []
     with "[Hσ] Hwp"); eauto; by rewrite right_id_L. }
   iDestruct 1 as (nt' ?) "(Hσ & Hval) /=".

@@ -19,7 +19,7 @@ Notation "|NC={ E1 }=> Q" := (ncfupd E1 E1 Q)
 Notation "|NC={ E1 , E2 }=> P" := (ncfupd E1 E2 P)
       (at level 99, E1, E2 at level 50, P at level 200,
        format "|NC={ E1 , E2 }=>  P") : bi_scope.
-Notation "|NC={ Eo } [ Ei ]▷=> Q" := (|NC={Eo,Ei}=> ▷ |NC={Ei,Eo}=> Q)%I
+Notation "|NC={ Eo } [ Ei ]▷=> Q" := (∀ q, NC q -∗ |={Eo,Ei}=> ▷ |={Ei,Eo}=> Q ∗ NC q)%I
   (at level 99, Eo, Ei at level 50, Q at level 200,
    format "|NC={ Eo } [ Ei ]▷=>  Q") : bi_scope.
 Notation "|NC={ E1 } [ E2 ]▷=>^ n Q" := (Nat.iter n (λ P, |NC={E1}[E2]▷=> P) Q)%I
@@ -230,6 +230,13 @@ Proof. by rewrite {1}(plain P) ncfupd_plainly_mask. Qed.
 Lemma ncfupd_plainly_elim E P : ■ P -∗ |NC={E}=> P.
 Proof. by rewrite (ncfupd_intro E (■ P)%I) ncfupd_plainly_mask. Qed.
 
+Lemma ncfupd_plain_fupd E P  `{!Plain P} : (∀ q, NC q -∗ |={E}=> P) -∗ |NC={E}=> P.
+Proof.
+  rewrite ncfupd_eq /ncfupd_def.
+  iIntros "H" (q) "HNC". iApply (fupd_plain_keep_l). iFrame.
+  iApply "H".
+Qed.
+
 Lemma ncfupd_plain_forall E1 E2 {A} (Φ : A → iProp Σ) `{!∀ x, Plain (Φ x)} :
   E2 ⊆ E1 →
   (|NC={E1,E2}=> ∀ x, Φ x) ⊣⊢ (∀ x, |NC={E1,E2}=> Φ x).
@@ -329,21 +336,30 @@ Proof. intros. by rewrite -(step_ncfupd_mask_mono Ei _ Ei _) // -!ncfupd_intro. 
 Lemma step_ncfupd_wand Eo Ei P Q : (|NC={Eo}[Ei]▷=> P) -∗ (P -∗ Q) -∗ |NC={Eo}[Ei]▷=> Q.
 Proof.
   apply wand_intro_l.
-  by rewrite (later_intro (P -∗ Q)%I) ncfupd_frame_l -later_sep ncfupd_frame_l
-             wand_elim_l.
+  rewrite (later_intro (P -∗ Q)%I).
+  iIntros "(HPQ&H)" (q) "HNC".
+  iMod ("H" with "[$]") as "H". iModIntro. iNext.
+  iMod "H" as "(HP&$)". iModIntro. by iApply "HPQ".
 Qed.
 
 Lemma step_ncfupd_ncfupd Eo Ei P : (|NC={Eo}[Ei]▷=> P) ⊣⊢ (|NC={Eo}[Ei]▷=> |NC={Eo}=> P).
 Proof.
   apply (anti_symm (⊢)).
-  - by rewrite -ncfupd_intro.
-  - by rewrite ncfupd_trans.
+  - iIntros "H" (q) "HNC". iMod ("H" with "[$]") as "H".
+    iModIntro. iNext. iMod "H" as "(H&$)". iModIntro.
+    eauto.
+  - iIntros "H" (q) "HNC". iMod ("H" with "[$]") as "H".
+    iModIntro. iNext. iMod "H" as "(H&HNC)".
+    rewrite ncfupd_eq /ncfupd_def.
+    by iMod ("H" with "[$]") as "($&$)".
 Qed.
 
 Lemma step_ncfupdN_mono Eo Ei n P Q :
   (P ⊢ Q) → (|NC={Eo}[Ei]▷=>^n P) ⊢ (|NC={Eo}[Ei]▷=>^n Q).
 Proof.
-  intros HPQ. induction n as [|n IH]=> //=. rewrite IH //.
+  intros HPQ. induction n as [|n IH]=> //=.
+  iIntros "H". iApply (step_ncfupd_wand with "H"); eauto.
+  iApply IH.
 Qed.
 
 Lemma step_ncfupdN_wand Eo Ei n P Q :
@@ -351,8 +367,9 @@ Lemma step_ncfupdN_wand Eo Ei n P Q :
 Proof.
   apply wand_intro_l. induction n as [|n IH]=> /=.
   { by rewrite wand_elim_l. }
-  rewrite -IH -ncfupd_frame_l later_sep -ncfupd_frame_l.
-  by apply sep_mono; first apply later_intro.
+  iIntros "(HPQ&H)".
+  iApply (step_ncfupd_wand with "H"); eauto.
+  iIntros. iApply IH. by iFrame.
 Qed.
 
 Lemma step_ncfupdN_S_ncfupd n E P:
@@ -386,15 +403,25 @@ Proof. by rewrite {1}(plain P) ncfupd_plainly_later. Qed.
 
 Lemma step_ncfupd_plain Eo Ei P `{!Plain P} : (|NC={Eo}[Ei]▷=> P) -∗ |NC={Eo}=> ▷ ◇ P.
 Proof.
-  rewrite -(ncfupd_plain_mask _ Ei (▷ ◇ P)%I).
-  apply ncfupd_elim. by rewrite ncfupd_plain_mask -ncfupd_plain_later.
+  rewrite ncfupd_eq.
+  iIntros "Hshift" (q) "HNC".
+  rewrite uPred_fupd_eq /uPred_fupd_def.
+  iIntros "[Hw HE]".
+  iAssert (▷ ◇ P)%I as "#HP".
+  {
+    iMod ("Hshift" with "[$] [$]") as ">(Hw & HE & Hshift)".
+    iNext. iMod ("Hshift" with "[$]") as "(Hw & HE & $ & _)".
+  }
+  iFrame "HP".
+  iPoseProof (ncfupd_plain_mask Ei Eo True%I) as "H".
+  by iFrame.
 Qed.
 
 Lemma step_ncfupdN_plain Eo Ei n P `{!Plain P} : (|NC={Eo}[Ei]▷=>^n P) -∗ |NC={Eo}=> ▷^n ◇ P.
 Proof.
   induction n as [|n IH].
   - by rewrite -ncfupd_intro -except_0_intro.
-  - rewrite Nat_iter_S step_ncfupd_ncfupd IH !ncfupd_trans step_ncfupd_plain.
+  - rewrite Nat_iter_S. setoid_rewrite IH. rewrite -step_ncfupd_ncfupd step_ncfupd_plain.
     apply ncfupd_mono. destruct n as [|n]; simpl.
     * by rewrite except_0_idemp.
     * by rewrite except_0_later.
