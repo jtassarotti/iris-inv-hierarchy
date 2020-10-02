@@ -25,8 +25,13 @@ Lemma wp_lift_step_fupd s E Φ e1 :
       WP e2 @ s; E {{ Φ }} ∗
       [∗ list] ef ∈ efs, WP ef @ s; ⊤ {{ fork_post }})
   ⊢ WP e1 @ s; E {{ Φ }}.
-Proof. by rewrite wp_unfold /wp_pre=>->. Qed.
-
+Proof.
+  rewrite wp_unfold /wp_pre=>->.
+  iIntros "H". iIntros (????) "Hinterp".
+  iMod ("H" with "[$]") as "($&H)".
+  iModIntro. iIntros. iMod ("H" with "[//]") as "H".
+  iModIntro. iNext. iMod "H". iModIntro; eauto.
+Qed.
 Lemma wp_lift_stuck E Φ e :
   to_val e = None →
   (∀ σ κs n, state_interp σ κs n ={E,∅}=∗ ⌜stuck e σ⌝)
