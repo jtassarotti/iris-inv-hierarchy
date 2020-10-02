@@ -475,29 +475,23 @@ Proof.
   iIntros (Hlen) "#HPQ". rewrite /ownI_mut.
   iDestruct 1 as (l γs) "(Hidx&Hown)".
   iExists l, γs; iFrame.
-  iApply (equivI_elim_own with "[] Hown").
-  { rewrite auth_equivI => //=. iSplit; first done.
-    rewrite gmap_equivI. iIntros (i0).
-    destruct (decide (i = i0)).
-    { subst. rewrite ?lookup_singleton option_equivI prod_equivI => //=.
-      iSplit; first done.
-      rewrite /inv_mut_unfold option_equivI prod_equivI => //=; iSplit; first done.
-      rewrite agree_equivI ?vec_to_list_to_vec list_equivI_O.
-      iIntros (j).
-      rewrite ?list_lookup_fmap.
-      iSpecialize ("HPQ" $! j).
-      rewrite ?option_equivI.
-      destruct (vec_to_list Qs_mut !! j) as [Q0|] eqn:HeqQ;
-      destruct (vec_to_list Ps_mut !! j) as [P0|] eqn:HeqP;
-      rewrite ?HeqQ ?HeqP //=.
-      * rewrite later_equivI. iNext. by iRewrite "HPQ".
-      * exfalso. apply lookup_ge_None_1 in HeqP. apply lookup_lt_Some in HeqQ.
-        rewrite ?vec_to_list_length in HeqQ HeqP. lia.
-      * exfalso. apply lookup_ge_None_1 in HeqQ. apply lookup_lt_Some in HeqP.
-        rewrite ?vec_to_list_length in HeqQ HeqP. lia.
-    }
-    rewrite ?lookup_singleton_ne //=.
-  }
+  iAssert (inv_mut_unfold q Ps_mut ≡ inv_mut_unfold q Qs_mut)%I as "Heq".
+  { rewrite /inv_mut_unfold option_equivI prod_equivI => //=; iSplit; first done.
+    rewrite agree_equivI ?vec_to_list_to_vec list_equivI_O.
+    iIntros (j).
+    rewrite ?list_lookup_fmap.
+    iSpecialize ("HPQ" $! j).
+    rewrite ?option_equivI.
+    destruct (vec_to_list Qs_mut !! j) as [Q0|] eqn:HeqQ;
+    destruct (vec_to_list Ps_mut !! j) as [P0|] eqn:HeqP;
+    rewrite ?HeqQ ?HeqP //=.
+    * rewrite later_equivI. iNext. by iRewrite "HPQ".
+    * exfalso. apply lookup_ge_None_1 in HeqP. apply lookup_lt_Some in HeqQ.
+      rewrite ?vec_to_list_length in HeqQ HeqP. lia.
+    * exfalso. apply lookup_ge_None_1 in HeqQ. apply lookup_lt_Some in HeqP.
+      rewrite ?vec_to_list_length in HeqQ HeqP. lia. }
+  iRewrite "Heq".
+  iExact "Hown".
 Qed.
 
 Lemma bi_schema_interp_ctx_later lvl sch (Qs Qs_mut Ps Ps_mut: list (iProp Σ)):
@@ -590,7 +584,7 @@ Proof.
     as (Qs Qs_mut HIlookup Hlen Hlen_mut) "(#HPQ&#HPQ_mut)".
   { iCombine "Hi Hi_mut" as "Hcombine".
     iDestruct (own_valid with "Hcombine") as "#Hval".
-    rewrite auth_validI /= gmap_validI_singleton uPred.prod_validI /=.
+    rewrite auth_frag_validI gmap_validI_singleton uPred.prod_validI /=.
     rewrite agree_validI. iDestruct "Hval" as "(Hval_agree&_)".
     iRewrite -"Hval_agree" in "Hcombine".
     rewrite agree_idemp left_id. eauto.
@@ -683,7 +677,7 @@ Proof.
   iDestruct (fmlist_idx_agree_1 with "Hidx1 Hidx2") as %->.
   iCombine "Hown1 Hown2" as "Hown".
   iDestruct (own_valid with "Hown") as "Hval".
-  rewrite auth_validI /= gmap_validI.
+  rewrite auth_frag_validI gmap_validI.
   iSpecialize ("Hval" $! i).
   rewrite lookup_singleton /= uPred.option_validI /= uPred.prod_validI /=.
   iDestruct "Hval" as "(_&Hval)".
@@ -715,7 +709,7 @@ Proof.
   iExists l1, _.  iFrame "Hidx1".
   iCombine "Hown1 Hown2" as "Hown".
   iDestruct (own_valid with "Hown") as "#Hval".
-  rewrite auth_validI /= gmap_validI.
+  rewrite auth_frag_validI gmap_validI.
   iSpecialize ("Hval" $! i).
   rewrite lookup_singleton /= uPred.option_validI /= uPred.prod_validI /=.
   iDestruct "Hval" as "(Hval1&Hval2)".
@@ -748,7 +742,7 @@ Proof.
     as (Qs' Qs_mut' HIlookup Hlen Hlen_mut) "(#HPQ&#HPQ_mut)".
   { iCombine "Hi Hi_mut" as "Hcombine".
     iDestruct (own_valid with "Hcombine") as "#Hval".
-    rewrite auth_validI /= gmap_validI_singleton uPred.prod_validI /=.
+    rewrite auth_frag_validI gmap_validI_singleton uPred.prod_validI /=.
     rewrite agree_validI. iDestruct "Hval" as "(Hval_agree&_)".
     iRewrite -"Hval_agree" in "Hcombine".
     rewrite agree_idemp left_id. eauto.
