@@ -69,7 +69,15 @@ Module invG.
     mlist_inPreG :> fmlistG (invariant_level_names) Σ;
   }.
 
-  (* XXX: this is very slow (~2min) for some reason. *)
+  (* XXX: magic commands to make the next proof not take 2min. *)
+  Local Strategy 100 [authR].
+  Local Strategy 100 [gmapURF].
+  Local Strategy 100 [agreeR].
+  Local Strategy 100 [prodR].
+  Local Strategy 100 [optionR].
+  Local Strategy 100 [prodO].
+  Local Strategy 100 [laterO].
+  Local Strategy 100 [listO].
   Instance subG_invΣ {Σ} : subG invΣ Σ → invPreG Σ.
   Proof. solve_inG. Qed.
 End invG.
