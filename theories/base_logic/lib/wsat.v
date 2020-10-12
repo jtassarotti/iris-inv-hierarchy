@@ -42,7 +42,7 @@ Module invG.
   Class invG (Σ : gFunctors) : Set := WsatG {
     inv_inG :> inG Σ (authR (gmapUR positive
                                     (prodR (agreeR (prodO (listO (laterO (iPropO Σ))) bi_schemaO))
-                                           (optionUR (prodR fracR (agreeR (listO (laterO (iPropO Σ)))))))));
+                                           (optionR (prodR fracR (agreeR (listO (laterO (iPropO Σ)))))))));
     enabled_inG :> inG Σ coPset_disjR;
     disabled_inG :> inG Σ (gset_disjR positive);
     mlist_inG :> fmlistG (invariant_level_names) Σ;
@@ -63,7 +63,7 @@ Module invG.
   Class invPreG (Σ : gFunctors) : Set := WsatPreG {
     inv_inPreG :> inG Σ (authR (gmapUR positive
                                     (prodR (agreeR (prodO (listO (laterO (iPropO Σ))) bi_schemaO))
-                                           (optionUR (prodR fracR (agreeR (listO (laterO (iPropO Σ)))))))));
+                                           (optionR (prodR fracR (agreeR (listO (laterO (iPropO Σ)))))))));
     enabled_inPreG :> inG Σ coPset_disjR;
     disabled_inPreG :> inG Σ (gset_disjR positive);
     mlist_inPreG :> fmlistG (invariant_level_names) Σ;
