@@ -769,7 +769,7 @@ Section cmra_morphism.
   Proof. intros [z ->]. exists (f z). by rewrite cmra_morphism_op. Qed.
   Lemma cmra_morphism_monotoneN n x y : x ≼{n} y → f x ≼{n} f y.
   Proof. intros [z ->]. exists (f z). by rewrite cmra_morphism_op. Qed.
-  Lemma cmra_monotone_valid x : ✓ x → ✓ f x.
+  Lemma cmra_morphism_valid x : ✓ x → ✓ f x.
   Proof. rewrite !cmra_valid_validN; eauto using cmra_morphism_validN. Qed.
 End cmra_morphism.
 
@@ -958,6 +958,10 @@ Proof. rewrite /urFunctorContractive; apply _. Qed.
 (** * Transporting a CMRA equality *)
 Definition cmra_transport {A B : cmraT} (H : A = B) (x : A) : B :=
   eq_rect A id x _ H.
+
+Lemma cmra_transport_trans {A B C : cmraT} (H1 : A = B) (H2 : B = C) x :
+  cmra_transport H2 (cmra_transport H1 x) = cmra_transport (eq_trans H1 H2) x.
+Proof. by destruct H2. Qed.
 
 Section cmra_transport.
   Context {A B : cmraT} (H : A = B).
@@ -1565,8 +1569,15 @@ Proof.
   by intros ? A1 ? A2 ? B1 ? B2 ? n f g Hfg; apply optionO_map_ne, rFunctor_map_contractive.
 Qed.
 
-Definition optionRF (F : rFunctor) : rFunctor :=
-  urFunctor_to_rFunctor (optionURF F).
+Program Definition optionRF (F : rFunctor) : rFunctor := {|
+  rFunctor_car A _ B _ := optionR (rFunctor_car F A B);
+  rFunctor_map A1 _ A2 _ B1 _ B2 _ fg := optionO_map (rFunctor_map F fg)
+|}.
+Solve Obligations with apply optionURF.
+
+Instance optionRF_contractive F :
+  rFunctorContractive F → rFunctorContractive (optionRF F).
+Proof. apply optionURF_contractive. Qed.
 
 (* Dependently-typed functions over a discrete domain *)
 Section discrete_fun_cmra.

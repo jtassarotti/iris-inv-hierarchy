@@ -300,7 +300,7 @@ Proof. apply singleton_core. rewrite cmra_pcore_core //. Qed.
 Lemma singleton_op (i : K) (x y : A) :
   {[ i := x ]} ⋅ {[ i := y ]} =@{gmap K A} {[ i := x ⋅ y ]}.
 Proof. by apply (merge_singleton _ _ _ x y). Qed.
-Global Instance is_op_singleton i a a1 a2 :
+Global Instance singleton_is_op i a a1 a2 :
   IsOp a a1 a2 → IsOp' ({[ i := a ]} : gmap K A) {[ i := a1 ]} {[ i := a2 ]}.
 Proof. rewrite /IsOp' /IsOp=> ->. by rewrite -singleton_op. Qed.
 
@@ -691,5 +691,12 @@ Proof.
   by intros ? A1 ? A2 ? B1 ? B2 ? n f g Hfg; apply gmapO_map_ne, rFunctor_map_contractive.
 Qed.
 
-Definition gmapRF K `{Countable K} (F : rFunctor) : rFunctor :=
-  urFunctor_to_rFunctor (gmapURF K F).
+Program Definition gmapRF K `{Countable K} (F : rFunctor) : rFunctor := {|
+  rFunctor_car A _ B _ := gmapR K (rFunctor_car F A B);
+  rFunctor_map A1 _ A2 _ B1 _ B2 _ fg := gmapO_map (rFunctor_map F fg)
+|}.
+Solve Obligations with apply gmapURF.
+
+Instance gmapRF_contractive K `{Countable K} F :
+  rFunctorContractive F → rFunctorContractive (gmapRF K F).
+Proof. apply gmapURF_contractive. Qed.

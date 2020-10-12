@@ -41,8 +41,8 @@ Qed.
 Module invG.
   Class invG (Σ : gFunctors) : Set := WsatG {
     inv_inG :> inG Σ (authR (gmapUR positive
-                                    (prodR (agreeR (prodO (listO (laterO (iPrePropO Σ))) bi_schemaO))
-                                           (optionUR (prodR fracR (agreeR (listO (laterO (iPrePropO Σ)))))))));
+                                    (prodR (agreeR (prodO (listO (laterO (iPropO Σ))) bi_schemaO))
+                                           (optionUR (prodR fracR (agreeR (listO (laterO (iPropO Σ)))))))));
     enabled_inG :> inG Σ coPset_disjR;
     disabled_inG :> inG Σ (gset_disjR positive);
     mlist_inG :> fmlistG (invariant_level_names) Σ;
@@ -55,48 +55,30 @@ Module invG.
     #[GFunctor (authRF (gmapURF positive
                                 (prodRF (agreeRF (prodOF (listOF (laterOF idOF)) (constOF bi_schemaO)))
                                         (optionRF (prodRF fracR (agreeRF (listOF (laterOF idOF))))))));
-      GFunctor coPset_disjUR;
-      GFunctor (gset_disjUR positive);
+      GFunctor coPset_disjR;
+      GFunctor (gset_disjR positive);
       fmlistΣ invariant_level_names
      ].
 
   Class invPreG (Σ : gFunctors) : Set := WsatPreG {
     inv_inPreG :> inG Σ (authR (gmapUR positive
-                                    (prodR (agreeR (prodO (listO (laterO (iPrePropO Σ))) bi_schemaO))
-                                           (optionUR (prodR fracR (agreeR (listO (laterO (iPrePropO Σ)))))))));
+                                    (prodR (agreeR (prodO (listO (laterO (iPropO Σ))) bi_schemaO))
+                                           (optionUR (prodR fracR (agreeR (listO (laterO (iPropO Σ)))))))));
     enabled_inPreG :> inG Σ coPset_disjR;
     disabled_inPreG :> inG Σ (gset_disjR positive);
     mlist_inPreG :> fmlistG (invariant_level_names) Σ;
   }.
 
-  (* XXX: this is very slow for some reason. *)
+  (* XXX: this is very slow (~2min) for some reason. *)
   Instance subG_invΣ {Σ} : subG invΣ Σ → invPreG Σ.
-  Proof.
-    rewrite /invΣ. intros.
-    (* Take apart subG for non-"atomic" lists *)
-    repeat match goal with
-           | H : subG (gFunctors.app _ _) _ |- _ => apply subG_inv in H; destruct H
-           end.
-    (* Try to turn singleton subG into inG; but also keep the subG for typeclass
-     resolution -- to keep them, we put them onto the goal. *)
-    repeat match goal with
-           | H : subG _ _ |- _ => move:(H); ((apply subG_inG in H) || clear H)
-           end.
-    (* Super hacky hack to guide Coq towards converting
-       things the right way so this does not take centuries. *)
-    let s_type := type of s in
-    let s_eval := (eval vm_compute in s_type) in
-    pose Hs := s:s_eval.
-    clearbody Hs. clear s.
-    done.
-  Qed.
+  Proof. solve_inG. Qed.
 End invG.
 Import invG.
 
-Definition invariant_unfold {Σ} {n} sch (Ps : vec (iProp Σ) n) : agree (list (later (iPrePropO Σ)) * bi_schema) :=
-  to_agree ((λ P, Next (iProp_unfold P)) <$> (vec_to_list Ps), sch).
-Definition inv_mut_unfold {Σ} {n} q (Ps : vec (iProp Σ) n) : option (frac * (agree (list (later (iPrePropO Σ))))) :=
-  Some (q%Qp, to_agree ((λ P, Next (iProp_unfold P)) <$> (vec_to_list Ps))).
+Definition invariant_unfold {Σ} {n} sch (Ps : vec (iProp Σ) n) : agree (list (later (iPropO Σ)) * bi_schema) :=
+  to_agree ((λ P, Next P) <$> (vec_to_list Ps), sch).
+Definition inv_mut_unfold {Σ} {n} q (Ps : vec (iProp Σ) n) : option (frac * (agree (list (later (iPropO Σ))))) :=
+  Some (q%Qp, to_agree ((λ P, Next P) <$> (vec_to_list Ps))).
 Definition ownI `{!invG Σ} {n} (lvl: nat) (i : positive) (sch: bi_schema) (Ps : vec (iProp Σ) n) : iProp Σ :=
   (∃ γs, fmlist_idx inv_list_name lvl γs ∗
          own (invariant_name γs) (◯ {[ i := (invariant_unfold sch Ps, ε) ]})).
@@ -106,7 +88,7 @@ Instance: Params (@invariant_unfold) 1 := {}.
 Instance: Params (@ownI) 3 := {}.
 
 Definition ownI_mut `{!invG Σ} {n} (lvl: nat) (i : positive) q (Qs : vec (iProp Σ) n) : iProp Σ :=
-  (∃ (l: agree (list (later (iPrePropO Σ)) * bi_schema)) γs, fmlist_idx inv_list_name lvl γs ∗
+  (∃ (l: agree (list (later (iPropO Σ)) * bi_schema)) γs, fmlist_idx inv_list_name lvl γs ∗
          own (invariant_name γs) (◯ {[ i := (l, inv_mut_unfold q Qs) ]})).
 Arguments ownI_mut {_ _ _} _ _ _%I.
 Typeclasses Opaque ownI_mut.
@@ -268,8 +250,7 @@ Proof.
   - destruct l2'; first by (simpl in Hlen; congruence).
     apply to_agree_ne => //=.
     apply pair_ne; last done. econstructor.
-    { destruct n; eauto. apply Next_contractive. inversion Hd; subst; eauto => //=.
-      by f_equiv. }
+    { destruct n; eauto. apply Next_contractive. inversion Hd; subst; eauto => //=. }
     efeed pose proof (IHl1' l2') as Hagree; eauto.
     { destruct n; eauto. inversion Hd; subst; eauto. }
     apply to_agree_injN in Hagree. eapply Hagree.
@@ -347,7 +328,7 @@ Lemma invariant_lookup_weak I {n} γ i sch (Ps: vec _ n) :
                ⌜ length Qs = length Ps ⌝ ∗
                ∀ i, ▷ (Qs !! i ≡ vec_to_list Ps !! i).
 Proof.
-  rewrite -own_op own_valid auth_both_validI /=. iIntros "[_ [#HI #HvI]]".
+  rewrite -own_op own_valid auth_both_validI /=. iIntros "[#HI #HvI]".
   iDestruct "HI" as (I') "HI". rewrite gmap_equivI gmap_validI.
   iSpecialize ("HI" $! i). iSpecialize ("HvI" $! i).
   rewrite lookup_fmap lookup_op lookup_singleton option_equivI.
@@ -375,7 +356,7 @@ Proof.
   destruct (Q !! j) as [Q0|] eqn:HeqQ;
   destruct (vec_to_list Ps !! j) as [P0|] eqn:HeqP;
   rewrite ?HeqQ ?HeqP //=.
-  { rewrite //= ?later_equivI iProp_unfold_equivI //=. iNext. by iRewrite "Hequiv". }
+  { rewrite //= ?later_equivI //=. iNext. by iRewrite "Hequiv". }
 Qed.
 
 Lemma agree_equiv_inclI {M} {A: ofeT} (a b: A) c : to_agree a ≡ to_agree b ⋅ c ⊢@{uPredI M} (b ≡ a).
@@ -396,7 +377,7 @@ Lemma invariant_lookup_strong I {n m} γ i q sch (Ps: vec _ n) (Ps_mut: vec _ m)
                (∀ i, ▷ (Qs !! i ≡ vec_to_list Ps !! i)) ∗
                (∀ i, ▷ (Qs_mut !! i ≡ vec_to_list Ps_mut !! i)).
 Proof.
-  rewrite -own_op own_valid auth_both_validI /=. iIntros "[_ [#HI #HvI]]".
+  rewrite -own_op own_valid auth_both_validI /=. iIntros "[#HI #HvI]".
   iDestruct "HI" as (I') "HI". rewrite gmap_equivI gmap_validI.
   iSpecialize ("HI" $! i). iSpecialize ("HvI" $! i).
   rewrite lookup_fmap lookup_op lookup_singleton option_equivI.
@@ -450,7 +431,7 @@ Proof.
     destruct (Q !! j) as [Q0|] eqn:HeqQ;
     destruct (vec_to_list Ps !! j) as [P0|] eqn:HeqP;
     rewrite ?HeqQ ?HeqP //=.
-    { rewrite //= ?later_equivI iProp_unfold_equivI //=. iNext. by iRewrite "Hequiv". }
+    { rewrite //= ?later_equivI //=. iNext. by iRewrite "Hequiv". }
   - iIntros (j).
     iSpecialize ("Hequiv_mut" $! j).
     rewrite ?list_lookup_fmap ?vec_to_list_to_vec.
@@ -458,7 +439,7 @@ Proof.
     destruct (Qmut !! j) as [Q0|] eqn:HeqQ;
     destruct (vec_to_list Ps_mut !! j) as [P0|] eqn:HeqP;
     rewrite ?HeqQ ?HeqP //=.
-    { rewrite //= ?later_equivI iProp_unfold_equivI //=. iNext. by iRewrite "Hequiv_mut". }
+    { rewrite //= ?later_equivI //=. iNext. by iRewrite "Hequiv_mut". }
 Qed.
 
 
@@ -619,7 +600,7 @@ Proof.
   destruct (I !! i) as [((QsI&schI)&Qs_mutI)|] eqn:Hlookup; last first.
   {
     rewrite auth_both_validI.
-    iDestruct "Hval" as "(_&Hval&_)".
+    iDestruct "Hval" as "(Hval&_)".
     iDestruct "Hval" as (I') "Heq".
     rewrite gmap_equivI. iSpecialize ("Heq" $! i). rewrite lookup_fmap Hlookup //=.
     rewrite lookup_op lookup_singleton option_equivI.
@@ -694,7 +675,7 @@ Proof.
   destruct (vec_to_list Qs_mut1 !! j) as [Q0|] eqn:HeqQ;
   destruct (vec_to_list Qs_mut2 !! j) as [P0|] eqn:HeqP;
   rewrite ?HeqQ ?HeqP //=.
-  rewrite //= ?later_equivI iProp_unfold_equivI //=. iNext. by iRewrite "Hagree".
+  rewrite //= ?later_equivI //=. iNext. by iRewrite "Hagree".
 Qed.
 
 Lemma ownI_mut_combine {n m} lvl i q1 q2 (Qs_mut1: vec _ n) (Qs_mut2: vec _ m):

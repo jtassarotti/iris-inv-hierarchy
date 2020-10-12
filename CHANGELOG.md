@@ -33,8 +33,14 @@ With this release, we dropped support for Coq 8.9.
   only way to construct elements of `auth` is via the elements `●{q} a` and
   `◯ b`. The constructor `Auth`, and the projections `auth_auth_proj` and
   `auth_frag_proj` no longer exist. Lemmas that referred to these constructors
-  have been removed, in particular, `auth_included`, `auth_valid_discrete`,
-  and `auth_both_op`.
+  have been removed, in particular: `auth_equivI`, `auth_validI`,
+  `auth_included`, `auth_valid_discrete`, and `auth_both_op`.  For validity, use
+  `auth_auth_valid*`, `auth_frag_valid*`, or `auth_both_valid*` instead.
+* Rename `auth_update_core_id` into `auth_update_frac_alloc`.
+* Add the camera of discardable fractions `dfrac`. This is a generalization of
+  the normal fractional camera. See `theories/algebra/dfrac.v` for further information.
+* Rename `cmra_monotone_valid` into `cmra_morphism_valid` (this rename was
+  forgotten in !56).
 
 **Changes in `proofmode`:**
 
@@ -75,6 +81,13 @@ With this release, we dropped support for Coq 8.9.
   `saved_pred_alloc_cofinite`, `auth_alloc_strong`, `auth_alloc_cofinite`,
   `auth_alloc`.
 * Change `uPred_mono` to only require inclusion at the smaller step-index.
+* Put `iProp`/`iPreProp`-isomorphism into the `own` construction. This affects
+  clients that define higher-order ghost state constructions. Concretely, when
+  defining an `inG`, the functor no longer needs to be applied to `iPreProp`,
+  but should be applied to `iProp`. This avoids clients from having to push
+  through the `iProp`/`iPreProp`-isomorphism themselves, which is now handled
+  once and for all by the `own` construction.
+
 
 **Changes in `program_logic`:**
 
