@@ -205,7 +205,7 @@ Section lemmas.
     rewrite /gmap_view_auth /gmap_view_frag.
     rewrite view_both_valid. setoid_rewrite gmap_view_rel_lookup.
     split; intros Hm; split.
-    - apply (Hm 0).
+    - apply (Hm 0%nat).
     - apply equiv_dist=>n. apply Hm.
     - apply Hm.
     - revert n. apply equiv_dist. apply Hm.
@@ -235,6 +235,21 @@ Section lemmas.
       specialize (Hrel _ _ Hbf). destruct Hrel as (v' & ? & ? & Hm).
       eexists. do 2 (split; first done).
       rewrite lookup_insert_ne //.
+  Qed.
+
+  Lemma gmap_view_delete m k v :
+    gmap_view_auth m ⋅ gmap_view_frag k (DfracOwn 1) v ~~>
+    gmap_view_auth (delete k m).
+  Proof.
+    apply view_update_dealloc=>n bf Hrel j [df va] Hbf /=.
+    destruct (decide (j = k)) as [->|Hne].
+    - edestruct (Hrel k) as (v' & _ & Hdf & _).
+      { rewrite lookup_op Hbf lookup_singleton -Some_op. done. }
+      exfalso. apply: dfrac_full_exclusive. apply Hdf.
+    - edestruct (Hrel j) as (v' & ? & ? & Hm).
+      { rewrite lookup_op lookup_singleton_ne // Hbf. done. }
+      exists v'. do 2 (split; first done).
+      rewrite lookup_delete_ne //.
   Qed.
 
   Lemma gmap_view_update m k v v' :
@@ -291,7 +306,7 @@ Section lemmas.
   Qed.
 
   (** Typeclass instances *)
-  Global Instance gmap_view_frag_core_id k v : CoreId dq → CoreId (gmap_view_frag k dq v).
+  Global Instance gmap_view_frag_core_id k dq v : CoreId dq → CoreId (gmap_view_frag k dq v).
   Proof. apply _. Qed.
 
   Global Instance gmap_view_cmra_discrete : OfeDiscrete V → CmraDiscrete (gmap_viewR K V).
