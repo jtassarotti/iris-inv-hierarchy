@@ -344,7 +344,7 @@ Proof.
   iExists Q, Qmut. (* iSplit; first done. *)
   iAssert (invariant_unfold sch' (list_to_vec Q) ≡ invariant_unfold sch Ps)%I as "Hequiv".
   { case: (I' !! i)=> [[Q' Qmut']|] //=.
-    - iRewrite "HI" in "HvI". rewrite uPred.option_validI uPred.prod_validI agree_validI.
+    - iRewrite "HI" in "HvI". rewrite option_validI prod_validI agree_validI.
       iDestruct "HvI" as "(HvI&_)". simpl.
       iRewrite -"HvI" in "HI". rewrite -pair_op agree_idemp prod_equivI.
       iDestruct "HI" as "($&_)".
@@ -393,7 +393,7 @@ Proof.
   iExists Q, Qmut. (* iSplit; first done. *)
   iAssert (invariant_unfold sch' (list_to_vec Q) ≡ invariant_unfold sch Ps)%I as "Hequiv".
   { case: (I' !! i)=> [[Q' Qmut']|] //=.
-    - iRewrite "HI" in "HvI". rewrite uPred.option_validI uPred.prod_validI agree_validI.
+    - iRewrite "HI" in "HvI". rewrite option_validI prod_validI agree_validI.
       iDestruct "HvI" as "(HvI&_)". simpl.
       iRewrite -"HvI" in "HI". rewrite -pair_op agree_idemp prod_equivI.
       iDestruct "HI" as "($&_)".
@@ -403,7 +403,7 @@ Proof.
   iAssert (inv_mut_unfold q (list_to_vec Qmut) ≡ inv_mut_unfold q Ps_mut)%I as "Hequiv_mut".
   {
     case: (I' !! i)=> [[Q' Qmut']|] //=.
-    - iRewrite "HI" in "HvI". rewrite uPred.option_validI uPred.prod_validI agree_validI.
+    - iRewrite "HI" in "HvI". rewrite option_validI prod_validI agree_validI.
       iDestruct "HvI" as "(HvI&_)". simpl.
       iRewrite -"HvI" in "HI". rewrite -pair_op agree_idemp prod_equivI //=.
       iDestruct "HI" as "(_&Hi)".
@@ -547,9 +547,9 @@ Lemma gmap_validI_singleton `{Countable K} {A: cmraT} {M: ucmraT} (i: K) (a: A) 
   ✓ {[ i := a ]} ⊣⊢@{uPredI M} ✓ a.
 Proof.
   rewrite gmap_validI. iSplit.
-  - iIntros "H". iSpecialize ("H" $! i). rewrite lookup_singleton uPred.option_validI //=.
+  - iIntros "H". iSpecialize ("H" $! i). rewrite lookup_singleton option_validI //=.
   - iIntros "Ha". iIntros (j). destruct (decide (i = j)).
-    * subst. rewrite lookup_singleton uPred.option_validI //=.
+    * subst. rewrite lookup_singleton option_validI //=.
     * rewrite lookup_singleton_ne //=.
 Qed.
 
@@ -573,7 +573,7 @@ Proof.
     as (Qs Qs_mut HIlookup Hlen Hlen_mut) "(#HPQ&#HPQ_mut)".
   { iCombine "Hi Hi_mut" as "Hcombine".
     iDestruct (own_valid with "Hcombine") as "#Hval".
-    rewrite auth_frag_validI gmap_validI_singleton uPred.prod_validI /=.
+    rewrite auth_frag_validI gmap_validI_singleton prod_validI /=.
     rewrite agree_validI. iDestruct "Hval" as "(Hval_agree&_)".
     iRewrite -"Hval_agree" in "Hcombine".
     rewrite agree_idemp left_id. eauto.
@@ -668,9 +668,9 @@ Proof.
   iDestruct (own_valid with "Hown") as "Hval".
   rewrite auth_frag_validI gmap_validI.
   iSpecialize ("Hval" $! i).
-  rewrite lookup_singleton /= uPred.option_validI /= uPred.prod_validI /=.
+  rewrite lookup_singleton /= option_validI /= prod_validI /=.
   iDestruct "Hval" as "(_&Hval)".
-  rewrite uPred.option_validI /= uPred.prod_validI /=.
+  rewrite option_validI /= prod_validI /=.
   iDestruct "Hval" as "(_&Hagree)".
   rewrite agree_validI agree_equivI.
   (* XXX: this pattern is repeated a few times in other proofs. prove a lemma *)
@@ -700,11 +700,11 @@ Proof.
   iDestruct (own_valid with "Hown") as "#Hval".
   rewrite auth_frag_validI gmap_validI.
   iSpecialize ("Hval" $! i).
-  rewrite lookup_singleton /= uPred.option_validI /= uPred.prod_validI /=.
+  rewrite lookup_singleton /= option_validI /= prod_validI /=.
   iDestruct "Hval" as "(Hval1&Hval2)".
   rewrite agree_op_invI. iRewrite -"Hval1" in "Hown".
   rewrite agree_idemp.
-  rewrite /= uPred.option_validI /= uPred.prod_validI /=.
+  rewrite /= option_validI /= prod_validI /=.
   iDestruct "Hval2" as "(Hval2a&Hval2b)".
   rewrite agree_op_invI. iRewrite -"Hval2b" in "Hown".
   rewrite agree_idemp.
@@ -731,7 +731,7 @@ Proof.
     as (Qs' Qs_mut' HIlookup Hlen Hlen_mut) "(#HPQ&#HPQ_mut)".
   { iCombine "Hi Hi_mut" as "Hcombine".
     iDestruct (own_valid with "Hcombine") as "#Hval".
-    rewrite auth_frag_validI gmap_validI_singleton uPred.prod_validI /=.
+    rewrite auth_frag_validI gmap_validI_singleton prod_validI /=.
     rewrite agree_validI. iDestruct "Hval" as "(Hval_agree&_)".
     iRewrite -"Hval_agree" in "Hcombine".
     rewrite agree_idemp left_id. eauto.
