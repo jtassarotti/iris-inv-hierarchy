@@ -80,6 +80,11 @@ With this release, we dropped support for Coq 8.9.
   interface and factor it into a type class `BiPureForall`.
 * Add notation `¬ P` for `P → False` to `bi_scope`.
 
+**Changes in `bi`:**
+
+* Add big op lemmas `big_op{L,L2,M,M2,S}_intuitionistically_forall` and
+  `big_sepL2_forall`, `big_sepMS_forall`, `big_sepMS_impl`, and `big_sepMS_dup`.
+
 **Changes in `base_logic`:**
 
 * Add a `ghost_var` library that provides (fractional) ownership of a ghost
@@ -110,6 +115,12 @@ With this release, we dropped support for Coq 8.9.
 * Add an `mnat` library on top of `mnat_auth` that supports ghost state which is
   an authoritative, monotonically-increasing `nat` with a proposition giving a
   persistent lower bound. See `base_logic.lib.mnat` for further details.
+* Remove the `gen_heap` notations `l ↦ -` and `l ↦{q} -`. They were barely used
+  and looked very confusing in context: `l ↦ - ∗ P` looks like a magic wand.
+* Change `gen_inv_heap` notation `l ↦□ I` to `l ↦_I □`, so that `↦□` can be used
+  by `gen_heap`.
+* Strengthen `mapsto_valid_2` conclusion from `✓ (q1 + q2)%Qp` to
+  `⌜✓ (q1 + q2)%Qp ∧ v1 = v2⌝`.
 
 **Changes in `program_logic`:**
 
@@ -406,7 +417,7 @@ Spies, and Tej Chajed.  Thanks a lot to everyone involved!
 * Make lemma `Excl_included` a bi-implication.
 * Make `auth_update_core_id` work with any fraction of the authoritative
   element.
-* Add `min_nat`, a RA for natural numbers with `min` as the operation.
+* Add `min_nat`, an RA for natural numbers with `min` as the operation.
 * Add many missing `Proper`/non-expansiveness lemmas for maps and lists.
 * Add `list_singletonM_included` and `list_lookup_singletonM_{lt,gt}` lemmas
   about singletons in the list RA.

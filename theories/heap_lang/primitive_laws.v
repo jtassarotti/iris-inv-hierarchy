@@ -34,9 +34,6 @@ Notation "l ↦{ q } v" := (mapsto (L:=loc) (V:=option val) l q (Some v%V))
   (at level 20, q at level 50, format "l  ↦{ q }  v") : bi_scope.
 Notation "l ↦ v" := (mapsto (L:=loc) (V:=option val) l 1%Qp (Some v%V))
   (at level 20) : bi_scope.
-Notation "l ↦{ q } -" := (∃ v, l ↦{q} v)%I
-  (at level 20, q at level 50, format "l  ↦{ q }  -") : bi_scope.
-Notation "l ↦ -" := (l ↦{1} -)%I (at level 20) : bi_scope.
 
 (** Same for [gen_inv_heap], except that these are higher-order notations so to
 make setoid rewriting in the predicate [I] work we need actual definitions
@@ -53,8 +50,8 @@ Instance: Params (@inv_mapsto_own) 4 := {}.
 Instance: Params (@inv_mapsto) 3 := {}.
 
 Notation inv_heap_inv := (inv_heap_inv loc (option val)).
-Notation "l ↦□ I" := (inv_mapsto l I%stdpp%type)
-  (at level 20, format "l  ↦□  I") : bi_scope.
+Notation "l '↦_' I □" := (inv_mapsto l I%stdpp%type)
+  (at level 20, I at level 9, format "l  '↦_' I  '□'") : bi_scope.
 Notation "l ↦_ I v" := (inv_mapsto_own l v I%stdpp%type)
   (at level 20, I at level 9, format "l  ↦_ I  v") : bi_scope.
 
@@ -282,16 +279,11 @@ Qed.
 (** We need to adjust the [gen_heap] and [gen_inv_heap] lemmas because of our
 value type being [option val]. *)
 
-Global Instance ex_mapsto_fractional l : Fractional (λ q, l ↦{q} -)%I.
+Lemma mapsto_valid_2 l q1 q2 v1 v2 :
+  l ↦{q1} v1 -∗ l ↦{q2} v2 -∗ ⌜✓ (q1 + q2)%Qp ∧ v1 = v2⌝.
 Proof.
-  intros p q. iSplit.
-  - iDestruct 1 as (v) "[H1 H2]". iSplitL "H1"; eauto.
-  - iIntros "[H1 H2]". iDestruct "H1" as (v1) "H1". iDestruct "H2" as (v2) "H2".
-    iDestruct (mapsto_agree with "H1 H2") as %->. iExists v2. by iFrame.
+  iIntros "H1 H2". iDestruct (mapsto_valid_2 with "H1 H2") as %[? [=?]]. done.
 Qed.
-Global Instance ex_mapsto_as_fractional l q :
-  AsFractional (l ↦{q} -) (λ q, l ↦{q} -)%I q.
-Proof. split. done. apply _. Qed.
 
 Lemma mapsto_agree l q1 q2 v1 v2 : l ↦{q1} v1 -∗ l ↦{q2} v2 -∗ ⌜v1 = v2⌝.
 Proof. iIntros "H1 H2". iDestruct (mapsto_agree with "H1 H2") as %[=?]. done. Qed.
@@ -305,8 +297,6 @@ Qed.
 
 Lemma mapsto_valid l q v : l ↦{q} v -∗ ✓ q.
 Proof. apply mapsto_valid. Qed.
-Lemma mapsto_valid_2 l q1 q2 v1 v2 : l ↦{q1} v1 -∗ l ↦{q2} v2 -∗ ✓ (q1 + q2)%Qp.
-Proof. apply mapsto_valid_2. Qed.
 Lemma mapsto_mapsto_ne l1 l2 q1 q2 v1 v2 :
   ¬ ✓(q1 + q2)%Qp → l1 ↦{q1} v1 -∗ l2 ↦{q2} v2 -∗ ⌜l1 ≠ l2⌝.
 Proof. apply mapsto_mapsto_ne. Qed.
@@ -329,7 +319,7 @@ Lemma make_inv_mapsto l v (I : val → Prop) E :
   I v →
   inv_heap_inv -∗ l ↦ v ={E}=∗ l ↦_I v.
 Proof. iIntros (??) "#HI Hl". iApply make_inv_mapsto; done. Qed.
-Lemma inv_mapsto_own_inv l v I : l ↦_I v -∗ l ↦□ I.
+Lemma inv_mapsto_own_inv l v I : l ↦_I v -∗ l ↦_I □.
 Proof. apply inv_mapsto_own_inv. Qed.
 
 Lemma inv_mapsto_own_acc_strong E :
@@ -356,7 +346,7 @@ Qed.
 
 Lemma inv_mapsto_acc l I E :
   ↑inv_heapN ⊆ E →
-  inv_heap_inv -∗ l ↦□ I ={E, E ∖ ↑inv_heapN}=∗
+  inv_heap_inv -∗ l ↦_I □ ={E, E ∖ ↑inv_heapN}=∗
     ∃ v, ⌜I v⌝ ∗ l ↦ v ∗ (l ↦ v ={E ∖ ↑inv_heapN, E}=∗ ⌜True⌝).
 Proof.
   iIntros (?) "#Hinv Hl".

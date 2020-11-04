@@ -1587,4 +1587,5 @@ Global Instance limit_preserving_Persistent {A:ofeT} `{Cofe A} (Φ : A → PROP)
   NonExpansive Φ → LimitPreserving (λ x, Persistent (Φ x)).
 Proof. intros. apply limit_preserving_entails; solve_proper. Qed.
 End derived.
+
 End bi.
