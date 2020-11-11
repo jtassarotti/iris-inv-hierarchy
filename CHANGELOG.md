@@ -7,6 +7,9 @@ lemma.
 
 With this release, we dropped support for Coq 8.9.
 
+We also split Iris into multiple opam packages: `coq-iris` no longer contains
+HeapLang, which is now in a separate package `coq-iris-heap-lang`.
+
 **Changes in `algebra`:**
 
 * Rename `agree_op_inv'` to `to_agree_op_inv`,
@@ -53,6 +56,18 @@ With this release, we dropped support for Coq 8.9.
   equal to `✓ b`.
 * Add `mnat_auth`, a wrapper for `auth max_nat`. The result is an authoritative
   `nat` where a fragment is a lower bound whose ownership is persistent.
+* Change `*_valid` lemma statements involving fractions to use `Qp` addition and
+  inequality instead of RA composition and validity (also in `base_logic` and
+  the higher layers).
+
+**Changes in `bi`:**
+
+* Add big op lemmas `big_op{L,L2,M,M2,S}_intuitionistically_forall` and
+  `big_sepL2_forall`, `big_sepMS_forall`, `big_sepMS_impl`, and `big_sepMS_dup`.
+* Remove `bi.tactics` with tactics that predate the proofmode (and that have not
+  been working properly for quite some time).
+* Strengthen `persistent_sep_dup` to support propositions that are persistent
+  and either affine or absorbing.
 
 **Changes in `proofmode`:**
 
@@ -79,11 +94,6 @@ With this release, we dropped support for Coq 8.9.
 * Remove the laws `pure_forall_2 : (∀ a, ⌜ φ a ⌝) ⊢ ⌜ ∀ a, φ a ⌝` from the BI
   interface and factor it into a type class `BiPureForall`.
 * Add notation `¬ P` for `P → False` to `bi_scope`.
-
-**Changes in `bi`:**
-
-* Add big op lemmas `big_op{L,L2,M,M2,S}_intuitionistically_forall` and
-  `big_sepL2_forall`, `big_sepMS_forall`, `big_sepMS_impl`, and `big_sepMS_dup`.
 
 **Changes in `base_logic`:**
 
@@ -121,12 +131,22 @@ With this release, we dropped support for Coq 8.9.
   by `gen_heap`.
 * Strengthen `mapsto_valid_2` conclusion from `✓ (q1 + q2)%Qp` to
   `⌜✓ (q1 + q2)%Qp ∧ v1 = v2⌝`.
+* Change `gen_heap_init` to also return ownership of the points-to facts for the
+  initial heap.
+* Rename `mapsto_mapsto_ne` to `mapsto_frac_ne`, and add a simpler
+  `mapsto_ne` that does not require reasoning about fractions.
 
 **Changes in `program_logic`:**
 
 * `wp_strong_adequacy` now applies to an initial state with multiple
   threads instead of only a single thread. The derived adequacy lemmas
   are unchanged.
+
+**Changes in `heap_lang`:**
+
+* `wp_pures` now turns goals of the form `WP v {{ Φ }}` into `Φ v`.
+* Fix `wp_bind` in case of a NOP (i.e., when the given expression pattern is
+  already at the top level).
 
 The following `sed` script helps adjust your code to the renaming (on macOS,
 replace `sed` by `gsed`, installed via e.g. `brew install gnu-sed`).
@@ -144,6 +164,8 @@ s/\bauth_both_frac_valid\b/auth_both_frac_valid_discrete/g
 # gen_heap_ctx and proph_map_ctx
 s/\bgen_heap_ctx\b/gen_heap_interp/g
 s/\bproph_map_ctx\b/proph_map_interp/g
+# other gen_heap changes
+s/\bmapsto_mapsto_ne\b/mapsto_frac_ne/g
 EOF
 ```
 

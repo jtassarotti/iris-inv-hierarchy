@@ -33,7 +33,7 @@ constructor).
 ## Notation
 
 Notation for writing HeapLang terms is defined in
-[`notation.v`](theories/heap_lang/notation.v).  There are two scopes, `%E` for
+[`notation.v`](../theories/heap_lang/notation.v).  There are two scopes, `%E` for
 expressions and `%V` for values.  For example, `(a, b)%E` is an expression pair
 and `(a, b)%V` a value pair.  The `e` of a `WP e {{ Q }}` is implicitly in `%E`
 scope.
@@ -60,6 +60,8 @@ Tactics to take one or more pure program steps:
   well as unary and binary arithmetic operators.
 - `wp_pures`: Perform as many pure reduction steps as possible. This
   tactic will **not** reduce lambdas/recs that are hidden behind a definition.
+  If the computation reaches a value, the `WP` will be entirely removed and the
+  postcondition becomes the new goal.
 - `wp_rec`, `wp_lam`: Perform a beta reduction.  Unlike `wp_pure`, this will
   also reduce lambdas that are hidden behind a definition.
 - `wp_let`, `wp_seq`: Reduce a let-binding or a sequential composition.
