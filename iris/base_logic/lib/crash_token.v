@@ -44,7 +44,7 @@ Proof. rewrite /C C_aux.(seal_eq). apply _. Qed.
 Global Instance C_persistent : Persistent C.
 Proof. rewrite /C C_aux.(seal_eq). apply _. Qed.
 
-Global Instance NC_timeless : Timeless (NC q).
+Global Instance NC_timeless q : Timeless (NC q).
 Proof. rewrite /NC NC_aux.(seal_eq). apply _. Qed.
 
 Lemma NC_split q:

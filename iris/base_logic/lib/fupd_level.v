@@ -342,9 +342,9 @@ Implicit Types E : coPset.
 Implicit Types j k : nat.
 Implicit Types mj : option nat.
 
-Global Instance fupd_split_level_ne E1 E2 k: NonExpansive (uPred_fupd_split_level E1 E2 k mj).
+Global Instance fupd_split_level_ne E1 E2 k mj : NonExpansive (uPred_fupd_split_level E1 E2 k mj).
 Proof. rewrite uPred_fupd_split_level_eq. solve_proper. Qed.
-Global Instance fupd_level_ne E1 E2 k: NonExpansive (uPred_fupd_level E1 E2 k).
+Global Instance fupd_level_ne E1 E2 k : NonExpansive (uPred_fupd_level E1 E2 k).
 Proof. rewrite uPred_fupd_level_eq. solve_proper. Qed.
 
 Lemma fupd_split_level_intro_mask E1 E2 k mj P : E2 ⊆ E1 → P ⊢ |k,mj={E1,E2}=> |k,mj={E2,E1}=> P.
@@ -791,10 +791,10 @@ Proof.
     fupd_split_level_frame_r wand_elim_r fupd_split_level_trans.
 Qed.
 
-Global Instance elim_modal_fupd_level_fupd p E1 E2 k P Q :
+Global Instance elim_modal_fupd_level_fupd p E1 E2 E3 k P Q :
   ElimModal True p false (|(S k)={E1,E2}=> P) P (|={E1,E3}=> Q) (|={E2,E3}=> Q).
 Proof.
-  rewrite /ElimModal => ??. rewrite (fupd_level_fupd) intuitionistically_if_elim /=.
+  rewrite /ElimModal=>?. rewrite (fupd_level_fupd) intuitionistically_if_elim /=.
   iIntros "(>H&H2)". iApply ("H2" with "[$]").
 Qed.
 
