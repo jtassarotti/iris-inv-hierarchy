@@ -280,7 +280,7 @@ Proof.
     ncfupd_frame_r wand_elim_r ncfupd_trans.
 Qed.
 
-Global Instance elim_modal_fupd_ncfupd p E1 E2 P Q :
+Global Instance elim_modal_fupd_ncfupd p E1 E2 E3 P Q :
   ElimModal True p false (|={E1,E2}=> P) P (|NC={E1,E3}=> Q) (|NC={E2,E3}=> Q).
 Proof.
   rewrite /ElimModal => ??. rewrite (fupd_ncfupd _ _) intuitionistically_if_elim
