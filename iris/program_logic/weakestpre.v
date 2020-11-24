@@ -250,12 +250,10 @@ Proof. intros <-. by apply wp_value_inv'. Qed.
 Lemma wp_frame_l s E e Φ R : R ∗ WP e @ s; E {{ Φ }} ⊢ WP e @ s; E {{ v, R ∗ Φ v }}.
 Proof.
   iIntros "[? H]". iApply (wp_strong_mono with "H"); auto with iFrame.
-  iIntros (?) "H !>". iFrame.
 Qed.
 Lemma wp_frame_r s E e Φ R : WP e @ s; E {{ Φ }} ∗ R ⊢ WP e @ s; E {{ v, Φ v ∗ R }}.
 Proof.
   iIntros "[H ?]". iApply (wp_strong_mono with "H"); auto with iFrame.
-  iIntros (?) "H !>". iFrame.
 Qed.
 
 Lemma wp_frame_step_l s E1 E2 e Φ R :

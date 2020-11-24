@@ -254,12 +254,10 @@ Proof. intros <-. by apply twp_value_inv'. Qed.
 Lemma twp_frame_l s E e Φ R : R ∗ WP e @ s; E [{ Φ }] -∗ WP e @ s; E [{ v, R ∗ Φ v }].
 Proof.
   iIntros "[? H]". iApply (twp_strong_mono with "H"); auto with iFrame.
-  iIntros (?) "H !>". iFrame.
 Qed.
 Lemma twp_frame_r s E e Φ R : WP e @ s; E [{ Φ }] ∗ R -∗ WP e @ s; E [{ v, Φ v ∗ R }].
 Proof.
   iIntros "[H ?]". iApply (twp_strong_mono with "H"); auto with iFrame.
-  iIntros (?) "H !>". iFrame.
 Qed.
 
 Lemma twp_wand s E e Φ Ψ :
