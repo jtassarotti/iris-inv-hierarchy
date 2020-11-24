@@ -468,3 +468,5 @@ Proof.
   iIntros (Hinv Hcrash). iPoseProof (Hiter Hinv Hcrash) as "Hiter".
   iApply (step_ncfupdN_wand with "Hiter"). by iApply ncfupd_mask_weaken.
 Qed.
+
+Hint Extern 1 (environments.envs_entails _ (|NC={_}=> _)) => iModIntro : core.
