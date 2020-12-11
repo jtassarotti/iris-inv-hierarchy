@@ -30,7 +30,7 @@ Importing Iris has some side effects as the library sets some global options.
 
 This version is known to compile with:
 
- - Coq 8.10.2 / 8.11.2 / 8.12.0
+ - Coq 8.10.2 / 8.11.2 / 8.12.1
  - A development version of [std++](https://gitlab.mpi-sws.org/iris/stdpp)
 
 If you need to work with Coq 8.7 or Coq 8.8, please check out the
@@ -57,12 +57,26 @@ Either way, you can now install Iris:
 - `opam install coq-iris-heap-lang` will additionally install HeapLang, the
   default language used by various Iris projects.
 
-To fetch updates later, run `opam update && opam upgrade`.  However, notice that
-we do not guarantee backwards-compatibility, so upgrading Iris may break your
+To fetch updates later, run `opam update && opam upgrade`.
+
+#### Be notified of breaking changes
+
+We do not guarantee backwards-compatibility, so upgrading Iris may break your
 Iris-using developments.  If you want to be notified of breaking changes, please
 let us know your account name on the
 [MPI-SWS GitLab](https://gitlab.mpi-sws.org/) so we can add you to the
 notification group.
+
+#### Use of Iris in submitted artifacts
+
+If you are using Iris as part of an artifact submitted for publication with a
+paper, we recommend you make the artifact self-contained so that it can be built
+in the future without relying in any other server to still exist. However, if
+that is for some reason not possible, and if you are using opam to obtain the
+right version of Iris and you used a `dev.*` version, please let us know which
+exact Iris version you artifact relies on so that we can
+[add it to this wiki page](https://gitlab.mpi-sws.org/iris/iris/-/wikis/Pinned-Iris-package-versions)
+and avoid removing it from our opam repository in the future.
 
 ### Working *on* Iris
 
@@ -71,36 +85,38 @@ the Iris development itself.
 
 ## Directory Structure
 
-* The folder [algebra](theories/algebra) contains the COFE and CMRA
+* The folder [prelude](iris/prelude) contains modules imported everywhere in
+  Iris.
+* The folder [algebra](iris/algebra) contains the COFE and CMRA
   constructions as well as the solver for recursive domain equations.
-* The folder [base_logic](theories/base_logic) defines the Iris base logic and
+* The folder [base_logic](iris/base_logic) defines the Iris base logic and
   the primitive connectives.  It also contains derived constructions that are
   entirely independent of the choice of resources.
-  * The subfolder [lib](theories/base_logic/lib) contains some generally useful
+  * The subfolder [lib](iris/base_logic/lib) contains some generally useful
     derived constructions.  Most importantly, it defines composable
     dynamic resources and ownership of them; the other constructions depend
     on this setup.
-* The folder [program_logic](theories/program_logic) specializes the base logic
+* The folder [program_logic](iris/program_logic) specializes the base logic
   to build Iris, the program logic.   This includes weakest preconditions that
   are defined for any language satisfying some generic axioms, and some derived
   constructions that work for any such language.
-* The folder [bi](theories/bi) contains the BI++ laws, as well as derived
+* The folder [bi](iris/bi) contains the BI++ laws, as well as derived
   connectives, laws and constructions that are applicable for general BIS.
-* The folder [proofmode](theories/proofmode) contains
+* The folder [proofmode](iris/proofmode) contains
   [MoSeL](http://iris-project.org/mosel/), which extends Coq with contexts for
   intuitionistic and spatial BI++ assertions. It also contains tactics for
   interactive proofs. Documentation can be found in
   [proof_mode.md](docs/proof_mode.md).
-* The folder [heap_lang](theories/heap_lang) defines the ML-like concurrent heap
+* The folder [heap_lang](iris_heap_lang) defines the ML-like concurrent heap
   language
-  * The subfolder [lib](theories/heap_lang/lib) contains a few derived
+  * The subfolder [lib](iris_heap_lang/lib) contains a few derived
     constructions within this language, e.g., parallel composition.
     For more examples of using Iris and heap_lang, have a look at the
     [Iris Examples](https://gitlab.mpi-sws.org/iris/examples).
-* The folder [tests](theories/tests) contains modules we use to test our
+* The folder [tests](tests) contains modules we use to test our
   infrastructure. Users of the Iris Coq library should *not* depend on these
   modules; they may change or disappear without any notice.
-* The folder [si_logic](theories/si_logic) defines a "plain" step-indexed logic
+* The folder [si_logic](iris/si_logic) defines a "plain" step-indexed logic
   and shows that it is an instance of the BI interface.
 
 ## Case Studies

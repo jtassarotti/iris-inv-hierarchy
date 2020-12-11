@@ -10,7 +10,7 @@ Set Default Proof Using "Type*".
 bundle these operational type classes with the laws. *)
 Class BUpd (PROP : Type) : Type := bupd : PROP → PROP.
 Instance : Params (@bupd) 2 := {}.
-Hint Mode BUpd ! : typeclass_instances.
+Global Hint Mode BUpd ! : typeclass_instances.
 Arguments bupd {_}%type_scope {_} _%bi_scope.
 
 Notation "|==> Q" := (bupd Q) : bi_scope.
@@ -19,7 +19,7 @@ Notation "P ==∗ Q" := (P -∗ |==> Q)%I : bi_scope.
 
 Class FUpd (PROP : Type) : Type := fupd : coPset → coPset → PROP → PROP.
 Instance: Params (@fupd) 4 := {}.
-Hint Mode FUpd ! : typeclass_instances.
+Global Hint Mode FUpd ! : typeclass_instances.
 Arguments fupd {_}%type_scope {_} _ _ _%bi_scope.
 
 Notation "|={ E1 , E2 }=> Q" := (fupd E1 E2 Q) : bi_scope.
@@ -82,23 +82,23 @@ Class BiBUpd (PROP : bi) := {
   bi_bupd_bupd :> BUpd PROP;
   bi_bupd_mixin : BiBUpdMixin PROP bi_bupd_bupd;
 }.
-Hint Mode BiBUpd ! : typeclass_instances.
+Global Hint Mode BiBUpd ! : typeclass_instances.
 Arguments bi_bupd_bupd : simpl never.
 
 Class BiFUpd (PROP : bi) := {
   bi_fupd_fupd :> FUpd PROP;
   bi_fupd_mixin : BiFUpdMixin PROP bi_fupd_fupd;
 }.
-Hint Mode BiFUpd ! : typeclass_instances.
+Global Hint Mode BiFUpd ! : typeclass_instances.
 Arguments bi_fupd_fupd : simpl never.
 
 Class BiBUpdFUpd (PROP : bi) `{BiBUpd PROP, BiFUpd PROP} :=
   bupd_fupd E (P : PROP) : (|==> P) ={E}=∗ P.
-Hint Mode BiBUpdFUpd ! - - : typeclass_instances.
+Global Hint Mode BiBUpdFUpd ! - - : typeclass_instances.
 
 Class BiBUpdPlainly (PROP : bi) `{!BiBUpd PROP, !BiPlainly PROP} :=
   bupd_plainly (P : PROP) : (|==> ■ P) -∗ P.
-Hint Mode BiBUpdPlainly ! - - : typeclass_instances.
+Global Hint Mode BiBUpdPlainly ! - - : typeclass_instances.
 
 (** These rules for the interaction between the [■] and [|={E1,E2=>] modalities
 only make sense for affine logics. From the axioms below, one could derive
@@ -123,7 +123,7 @@ Class BiFUpdPlainly (PROP : bi) `{!BiFUpd PROP, !BiPlainly PROP} := {
   fupd_plainly_forall_2 E {A} (Φ : A → PROP) :
     (∀ x, |={E}=> ■ Φ x) ⊢ |={E}=> ∀ x, Φ x
 }.
-Hint Mode BiBUpdFUpd ! - - : typeclass_instances.
+Global Hint Mode BiBUpdFUpd ! - - : typeclass_instances.
 
 Section bupd_laws.
   Context `{BiBUpd PROP}.
@@ -184,6 +184,12 @@ Section bupd_derived.
   Proof. by rewrite bupd_frame_r wand_elim_r. Qed.
   Lemma bupd_sep P Q : (|==> P) ∗ (|==> Q) ==∗ P ∗ Q.
   Proof. by rewrite bupd_frame_r bupd_frame_l bupd_trans. Qed.
+  Lemma bupd_idemp P : (|==> |==> P) ⊣⊢ |==> P.
+  Proof.
+    apply: anti_symm.
+    - apply bupd_trans.
+    - apply bupd_intro.
+  Qed.
 
   Global Instance bupd_homomorphism :
     MonoidHomomorphism bi_sep bi_sep (flip (⊢)) (bupd (PROP:=PROP)).
@@ -245,6 +251,12 @@ Section fupd_derived.
   Proof. exact: fupd_intro_mask. Qed.
   Lemma fupd_except_0 E1 E2 P : (|={E1,E2}=> ◇ P) ={E1,E2}=∗ P.
   Proof. by rewrite {1}(fupd_intro E2 P) except_0_fupd fupd_trans. Qed.
+  Lemma fupd_idemp E P : (|={E}=> |={E}=> P) ⊣⊢ |={E}=> P.
+  Proof.
+    apply: anti_symm.
+    - apply fupd_trans.
+    - apply fupd_intro.
+  Qed.
 
   Lemma fupd_frame_l E1 E2 R Q : (R ∗ |={E1,E2}=> Q) ={E1,E2}=∗ R ∗ Q.
   Proof. rewrite !(comm _ R); apply fupd_frame_r. Qed.

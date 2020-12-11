@@ -92,10 +92,15 @@ Proof.
   by repeat (f_contractive || f_equiv).
 Qed.
 
-Lemma wp_value' s E Φ v : Φ v ⊢ WP of_val v @ s; E {{ Φ }}.
-Proof. iIntros "HΦ". rewrite wp_unfold /wp_pre to_of_val. iIntros; by iFrame. Qed.
-Lemma wp_value_inv' s E Φ v : WP of_val v @ s; E {{ Φ }} -∗ |NC={E}=> Φ v.
-Proof. by rewrite wp_unfold /wp_pre to_of_val ncfupd_eq /ncfupd_def. Qed.
+Lemma wp_value_fupd' s E Φ v : WP of_val v @ s; E {{ Φ }} ⊣⊢ |NC={E}=> Φ v.
+Proof.
+  rewrite wp_unfold /wp_pre to_of_val.
+  rewrite ncfupd_eq /ncfupd_def.
+  auto.
+Qed.
+
+Lemma wp_value_fupd'_1 s E Φ v : WP of_val v @ s; E {{ Φ }} ⊢ |NC={E}=> Φ v.
+Proof. rewrite wp_value_fupd' //. Qed.
 
 Lemma wp_strong_mono s1 s2 E1 E2 e Φ Ψ :
   s1 ⊑ s2 → E1 ⊆ E2 →
@@ -157,11 +162,11 @@ Proof.
     + iMod ("H" $! _ _ [] with "[$] [$]") as "[H _]". iDestruct "H" as %(? & ? & ? & ? & ?).
       by edestruct (atomic _ _ _ _ _ Hstep).
   - destruct (atomic _ _ _ _ _ Hstep) as [v <-%of_to_val].
-    iPoseProof (wp_value_inv' with "H") as "H".
+    iPoseProof (wp_value_fupd'_1 with "H") as "H".
     rewrite ncfupd_eq /ncfupd_def.
     iMod ("H" with "[$]") as "(H&HNC)".
     iMod ("H" with "[$]") as "(?&HNC)".
-    iModIntro. iFrame "Hσ Hefs". iFrame. by iApply wp_value'.
+    iModIntro. iFrame "Hσ Hefs". iFrame. by iApply wp_value_fupd'.
 Qed.
 Lemma wp_atomic s E1 E2 e Φ `{!Atomic (stuckness_to_atomicity s) e} :
   (|={E1,E2}=> WP e @ s; E2 {{ v, |={E2,E1}=> Φ v }}) ⊢ WP e @ s; E1 {{ Φ }}.
@@ -237,15 +242,12 @@ Global Instance wp_flip_mono' s E e :
   Proper (pointwise_relation _ (flip (⊢)) ==> (flip (⊢))) (wp (PROP:=iProp Σ) s E e).
 Proof. by intros Φ Φ' ?; apply wp_mono. Qed.
 
+Lemma wp_value_fupd s E Φ e v : IntoVal e v → WP e @ s; E {{ Φ }} ⊣⊢ |NC={E}=> Φ v.
+Proof. intros <-. by apply wp_value_fupd'. Qed.
+Lemma wp_value' s E Φ v : Φ v ⊢ WP (of_val v) @ s; E {{ Φ }}.
+Proof. rewrite wp_value_fupd'. auto. Qed.
 Lemma wp_value s E Φ e v : IntoVal e v → Φ v ⊢ WP e @ s; E {{ Φ }}.
-Proof. intros <-. by apply wp_value'. Qed.
-Lemma wp_value_fupd' s E Φ v : (|={E}=> Φ v) ⊢ WP of_val v @ s; E {{ Φ }}.
-Proof. intros. by rewrite -wp_fupd -wp_value'. Qed.
-Lemma wp_value_fupd s E Φ e v `{!IntoVal e v} :
-  (|={E}=> Φ v) ⊢ WP e @ s; E {{ Φ }}.
-Proof. intros. rewrite -wp_fupd -wp_value //. Qed.
-Lemma wp_value_inv s E Φ e v : IntoVal e v → WP e @ s; E {{ Φ }} -∗ |NC={E}=> Φ v.
-Proof. intros <-. by apply wp_value_inv'. Qed.
+Proof. intros <-. apply wp_value'. Qed.
 
 Lemma wp_frame_l s E e Φ R : R ∗ WP e @ s; E {{ Φ }} ⊢ WP e @ s; E {{ v, R ∗ Φ v }}.
 Proof.

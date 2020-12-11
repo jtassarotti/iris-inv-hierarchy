@@ -469,4 +469,4 @@ Proof.
   iApply (step_ncfupdN_wand with "Hiter"). by iApply ncfupd_mask_weaken.
 Qed.
 
-Hint Extern 1 (environments.envs_entails _ (|NC={_}=> _)) => iModIntro : core.
+Global Hint Extern 1 (environments.envs_entails _ (|NC={_}=> _)) => iModIntro : core.

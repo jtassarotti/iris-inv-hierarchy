@@ -35,6 +35,8 @@ Lemma tac_wp_pure `{!heapG Σ} Δ Δ' s E K e1 e2 φ n Φ :
   envs_entails Δ (WP (fill K e1) @ s; E {{ Φ }}).
 Proof.
   rewrite envs_entails_eq=> ??? HΔ'. rewrite into_laterN_env_sound /=.
+  (* We want [pure_exec_fill] to be available to TC search locally. *)
+  pose proof @pure_exec_fill.
   rewrite HΔ' -lifting.wp_pure_step_later //.
 Qed.
 Lemma tac_twp_pure `{!heapG Σ} Δ s E K e1 e2 φ n Φ :
@@ -43,20 +45,47 @@ Lemma tac_twp_pure `{!heapG Σ} Δ s E K e1 e2 φ n Φ :
   envs_entails Δ (WP (fill K e2) @ s; E [{ Φ }]) →
   envs_entails Δ (WP (fill K e1) @ s; E [{ Φ }]).
 Proof.
-  rewrite envs_entails_eq=> ?? ->. rewrite -total_lifting.twp_pure_step //.
+  rewrite envs_entails_eq=> ?? ->.
+  (* We want [pure_exec_fill] to be available to TC search locally. *)
+  pose proof @pure_exec_fill.
+  rewrite -total_lifting.twp_pure_step //.
 Qed.
 
-Lemma tac_wp_value `{!heapG Σ} Δ s E Φ v :
+Lemma tac_wp_value_nofupd `{!heapG Σ} Δ s E Φ v :
   envs_entails Δ (Φ v) → envs_entails Δ (WP (Val v) @ s; E {{ Φ }}).
 Proof. rewrite envs_entails_eq=> ->. by apply wp_value. Qed.
-Lemma tac_twp_value `{!heapG Σ} Δ s E Φ v :
+Lemma tac_twp_value_nofupd `{!heapG Σ} Δ s E Φ v :
   envs_entails Δ (Φ v) → envs_entails Δ (WP (Val v) @ s; E [{ Φ }]).
 Proof. rewrite envs_entails_eq=> ->. by apply twp_value. Qed.
 
+Lemma tac_wp_value `{!heapG Σ} Δ s E (Φ : val → iPropI Σ) v :
+  envs_entails Δ (|NC={E}=> Φ v) → envs_entails Δ (WP (Val v) @ s; E {{ Φ }}).
+Proof. rewrite envs_entails_eq=> ->. by rewrite wp_value_fupd. Qed.
+Lemma tac_twp_value `{!heapG Σ} Δ s E (Φ : val → iPropI Σ) v :
+  envs_entails Δ (|NC={E}=> Φ v) → envs_entails Δ (WP (Val v) @ s; E [{ Φ }]).
+Proof. rewrite envs_entails_eq=> ->. by rewrite twp_value_fupd. Qed.
+
 Ltac wp_expr_simpl := wp_expr_eval simpl.
 
+(** Simplify the goal if it is [WP] of a value.
+  If the postcondition already allows a fupd, do not add a second one.
+  But otherwise, *do* add a fupd. This ensures that all the lemmas applied
+  here are bidirectional, so we never will make a goal unprovable. *)
 Ltac wp_value_head :=
-  first [eapply tac_wp_value | eapply tac_twp_value].
+  lazymatch goal with
+  | |- envs_entails _ (wp ?s ?E (Val _) (λ _, fupd ?E _ _)) =>
+      eapply tac_wp_value_nofupd
+  | |- envs_entails _ (wp ?s ?E (Val _) (λ _, wp _ ?E _ _)) =>
+      eapply tac_wp_value_nofupd
+  | |- envs_entails _ (wp ?s ?E (Val _) _) =>
+      eapply tac_wp_value
+  | |- envs_entails _ (twp ?s ?E (Val _) (λ _, fupd ?E _ _)) =>
+      eapply tac_twp_value_nofupd
+  | |- envs_entails _ (twp ?s ?E (Val _) (λ _, twp _ ?E _ _)) =>
+      eapply tac_twp_value_nofupd
+  | |- envs_entails _ (twp ?s ?E (Val _) _) =>
+      eapply tac_twp_value
+  end.
 
 Ltac wp_finish :=
   wp_expr_simpl;      (* simplify occurences of subst/fill *)
@@ -86,7 +115,8 @@ Tactic Notation "wp_pure" open_constr(efoc) :=
       unify e' efoc;
       eapply (tac_wp_pure _ _ _ _ K e');
       [iSolveTC                       (* PureExec *)
-      |try solve_vals_compare_safe    (* The pure condition for PureExec -- handles trivial goals, including [vals_compare_safe] *)
+      |try solve_vals_compare_safe    (* The pure condition for PureExec --
+         handles trivial goals, including [vals_compare_safe] *)
       |iSolveTC                       (* IntoLaters *)
       |wp_finish                      (* new goal *)
       ])

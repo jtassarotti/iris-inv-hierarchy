@@ -12,7 +12,7 @@ Implicit Types e : expr Λ.
 Definition twptp_pre (twptp : list (expr Λ) → iProp Σ)
     (t1 : list (expr Λ)) : iProp Σ :=
   (∀ t2 σ1 κ κs σ2 n, ⌜step (t1,σ1) κ (t2,σ2)⌝ -∗
-    state_interp σ1 κs n ={⊤}=∗ ∃ n', ⌜κ = []⌝ ∗ state_interp σ2 κs n' ∗ twptp t2)%I.
+    state_interp σ1 κs n -∗ |NC={⊤}=> ∃ n', ⌜κ = []⌝ ∗ state_interp σ2 κs n' ∗ twptp t2)%I.
 
 Lemma twptp_pre_mono (twptp1 twptp2 : list (expr Λ) → iProp Σ) :
   ⊢ <pers> (∀ t, twptp1 t -∗ twptp2 t) →
@@ -103,7 +103,7 @@ Proof.
 Qed.
 
 Lemma twptp_total n σ t :
-  state_interp σ [] n -∗ twptp t ={⊤}=∗ ▷ ⌜sn erased_step (t, σ)⌝.
+  state_interp σ [] n -∗ twptp t -∗ |NC={⊤}=> ▷ ⌜sn erased_step (t, σ)⌝.
 Proof.
   iIntros "Hσ Ht". iRevert (σ n) "Hσ". iRevert (t) "Ht".
   iApply twptp_ind; iIntros "!>" (t) "IH"; iIntros (σ n) "Hσ".
@@ -114,18 +114,18 @@ Proof.
 Qed.
 End adequacy.
 
-Theorem twp_total Σ Λ `{!invPreG Σ} s e σ Φ :
-  (∀ `{Hinv : !invG Σ},
-     ⊢ |={⊤}=> ∃
+Theorem twp_total Σ Λ `{!invPreG Σ} `{!crashPreG Σ} s e σ Φ :
+  (∀ `{Hinv : !invG Σ} `{Hcrash: !crashG Σ},
+     ⊢ |NC={⊤}=> ∃
          (stateI : state Λ → list (observation Λ) → nat → iProp Σ)
          (fork_post : val Λ → iProp Σ),
-       let _ : irisG Λ Σ := IrisG _ _ Hinv stateI fork_post in
+       let _ : irisG Λ Σ := IrisG _ _ Hinv _ stateI fork_post in
        stateI σ [] 0 ∗ WP e @ s; ⊤ [{ Φ }]) →
   sn erased_step ([e], σ). (* i.e. ([e], σ) is strongly normalizing *)
 Proof.
   intros Hwp. apply (soundness (M:=iResUR Σ) _  1); simpl.
-  apply (fupd_plain_soundness ⊤ ⊤ _)=> Hinv.
+  apply (ncfupd_plain_soundness ⊤ ⊤ _)=> Hinv Hcrash.
   iMod (Hwp) as (stateI fork_post) "[Hσ H]".
-  iApply (@twptp_total _ _ (IrisG _ _ Hinv stateI fork_post) with "Hσ").
-  by iApply (@twp_twptp _ _ (IrisG _ _ Hinv stateI fork_post)).
+  iApply (@twptp_total _ _ (IrisG _ _ Hinv _ stateI fork_post) with "Hσ").
+  by iApply (@twp_twptp _ _ (IrisG _ _ Hinv _ stateI fork_post)).
 Qed.

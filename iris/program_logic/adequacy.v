@@ -113,6 +113,7 @@ Proof.
     move: He' => /(elem_of_list_split _ _)[?[?->]].
     iDestruct (big_sepL2_app_inv_l with "Ht") as (Φs1 Φs2 ?) "[? Hwp]".
     iDestruct (big_sepL2_cons_inv_l with "Hwp") as (Φ Φs3 ->) "[Hwp ?]".
+
     iPoseProof (wp_not_stuck with "Hσ Hwp") as "H"; auto.
     rewrite ncfupd_eq. by iMod ("H" with "[$]") as "($&_)".
   }
@@ -124,7 +125,7 @@ Proof.
   iApply (big_sepL2_mono_with_fupd_inv with "HNC Hwp").
   iIntros (? e Φ ??) "(HNC&Hwp)".
   destruct (to_val e) as [v2|] eqn:He2'.
-  - apply of_to_val in He2' as <-. iPoseProof (wp_value_inv') as "H".
+  - apply of_to_val in He2' as <-. iPoseProof (wp_value_fupd'_1) as "H".
     rewrite ncfupd_eq /ncfupd_def. by iMod ("H" with "[$] [$]") as "($&$)".
   - iFrame. eauto.
 Qed.

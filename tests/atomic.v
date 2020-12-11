@@ -1,6 +1,6 @@
 From iris.proofmode Require Import tactics.
 From iris.program_logic Require Export atomic.
-From iris.heap_lang Require Import proofmode notation atomic_heap.
+From iris.heap_lang Require Import proofmode notation lib.atomic_heap.
 Set Default Proof Using "Type".
 
 Section tests.

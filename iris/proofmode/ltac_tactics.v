@@ -1419,7 +1419,9 @@ Local Ltac string_to_ident s :=
   end.
 
 (** * Basic destruct tactic *)
-Local Ltac iDestructHypGo Hz pat :=
+
+(** [pat0] is the unparsed pattern, and is only used in error messages *)
+Local Ltac iDestructHypGo Hz pat0 pat :=
   lazymatch pat with
   | IFresh =>
      lazymatch Hz with
@@ -1430,20 +1432,38 @@ Local Ltac iDestructHypGo Hz pat :=
   | IFrame => iFrameHyp Hz
   | IIdent ?y => iRename Hz into y
   | IList [[]] => iExFalso; iExact Hz
-  | IList [[?pat1; IDrop]] => iAndDestructChoice Hz as Left Hz; iDestructHypGo Hz pat1
-  | IList [[IDrop; ?pat2]] => iAndDestructChoice Hz as Right Hz; iDestructHypGo Hz pat2
+
+  (* conjunctive patterns like [H1 H2] *)
+  | IList [[?pat1; IDrop]] =>
+     iAndDestructChoice Hz as Left Hz;
+     iDestructHypGo Hz pat0 pat1
+  | IList [[IDrop; ?pat2]] =>
+     iAndDestructChoice Hz as Right Hz;
+     iDestructHypGo Hz pat0 pat2
   | IList [[?pat1; ?pat2]] =>
-     let Hy := iFresh in iAndDestruct Hz as Hz Hy; iDestructHypGo Hz pat1; iDestructHypGo Hy pat2
-  | IList [[?pat1];[?pat2]] => iOrDestruct Hz as Hz Hz; [iDestructHypGo Hz pat1|iDestructHypGo Hz pat2]
+     let Hy := iFresh in iAndDestruct Hz as Hz Hy;
+     iDestructHypGo Hz pat0 pat1; iDestructHypGo Hy pat0 pat2
+  | IList [_ :: _ :: _] => fail "iDestruct:" pat0 "has too many conjuncts"
+  | IList [[_]] => fail "iDestruct:" pat0 "has just a single conjunct"
+
+  (* disjunctive patterns like [H1|H2] *)
+  | IList [[?pat1];[?pat2]] =>
+     iOrDestruct Hz as Hz Hz;
+     [iDestructHypGo Hz pat0 pat1|iDestructHypGo Hz pat0 pat2]
+  (* this matches a list of three or more disjunctions [H1|H2|H3] *)
+  | IList (_ :: _ :: _ :: _) => fail "iDestruct:" pat0 "has too many disjuncts"
+  (* the above patterns don't match [H1 H2|H3] *)
+  | IList [_;_] => fail "iDestruct: in" pat0 "a disjunct has multiple patterns"
+
   | IPure IGallinaAnon => iPure Hz as ?
   | IPure (IGallinaNamed ?s) => let x := string_to_ident s in
                                 iPure Hz as x
   | IRewrite Right => iPure Hz as ->
   | IRewrite Left => iPure Hz as <-
-  | IIntuitionistic ?pat => iIntuitionistic Hz; iDestructHypGo Hz pat
-  | ISpatial ?pat => iSpatial Hz; iDestructHypGo Hz pat
-  | IModalElim ?pat => iModCore Hz; iDestructHypGo Hz pat
-  | _ => fail "iDestruct:" pat "invalid"
+  | IIntuitionistic ?pat => iIntuitionistic Hz; iDestructHypGo Hz pat0 pat
+  | ISpatial ?pat => iSpatial Hz; iDestructHypGo Hz pat0 pat
+  | IModalElim ?pat => iModCore Hz; iDestructHypGo Hz pat0 pat
+  | _ => fail "iDestruct:" pat0 "is not supported due to" pat
   end.
 Local Ltac iDestructHypFindPat Hgo pat found pats :=
   lazymatch pats with
@@ -1457,7 +1477,7 @@ Local Ltac iDestructHypFindPat Hgo pat found pats :=
   | IClearFrame ?H :: ?pats => iFrame H; iDestructHypFindPat Hgo pat found pats
   | ?pat1 :: ?pats =>
      lazymatch found with
-     | false => iDestructHypGo Hgo pat1; iDestructHypFindPat Hgo pat true pats
+     | false => iDestructHypGo Hgo pat pat1; iDestructHypFindPat Hgo pat true pats
      | true => fail "iDestruct:" pat "should contain exactly one proper introduction pattern"
      end
   end.
@@ -1971,34 +1991,30 @@ Tactic Notation "iRevertIntros" "(" ident(x1) ident(x2) ident(x3) ident(x4)
     ident(x12) ident(x13) ident(x14) ident(x15) ")" "with" tactic3(tac):=
   iRevertIntros (x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15) "" with tac.
 
-(** * Destruct tactic *)
-Class CopyDestruct {PROP : bi} (P : PROP).
-Arguments CopyDestruct {_} _%I.
-Hint Mode CopyDestruct + ! : typeclass_instances.
+(** * Destruct and PoseProof tactics *)
+(** The tactics [iDestruct] and [iPoseProof] are similar, but there are some
+subtle differences:
 
-Instance copy_destruct_forall {PROP : bi} {A} (Φ : A → PROP) : CopyDestruct (∀ x, Φ x) := {}.
-Instance copy_destruct_impl {PROP : bi} (P Q : PROP) :
-  CopyDestruct Q → CopyDestruct (P → Q) := {}.
-Instance copy_destruct_wand {PROP : bi} (P Q : PROP) :
-  CopyDestruct Q → CopyDestruct (P -∗ Q) := {}.
-Instance copy_destruct_affinely {PROP : bi} (P : PROP) :
-  CopyDestruct P → CopyDestruct (<affine> P) := {}.
-Instance copy_destruct_persistently {PROP : bi} (P : PROP) :
-  CopyDestruct P → CopyDestruct (<pers> P) := {}.
+1. The [iDestruct] tactic can be called with a natural number [n] instead of a
+   hypothesis/lemma, i.e., [iDestruct n as ...]. This introduces [n] hypotheses,
+   and then calls [iDestruct] on the last introduced hypothesis. The
+   [iPoseProof] tactic does not support this feature.
+2. When the argument [lem] of [iDestruct lem as ...] is a proof mode identifier
+   (instead of a proof mode term, i.e., no quantifiers or wands/implications are
+   eliminated), then the original hypothesis will always be removed. For
+   example, calling [iDestruct "H" as ...] on ["H" : P ∨ Q] will remove ["H"].
+   Conversely, [iPoseProof] always tries to keep the hypothesis. For example,
+   calling [iPoseProof "H" as ...] on ["H" : P ∨ Q] will keep ["H"] if it
+   resides in the intuitionistic context.
 
+These differences are also present in Coq's [destruct] and [pose proof] tactics.
+However, Coq's [destruct lem as ...] is more eager on removing the original
+hypothesis, it might also remove the original hypothesis if [lem] is not an
+identifier, but an applied term. For example, calling [destruct (H HP) as ...]
+on [H : P → Q] and [HP : P] will remove [H]. The [iDestruct] does not do this
+because it could lead to information loss if [H] resides in the intuitionistic
+context and [HP] resides in the spatial context. *)
 Tactic Notation "iDestructCore" open_constr(lem) "as" constr(p) tactic3(tac) :=
-  let ident :=
-    lazymatch type of lem with
-    | ident => constr:(Some lem)
-    | string => constr:(Some (INamed lem))
-    | iTrm =>
-       lazymatch lem with
-       | @iTrm ident ?H _ _ => constr:(Some H)
-       | @iTrm string ?H _ _ => constr:(Some (INamed H))
-       | _ => constr:(@None ident)
-       end
-    | _ => constr:(@None ident)
-    end in
   let intro_destruct n :=
     let rec go n' :=
       lazymatch n' with
@@ -2009,32 +2025,14 @@ Tactic Notation "iDestructCore" open_constr(lem) "as" constr(p) tactic3(tac) :=
     intros; go n in
   lazymatch type of lem with
   | nat => intro_destruct lem
-  | Z => (* to make it work in Z_scope. We should just be able to bind
-     tactic notation arguments to notation scopes. *)
+  | Z =>
+     (** This case is used to make the tactic work in [Z_scope]. It would be
+     better if we could bind tactic notation arguments to notation scopes, but
+     that is not supported by Ltac. *)
      let n := eval compute in (Z.to_nat lem) in intro_destruct n
-  | _ =>
-     (* Only copy the hypothesis in case there is a [CopyDestruct] instance.
-     Also, rule out cases in which it does not make sense to copy, namely when
-     destructing a lemma (instead of a hypothesis) or a spatial hypothesis
-     (which cannot be kept). *)
-     iStartProof;
-     lazymatch ident with
-     | None => iPoseProofCore lem as p tac
-     | Some ?H =>
-        lazymatch iTypeOf H with
-        | None =>
-          let H := pretty_ident H in
-          fail "iDestruct:" H "not found"
-        | Some (true, ?P) =>
-           (* intuitionistic hypothesis, check for a CopyDestruct instance *)
-           tryif (let dummy := constr:(_ : CopyDestruct P) in idtac)
-           then (iPoseProofCore lem as p tac)
-           else (iSpecializeCore lem as p; [..| tac H])
-        | Some (false, ?P) =>
-           (* spatial hypothesis, cannot copy *)
-           iSpecializeCore lem as p; [..| tac H ]
-        end
-     end
+  | ident => tac lem
+  | string => tac constr:(INamed lem)
+  | _ => iPoseProofCore lem as p tac
   end.
 
 Tactic Notation "iDestruct" open_constr(lem) "as" constr(pat) :=
@@ -3241,54 +3239,54 @@ Tactic Notation "iAccu" :=
   iStartProof; eapply tac_accu; [pm_reflexivity || fail "iAccu: not an evar"].
 
 (** Automation *)
-Hint Extern 0 (_ ⊢ _) => iStartProof : core.
-Hint Extern 0 (⊢ _) => iStartProof : core.
+Global Hint Extern 0 (_ ⊢ _) => iStartProof : core.
+Global Hint Extern 0 (⊢ _) => iStartProof : core.
 
 (* Make sure that by and done solve trivial things in proof mode *)
-Hint Extern 0 (envs_entails _ _) => iPureIntro; try done : core.
-Hint Extern 0 (envs_entails _ ?Q) =>
+Global Hint Extern 0 (envs_entails _ _) => iPureIntro; try done : core.
+Global Hint Extern 0 (envs_entails _ ?Q) =>
   first [is_evar Q; fail 1|iAssumption] : core.
-Hint Extern 0 (envs_entails _ emp) => iEmpIntro : core.
+Global Hint Extern 0 (envs_entails _ emp) => iEmpIntro : core.
 
 (* TODO: look for a more principled way of adding trivial hints like those
 below; see the discussion in !75 for further details. *)
-Hint Extern 0 (envs_entails _ (_ ≡ _)) =>
+Global Hint Extern 0 (envs_entails _ (_ ≡ _)) =>
   rewrite envs_entails_eq; apply internal_eq_refl : core.
-Hint Extern 0 (envs_entails _ (big_opL _ _ _)) =>
+Global Hint Extern 0 (envs_entails _ (big_opL _ _ _)) =>
   rewrite envs_entails_eq; apply (big_sepL_nil' _) : core.
-Hint Extern 0 (envs_entails _ (big_sepL2 _ _ _)) =>
+Global Hint Extern 0 (envs_entails _ (big_sepL2 _ _ _)) =>
   rewrite envs_entails_eq; apply (big_sepL2_nil' _) : core.
-Hint Extern 0 (envs_entails _ (big_opM _ _ _)) =>
+Global Hint Extern 0 (envs_entails _ (big_opM _ _ _)) =>
   rewrite envs_entails_eq; apply (big_sepM_empty' _) : core.
-Hint Extern 0 (envs_entails _ (big_sepM2 _ _ _)) =>
+Global Hint Extern 0 (envs_entails _ (big_sepM2 _ _ _)) =>
   rewrite envs_entails_eq; apply (big_sepM2_empty' _) : core.
-Hint Extern 0 (envs_entails _ (big_opS _ _ _)) =>
+Global Hint Extern 0 (envs_entails _ (big_opS _ _ _)) =>
   rewrite envs_entails_eq; apply (big_sepS_empty' _) : core.
-Hint Extern 0 (envs_entails _ (big_opMS _ _ _)) =>
+Global Hint Extern 0 (envs_entails _ (big_opMS _ _ _)) =>
   rewrite envs_entails_eq; apply (big_sepMS_empty' _) : core.
 
 (* These introduce as much as possible at once, for better performance. *)
-Hint Extern 0 (envs_entails _ (∀ _, _)) => iIntros : core.
-Hint Extern 0 (envs_entails _ (_ → _)) => iIntros : core.
-Hint Extern 0 (envs_entails _ (_ -∗ _)) => iIntros : core.
+Global Hint Extern 0 (envs_entails _ (∀ _, _)) => iIntros : core.
+Global Hint Extern 0 (envs_entails _ (_ → _)) => iIntros : core.
+Global Hint Extern 0 (envs_entails _ (_ -∗ _)) => iIntros : core.
 (* Multi-intro doesn't work for custom binders. *)
-Hint Extern 0 (envs_entails _ (∀.. _, _)) => iIntros (?) : core.
+Global Hint Extern 0 (envs_entails _ (∀.. _, _)) => iIntros (?) : core.
 
-Hint Extern 1 (envs_entails _ (_ ∧ _)) => iSplit : core.
-Hint Extern 1 (envs_entails _ (_ ∗ _)) => iSplit : core.
-Hint Extern 1 (envs_entails _ (_ ∗-∗ _)) => iSplit : core.
-Hint Extern 1 (envs_entails _ (▷ _)) => iNext : core.
-Hint Extern 1 (envs_entails _ (■ _)) => iModIntro : core.
-Hint Extern 1 (envs_entails _ (<pers> _)) => iModIntro : core.
-Hint Extern 1 (envs_entails _ (<affine> _)) => iModIntro : core.
-Hint Extern 1 (envs_entails _ (□ _)) => iModIntro : core.
-Hint Extern 1 (envs_entails _ (∃ _, _)) => iExists _ : core.
-Hint Extern 1 (envs_entails _ (∃.. _, _)) => iExists _ : core.
-Hint Extern 1 (envs_entails _ (◇ _)) => iModIntro : core.
-Hint Extern 1 (envs_entails _ (_ ∨ _)) => iLeft : core.
-Hint Extern 1 (envs_entails _ (_ ∨ _)) => iRight : core.
-Hint Extern 1 (envs_entails _ (|==> _)) => iModIntro : core.
-Hint Extern 1 (envs_entails _ (<absorb> _)) => iModIntro : core.
-Hint Extern 2 (envs_entails _ (|={_}=> _)) => iModIntro : core.
+Global Hint Extern 1 (envs_entails _ (_ ∧ _)) => iSplit : core.
+Global Hint Extern 1 (envs_entails _ (_ ∗ _)) => iSplit : core.
+Global Hint Extern 1 (envs_entails _ (_ ∗-∗ _)) => iSplit : core.
+Global Hint Extern 1 (envs_entails _ (▷ _)) => iNext : core.
+Global Hint Extern 1 (envs_entails _ (■ _)) => iModIntro : core.
+Global Hint Extern 1 (envs_entails _ (<pers> _)) => iModIntro : core.
+Global Hint Extern 1 (envs_entails _ (<affine> _)) => iModIntro : core.
+Global Hint Extern 1 (envs_entails _ (□ _)) => iModIntro : core.
+Global Hint Extern 1 (envs_entails _ (∃ _, _)) => iExists _ : core.
+Global Hint Extern 1 (envs_entails _ (∃.. _, _)) => iExists _ : core.
+Global Hint Extern 1 (envs_entails _ (◇ _)) => iModIntro : core.
+Global Hint Extern 1 (envs_entails _ (_ ∨ _)) => iLeft : core.
+Global Hint Extern 1 (envs_entails _ (_ ∨ _)) => iRight : core.
+Global Hint Extern 1 (envs_entails _ (|==> _)) => iModIntro : core.
+Global Hint Extern 1 (envs_entails _ (<absorb> _)) => iModIntro : core.
+Global Hint Extern 2 (envs_entails _ (|={_}=> _)) => iModIntro : core.
 
-Hint Extern 2 (envs_entails _ (_ ∗ _)) => progress iFrame : iFrame.
+Global Hint Extern 2 (envs_entails _ (_ ∗ _)) => progress iFrame : iFrame.

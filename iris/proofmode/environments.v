@@ -1,4 +1,4 @@
-From iris.algebra Require Export base.
+From iris.prelude Require Export prelude.
 From iris.bi Require Export bi.
 From iris.proofmode Require Import base.
 From iris.prelude Require Import options.
@@ -90,7 +90,7 @@ Context {A : Type}.
 Implicit Types Γ : env A.
 Implicit Types i : ident.
 Implicit Types x : A.
-Hint Resolve Esnoc_wf Enil_wf : core.
+Local Hint Resolve Esnoc_wf Enil_wf : core.
 
 Ltac simplify :=
   repeat match goal with

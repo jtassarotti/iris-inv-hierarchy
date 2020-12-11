@@ -20,7 +20,7 @@ Arguments inG_apply {_ _} _ _ {_}.
 (** We use the mode [-] for [Σ] since there is always a unique [Σ]. We use the
 mode [!] for [A] since we can have multiple [inG]s for different [A]s, so we do
 not want Coq to pick one arbitrarily. *)
-Hint Mode inG - ! : typeclass_instances.
+Global Hint Mode inG - ! : typeclass_instances.
 
 Lemma subG_inG Σ (F : gFunctor) : subG F Σ → inG Σ (rFunctor_apply F (iPropO Σ)).
 Proof. move=> /(_ 0%fin) /= [j ->]. by exists j. Qed.
@@ -248,12 +248,12 @@ Qed.
 Lemma own_alloc_strong a (P : gname → Prop) :
   pred_infinite P →
   ✓ a → ⊢ |==> ∃ γ, ⌜P γ⌝ ∗ own γ a.
-Proof. intros HP Ha. eapply own_alloc_strong_dep with (f := λ _, a); eauto. Qed.
+Proof. intros HP Ha. eapply (own_alloc_strong_dep (λ _, a)); eauto. Qed.
 Lemma own_alloc_cofinite a (G : gset gname) :
   ✓ a → ⊢ |==> ∃ γ, ⌜γ ∉ G⌝ ∗ own γ a.
-Proof. intros Ha. eapply own_alloc_cofinite_dep with (f := λ _, a); eauto. Qed.
+Proof. intros Ha. eapply (own_alloc_cofinite_dep (λ _, a)); eauto. Qed.
 Lemma own_alloc a : ✓ a → ⊢ |==> ∃ γ, own γ a.
-Proof. intros Ha. eapply own_alloc_dep with (f := λ _, a); eauto. Qed.
+Proof. intros Ha. eapply (own_alloc_dep (λ _, a)); eauto. Qed.
 
 (** ** Frame preserving updates *)
 Lemma own_updateP P γ a : a ~~>: P → own γ a ==∗ ∃ a', ⌜P a'⌝ ∗ own γ a'.

@@ -12,7 +12,7 @@ two repositories:
     opam repo add coq-released https://coq.inria.fr/opam/released
     opam repo add iris-dev https://gitlab.mpi-sws.org/iris/opam.git
 
-Once you got opam set up, run `make build-dep` to install the right versions
+Once you got opam set up, run `make builddep` to install the right versions
 of the dependencies.
 
 Run `make -jN` to build the full development, where `N` is the number of your
@@ -20,7 +20,7 @@ CPU cores.
 
 To update Iris, do `git pull`.  After an update, the development may fail to
 compile because of outdated dependencies.  To fix that, please run `opam update`
-followed by `make build-dep`.
+followed by `make builddep`.
 
 ## How to submit a merge request
 
@@ -45,7 +45,7 @@ a feature branch instead.
 * In Iris, change the `opam` file to depend on the new version.
   (In case you do not use opam yourself, you can see recently published versions
   [in this repository](https://gitlab.mpi-sws.org/iris/opam/commits/master).)
-* Run `make build-dep` (in Iris) to install the new version of std++.
+* Run `make builddep` (in Iris) to install the new version of std++.
   You may have to do `make clean` as Coq will likely complain about .vo file
   mismatches.
 
@@ -88,20 +88,19 @@ or the [examples].  To do this, check out the respective project and change its
 build-iris.dev:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.9.0   coq-iris.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#yourname/feature"
-    TIMING_CONF: "coq-8.9.0"
+    OPAM_PINS: "coq version 8.12.0   coq-iris.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#yourname/feature   coq-iris-heap-lang.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#yourname/feature"
   tags:
   - fp-timing
 ```
 You will have to adjust this a bit: you should use the same Coq version as
 whatever the master branch uses for its timing job, which you can determine by
-checking its `.gitlab-ci.yml`.  If you change the Coq version, remember to do it
-in both places (`OPAM_PINS` and `TIMING_CONF`).  You will also have to adjust
-the Iris branch being used, which is determined after the `#` in `OPAM_PINS`.
-If you are in doubt, ask on Mattermost *before* pushing your branch.  Please
-double-check that the job name is `build-iris.dev` to avoid polluting the caches
-of regular CI builds!  This way, you are going to share the cache with the
-nightly builds, which is fine.
+checking its `.gitlab-ci.yml`.  You will also have to adjust the Iris branch
+being used, which is determined after the `#` in `OPAM_PINS`.  If the repo you
+are testing does not need HeapLang, you can remove the `coq-iris-heap-lang` part
+of `OPAM_PINS`.  If you are in doubt, ask on Mattermost *before* pushing your
+branch.  Please double-check that the job name is `build-iris.dev` to avoid
+polluting the caches of regular CI builds!  This way, you are going to share the
+cache with the nightly builds, which is fine.
 
 Once you are confident with your CI configuration, push this to a new branch
 whose name starts with `ci/`.  It should usually be of the form
