@@ -100,6 +100,7 @@ iris/base_logic/lib/proph_map.v
 iris/base_logic/lib/ghost_var.v
 iris/base_logic/lib/mono_nat.v
 iris/base_logic/lib/gset_bij.v
+iris/base_logic/lib/ghost_map.v
 iris/program_logic/adequacy.v
 iris/program_logic/lifting.v
 iris/program_logic/weakestpre.v
