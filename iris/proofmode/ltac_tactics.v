@@ -359,14 +359,14 @@ Local Ltac iFrameFinish :=
   | |- envs_entails _ emp => iEmpIntro
   end.
 
-Local Ltac iFramePure t :=
+Ltac iFramePure t :=
   iStartProof;
   let φ := type of t in
   eapply (tac_frame_pure _ _ _ _ t);
     [iSolveTC || fail "iFrame: cannot frame" φ
     |iFrameFinish].
 
-Local Ltac iFrameHyp H :=
+Ltac iFrameHyp H :=
   iStartProof;
   eapply tac_frame with H _ _ _;
     [pm_reflexivity ||
@@ -377,10 +377,10 @@ Local Ltac iFrameHyp H :=
      fail "iFrame: cannot frame" R
     |pm_reduce; iFrameFinish].
 
-Local Ltac iFrameAnyPure :=
+Ltac iFrameAnyPure :=
   repeat match goal with H : _ |- _ => iFramePure H end.
 
-Local Ltac iFrameAnyIntuitionistic :=
+Ltac iFrameAnyIntuitionistic :=
   iStartProof;
   let rec go Hs :=
     match Hs with [] => idtac | ?H :: ?Hs => repeat iFrameHyp H; go Hs end in
@@ -389,7 +389,7 @@ Local Ltac iFrameAnyIntuitionistic :=
      let Hs := eval cbv in (env_dom (env_intuitionistic Δ)) in go Hs
   end.
 
-Local Ltac iFrameAnySpatial :=
+Ltac iFrameAnySpatial :=
   iStartProof;
   let rec go Hs :=
     match Hs with [] => idtac | ?H :: ?Hs => try iFrameHyp H; go Hs end in
@@ -421,7 +421,7 @@ Tactic Notation "iFrame" "(" constr(t1) constr(t2) constr(t3) constr(t4)
     constr(t5) constr(t6) constr(t7) constr(t8)")" :=
   iFramePure t1; iFrame ( t2 t3 t4 t5 t6 t7 t8 ).
 
-Local Ltac iFrame_go Hs :=
+Ltac iFrame_go Hs :=
   lazymatch Hs with
   | [] => idtac
   | SelPure :: ?Hs => iFrameAnyPure; iFrame_go Hs
