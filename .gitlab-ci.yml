@@ -32,10 +32,15 @@ build-coq.dev:
   variables:
     OPAM_PINS: "coq version dev"
 
-build-coq.8.12.1:
+build-coq.8.13.dev:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.12.1"
+    OPAM_PINS: "coq version 8.13.dev"
+
+build-coq.8.12.2:
+  <<: *template
+  variables:
+    OPAM_PINS: "coq version 8.12.2"
     DENY_WARNINGS: "1"
     OPAM_PKG: "1"
     DOC_DIR: "coqdoc@center.mpi-sws.org:iris"
@@ -47,11 +52,6 @@ build-coq.8.11.2:
   <<: *template
   variables:
     OPAM_PINS: "coq version 8.11.2"
-
-build-coq.8.10.2:
-  <<: *template
-  variables:
-    OPAM_PINS: "coq version 8.10.2"
 
 # Nightly job with a known-to-work Coq version
 # (so failures must be caused by std++)
@@ -65,7 +65,7 @@ build-stdpp.dev-coq.8.12.1:
   - schedules
   - api
 
-# Nightly job with latest Coq branch
+# Nightly job with latest Coq beta branch
 build-stdpp.dev-coq.8.13.dev:
   <<: *template
   variables:

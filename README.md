@@ -30,7 +30,7 @@ Importing Iris has some side effects as the library sets some global options.
 
 This version is known to compile with:
 
- - Coq 8.10.2 / 8.11.2 / 8.12.1
+ - Coq 8.11.2 / 8.12.2
  - A development version of [std++](https://gitlab.mpi-sws.org/iris/stdpp)
 
 If you need to work with Coq 8.7 or Coq 8.8, please check out the
@@ -155,14 +155,12 @@ Contacting the developers:
 
 * Discussion about the Iris Coq development happens on the mailing list
   [iris-club@lists.mpi-sws.org](https://lists.mpi-sws.org/listinfo/iris-club)
-  and in the [Iris Chat](https://mattermost.mpi-sws.org/iris).  This is also the
-  right place to ask questions.  The chat requires an account at the
-  [MPI-SWS GitLab](https://gitlab.mpi-sws.org/users/sign_in) (use the "Register"
-  tab). If you have trouble joining the chat, please contact
-  [Ralf](https://gitlab.mpi-sws.org/jung).
+  and in the [Iris Chat](https://iris-project.org/chat.html).  This is also the
+  right place to ask questions.
 * If you want to report a bug, please use the
-  [issue tracker](https://gitlab.mpi-sws.org/iris/iris/issues), which also
-  requires an MPI-SWS GitLab account.
+  [issue tracker](https://gitlab.mpi-sws.org/iris/iris/issues), which requires
+  an MPI-SWS GitLab account. The [chat page](https://iris-project.org/chat.html)
+  describes how to create such an account.
 * To contribute to Iris itself, see the [contribution guide](CONTRIBUTING.md).
 
 Miscellaneous:
