@@ -13,17 +13,17 @@ Inductive csum (A B : Type) :=
   | Cinl : A → csum A B
   | Cinr : B → csum A B
   | CsumBot : csum A B.
-Arguments Cinl {_ _} _.
-Arguments Cinr {_ _} _.
-Arguments CsumBot {_ _}.
+Global Arguments Cinl {_ _} _.
+Global Arguments Cinr {_ _} _.
+Global Arguments CsumBot {_ _}.
 
-Instance: Params (@Cinl) 2 := {}.
-Instance: Params (@Cinr) 2 := {}.
-Instance: Params (@CsumBot) 2 := {}.
+Global Instance: Params (@Cinl) 2 := {}.
+Global Instance: Params (@Cinr) 2 := {}.
+Global Instance: Params (@CsumBot) 2 := {}.
 
-Instance maybe_Cinl {A B} : Maybe (@Cinl A B) := λ x,
+Global Instance maybe_Cinl {A B} : Maybe (@Cinl A B) := λ x,
   match x with Cinl a => Some a | _ => None end.
-Instance maybe_Cinr {A B} : Maybe (@Cinr A B) := λ x,
+Global Instance maybe_Cinr {A B} : Maybe (@Cinr A B) := λ x,
   match x with Cinr b => Some b | _ => None end.
 
 Section ofe.
@@ -110,7 +110,7 @@ Proof. by inversion_clear 2; constructor; apply (discrete _). Qed.
 
 End ofe.
 
-Arguments csumO : clear implicits.
+Global Arguments csumO : clear implicits.
 
 (* Functor on COFEs *)
 Definition csum_map {A A' B B'} (fA : A → A') (fB : B → B')
@@ -120,7 +120,7 @@ Definition csum_map {A A' B B'} (fA : A → A') (fB : B → B')
   | Cinr b => Cinr (fB b)
   | CsumBot => CsumBot
   end.
-Instance: Params (@csum_map) 4 := {}.
+Global Instance: Params (@csum_map) 4 := {}.
 
 Lemma csum_map_id {A B} (x : csum A B) : csum_map id id x = x.
 Proof. by destruct x. Qed.
@@ -131,14 +131,14 @@ Proof. by destruct x. Qed.
 Lemma csum_map_ext {A A' B B' : ofeT} (f f' : A → A') (g g' : B → B') x :
   (∀ x, f x ≡ f' x) → (∀ x, g x ≡ g' x) → csum_map f g x ≡ csum_map f' g' x.
 Proof. by destruct x; constructor. Qed.
-Instance csum_map_cmra_ne {A A' B B' : ofeT} n :
+Global Instance csum_map_cmra_ne {A A' B B' : ofeT} n :
   Proper ((dist n ==> dist n) ==> (dist n ==> dist n) ==> dist n ==> dist n)
          (@csum_map A A' B B').
 Proof. intros f f' Hf g g' Hg []; destruct 1; constructor; by apply Hf || apply Hg. Qed.
 Definition csumO_map {A A' B B'} (f : A -n> A') (g : B -n> B') :
   csumO A B -n> csumO A' B' :=
   OfeMor (csum_map f g).
-Instance csumO_map_ne A A' B B' :
+Global Instance csumO_map_ne A A' B B' :
   NonExpansive2 (@csumO_map A A' B B').
 Proof. by intros n f f' Hf g g' Hg []; constructor. Qed.
 
@@ -148,25 +148,25 @@ Implicit Types a : A.
 Implicit Types b : B.
 
 (* CMRA *)
-Instance csum_valid : Valid (csum A B) := λ x,
+Local Instance csum_valid : Valid (csum A B) := λ x,
   match x with
   | Cinl a => ✓ a
   | Cinr b => ✓ b
   | CsumBot => False
   end.
-Instance csum_validN : ValidN (csum A B) := λ n x,
+Local Instance csum_validN : ValidN (csum A B) := λ n x,
   match x with
   | Cinl a => ✓{n} a
   | Cinr b => ✓{n} b
   | CsumBot => False
   end.
-Instance csum_pcore : PCore (csum A B) := λ x,
+Local Instance csum_pcore : PCore (csum A B) := λ x,
   match x with
   | Cinl a => Cinl <$> pcore a
   | Cinr b => Cinr <$> pcore b
   | CsumBot => Some CsumBot
   end.
-Instance csum_op : Op (csum A B) := λ x y,
+Local Instance csum_op : Op (csum A B) := λ x y,
   match x, y with
   | Cinl a, Cinl a' => Cinl (a ⋅ a')
   | Cinr b, Cinr b' => Cinr (b ⋅ b')
@@ -361,10 +361,10 @@ Proof.
 Qed.
 End cmra.
 
-Arguments csumR : clear implicits.
+Global Arguments csumR : clear implicits.
 
 (* Functor *)
-Instance csum_map_cmra_morphism {A A' B B' : cmraT} (f : A → A') (g : B → B') :
+Global Instance csum_map_cmra_morphism {A A' B B' : cmraT} (f : A → A') (g : B → B') :
   CmraMorphism f → CmraMorphism g → CmraMorphism (csum_map f g).
 Proof.
   split; try apply _.
@@ -389,7 +389,7 @@ Next Obligation.
   apply csum_map_ext=>y; apply rFunctor_map_compose.
 Qed.
 
-Instance csumRF_contractive Fa Fb :
+Global Instance csumRF_contractive Fa Fb :
   rFunctorContractive Fa → rFunctorContractive Fb →
   rFunctorContractive (csumRF Fa Fb).
 Proof.

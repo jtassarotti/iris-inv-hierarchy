@@ -78,7 +78,8 @@ Module invG.
   Local Strategy 100 [prodO].
   Local Strategy 100 [laterO].
   Local Strategy 100 [listO].
-  Instance subG_invΣ {Σ} : subG invΣ Σ → invPreG Σ.
+
+  Global Instance subG_invΣ {Σ} : subG invΣ Σ → invPreG Σ.
   Proof. solve_inG. Qed.
 End invG.
 Import invG.
@@ -90,10 +91,10 @@ Definition inv_mut_unfold {Σ} {n} q (Ps : vec (iProp Σ) n) : option (frac * (a
 Definition ownI `{!invG Σ} {n} (lvl: nat) (i : positive) (sch: bi_schema) (Ps : vec (iProp Σ) n) : iProp Σ :=
   (∃ γs, fmlist_idx inv_list_name lvl γs ∗
          own (invariant_name γs) (◯ {[ i := (invariant_unfold sch Ps, ε) ]})).
-Arguments ownI {_ _ _} _ _ _%I _%I.
+Global Arguments ownI {_ _ _} _ _ _%I _%I.
 Typeclasses Opaque ownI.
-Instance: Params (@invariant_unfold) 1 := {}.
-Instance: Params (@ownI) 3 := {}.
+Global Instance: Params (@invariant_unfold) 1 := {}.
+Global Instance: Params (@ownI) 3 := {}.
 
 Definition ownI_mut `{!invG Σ} {n} (lvl: nat) (i : positive) q (Qs : vec (iProp Σ) n) : iProp Σ :=
   (∃ (l: agree (list (later (iPropO Σ)) * bi_schema)) γs, fmlist_idx inv_list_name lvl γs ∗
@@ -106,12 +107,12 @@ Instance: Params (@ownI_mut) 3 := {}.
 Definition ownE `{!invG Σ} (E : coPset) : iProp Σ :=
   own enabled_name (CoPset E).
 Typeclasses Opaque ownE.
-Instance: Params (@ownE) 3 := {}.
+Global Instance: Params (@ownE) 3 := {}.
 
 Definition ownD `{!invG Σ} (E : gset positive) : iProp Σ :=
   own disabled_name (GSet E).
 Typeclasses Opaque ownD.
-Instance: Params (@ownD) 3 := {}.
+Global Instance: Params (@ownD) 3 := {}.
 
 Definition inv_cmra_fmap `{!invG Σ} (v: (list (iProp Σ) * bi_schema) * list (iProp Σ)) :=
   let '((Ps, sch), Qs) := v in

@@ -36,10 +36,10 @@ Declare Scope val_scope.
 Delimit Scope val_scope with V.
 Bind Scope val_scope with val.
 
-Arguments Language {_ _ _ _ _ _ _} _.
-Arguments of_val {_} _.
-Arguments to_val {_} _.
-Arguments prim_step {_} _ _ _ _ _ _.
+Global Arguments Language {_ _ _ _ _ _ _} _.
+Global Arguments of_val {_} _.
+Global Arguments to_val {_} _.
+Global Arguments prim_step {_} _ _ _ _ _ _.
 
 Canonical Structure stateO Λ := leibnizO (state Λ).
 Canonical Structure valO Λ := leibnizO (val Λ).
@@ -58,7 +58,7 @@ Class LanguageCtx {Λ : language} (K : expr Λ → expr Λ) := {
     ∃ e2', e2 = K e2' ∧ prim_step e1' σ1 κ e2' σ2 efs
 }.
 
-Instance language_ctx_id Λ : LanguageCtx (@id (expr Λ)).
+Global Instance language_ctx_id Λ : LanguageCtx (@id (expr Λ)).
 Proof. constructor; naive_solver. Qed.
 
 Inductive atomicity := StronglyAtomic | WeaklyAtomic.

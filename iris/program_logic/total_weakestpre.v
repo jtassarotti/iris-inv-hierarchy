@@ -61,7 +61,7 @@ Definition twp_def `{!irisG Λ Σ} : Twp Λ (iProp Σ) stuckness
   := λ s E e Φ, bi_least_fixpoint (twp_pre' s) (E,e,Φ).
 Definition twp_aux : seal (@twp_def). Proof. by eexists. Qed.
 Definition twp' := twp_aux.(unseal).
-Arguments twp' {Λ Σ _}.
+Global Arguments twp' {Λ Σ _}.
 Existing Instance twp'.
 Lemma twp_eq `{!irisG Λ Σ} : twp = @twp_def Λ Σ _.
 Proof. rewrite -twp_aux.(seal_eq) //. Qed.
@@ -308,11 +308,11 @@ Section proofmode_classes.
   Qed.
 
   Global Instance elim_modal_fupd_twp_atomic p s E1 E2 e P Φ :
-    Atomic (stuckness_to_atomicity s) e →
-    ElimModal True p false (|={E1,E2}=> P) P
-            (WP e @ s; E1 [{ Φ }]) (WP e @ s; E2 [{ v, |={E2,E1}=> Φ v }])%I.
+    ElimModal (Atomic (stuckness_to_atomicity s) e) p false
+            (|={E1,E2}=> P) P
+            (WP e @ s; E1 [{ Φ }]) (WP e @ s; E2 [{ v, |={E2,E1}=> Φ v }])%I | 100.
   Proof.
-    intros. by rewrite /ElimModal intuitionistically_if_elim
+    intros ?. by rewrite intuitionistically_if_elim
       fupd_frame_r wand_elim_r twp_atomic.
   Qed.
 

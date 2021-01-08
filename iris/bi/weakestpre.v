@@ -10,8 +10,8 @@ Definition stuckness_leb (s1 s2 : stuckness) : bool :=
   | MaybeStuck, NotStuck => false
   | _, _ => true
   end.
-Instance stuckness_le : SqSubsetEq stuckness := stuckness_leb.
-Instance stuckness_le_po : PreOrder stuckness_le.
+Global Instance stuckness_le : SqSubsetEq stuckness := stuckness_leb.
+Global Instance stuckness_le_po : PreOrder stuckness_le.
 Proof. split; by repeat intros []. Qed.
 
 Definition stuckness_to_atomicity (s : stuckness) : atomicity :=
@@ -30,13 +30,13 @@ different [A], the plan is to generalize the notation to use [Inhabited] instead
 to pick a default value depending on [A]. *)
 Class Wp (Λ : language) (PROP A : Type) :=
   wp : A → coPset → expr Λ → (val Λ → PROP) → PROP.
-Arguments wp {_ _ _ _} _ _ _%E _%I.
-Instance: Params (@wp) 7 := {}.
+Global Arguments wp {_ _ _ _} _ _ _%E _%I.
+Global Instance: Params (@wp) 7 := {}.
 
 Class Twp (Λ : language) (PROP A : Type) :=
   twp : A → coPset → expr Λ → (val Λ → PROP) → PROP.
-Arguments twp {_ _ _ _} _ _ _%E _%I.
-Instance: Params (@twp) 7 := {}.
+Global Arguments twp {_ _ _ _} _ _ _%E _%I.
+Global Instance: Params (@twp) 7 := {}.
 
 (** Notations for partial weakest preconditions *)
 (** Notations without binder -- only parsing because they overlap with the

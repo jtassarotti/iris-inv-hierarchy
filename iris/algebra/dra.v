@@ -35,14 +35,14 @@ Structure draT := DraT {
   dra_valid : Valid dra_car;
   dra_mixin : DraMixin dra_car
 }.
-Arguments DraT _ {_ _ _ _ _} _.
-Arguments dra_car : simpl never.
-Arguments dra_equiv : simpl never.
-Arguments dra_pcore : simpl never.
-Arguments dra_disjoint : simpl never.
-Arguments dra_op : simpl never.
-Arguments dra_valid : simpl never.
-Arguments dra_mixin : simpl never.
+Global Arguments DraT _ {_ _ _ _ _} _.
+Global Arguments dra_car : simpl never.
+Global Arguments dra_equiv : simpl never.
+Global Arguments dra_pcore : simpl never.
+Global Arguments dra_disjoint : simpl never.
+Global Arguments dra_op : simpl never.
+Global Arguments dra_valid : simpl never.
+Global Arguments dra_mixin : simpl never.
 Add Printing Constructor draT.
 Existing Instances dra_equiv dra_pcore dra_disjoint dra_op dra_valid.
 
@@ -93,9 +93,9 @@ Record validity (A : draT) := Validity {
   validity_prf : validity_is_valid → valid validity_car
 }.
 Add Printing Constructor validity.
-Arguments Validity {_} _ _ _.
-Arguments validity_car {_} _.
-Arguments validity_is_valid {_} _.
+Global Arguments Validity {_} _ _ _.
+Global Arguments validity_car {_} _.
+Global Arguments validity_is_valid {_} _.
 
 Definition to_validity {A : draT} (x : A) : validity A :=
   Validity x (valid x) id.
@@ -105,12 +105,12 @@ Section dra.
 Context (A : draT).
 Implicit Types a b : A.
 Implicit Types x y z : validity A.
-Arguments valid _ _ !_ /.
+Local Arguments valid _ _ !_ /.
 
-Instance validity_valid : Valid (validity A) := validity_is_valid.
-Instance validity_equiv : Equiv (validity A) := λ x y,
+Local Instance validity_valid : Valid (validity A) := validity_is_valid.
+Local Instance validity_equiv : Equiv (validity A) := λ x y,
   (valid x ↔ valid y) ∧ (valid x → validity_car x ≡ validity_car y).
-Instance validity_equivalence : Equivalence (@equiv (validity A) _).
+Local Instance validity_equivalence : Equivalence (@equiv (validity A) _).
 Proof.
   split; unfold equiv, validity_equiv.
   - by intros [x px ?]; simpl.
@@ -120,11 +120,11 @@ Proof.
 Qed.
 Canonical Structure validityO : ofeT := discreteO (validity A).
 
-Instance dra_valid_proper' : Proper ((≡) ==> iff) (valid : A → Prop).
+Local Instance dra_valid_proper' : Proper ((≡) ==> iff) (valid : A → Prop).
 Proof. by split; apply: dra_valid_proper. Qed.
 Global Instance to_validity_proper : Proper ((≡) ==> (≡)) to_validity.
 Proof. by intros x1 x2 Hx; split; rewrite /= Hx. Qed.
-Instance: Proper ((≡) ==> (≡) ==> iff) (disjoint : relation A).
+Local Instance: Proper ((≡) ==> (≡) ==> iff) (disjoint : relation A).
 Proof.
   intros x1 x2 Hx y1 y2 Hy; split.
   - by rewrite Hy (symmetry_iff (##) x1) (symmetry_iff (##) x2) Hx.

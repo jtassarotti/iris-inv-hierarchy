@@ -60,7 +60,7 @@ Definition uPred_fupd_def `{!invG Σ} (E1 E2 : coPset) (P : iProp Σ) : iProp Σ
   wsat_all ∗ ownE (AlwaysEn ∪ MaybeEn E1) ==∗ ◇ (wsat_all ∗ ownE (AlwaysEn ∪ MaybeEn E2) ∗ P).
 Definition uPred_fupd_aux : seal (@uPred_fupd_def). Proof. by eexists. Qed.
 Definition uPred_fupd := uPred_fupd_aux.(unseal).
-Arguments uPred_fupd {Σ _}.
+Global Arguments uPred_fupd {Σ _}.
 Lemma uPred_fupd_eq `{!invG Σ} : @fupd _ uPred_fupd = uPred_fupd_def.
 Proof. rewrite -uPred_fupd_aux.(seal_eq) //. Qed.
 
@@ -116,13 +116,13 @@ Proof.
     iIntros "!> !>". iFrame. by iApply "HP".
   - rewrite uPred_fupd_eq /uPred_fupd_def. by iIntros (????) "[HwP $]".
 Qed.
-Instance uPred_bi_fupd `{!invG Σ} : BiFUpd (uPredI (iResUR Σ)) :=
+Global Instance uPred_bi_fupd `{!invG Σ} : BiFUpd (uPredI (iResUR Σ)) :=
   {| bi_fupd_mixin := uPred_fupd_mixin |}.
 
-Instance uPred_bi_bupd_fupd `{!invG Σ} : BiBUpdFUpd (uPredI (iResUR Σ)).
+Global Instance uPred_bi_bupd_fupd `{!invG Σ} : BiBUpdFUpd (uPredI (iResUR Σ)).
 Proof. rewrite /BiBUpdFUpd uPred_fupd_eq. by iIntros (E P) ">? [$ $] !> !>". Qed.
 
-Instance uPred_bi_fupd_plainly `{!invG Σ} : BiFUpdPlainly (uPredI (iResUR Σ)).
+Global Instance uPred_bi_fupd_plainly `{!invG Σ} : BiFUpdPlainly (uPredI (iResUR Σ)).
 Proof.
   split.
   - rewrite uPred_fupd_eq /uPred_fupd_def. iIntros (E P) "H [Hw HE]".

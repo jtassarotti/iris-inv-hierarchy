@@ -9,7 +9,7 @@ Record siProp := SiProp {
   siProp_holds :> nat → Prop;
   siProp_closed n1 n2 : siProp_holds n1 → n2 ≤ n1 → siProp_holds n2
 }.
-Arguments siProp_holds : simpl never.
+Global Arguments siProp_holds : simpl never.
 Add Printing Constructor siProp.
 
 Declare Scope siProp_scope.
@@ -19,10 +19,10 @@ Bind Scope siProp_scope with siProp.
 Section cofe.
   Inductive siProp_equiv' (P Q : siProp) : Prop :=
     { siProp_in_equiv : ∀ n, P n ↔ Q n }.
-  Instance siProp_equiv : Equiv siProp := siProp_equiv'.
+  Local Instance siProp_equiv : Equiv siProp := siProp_equiv'.
   Inductive siProp_dist' (n : nat) (P Q : siProp) : Prop :=
     { siProp_in_dist : ∀ n', n' ≤ n → P n' ↔ Q n' }.
-  Instance siProp_dist : Dist siProp := siProp_dist'.
+  Local Instance siProp_dist : Dist siProp := siProp_dist'.
   Definition siProp_ofe_mixin : OfeMixin siProp.
   Proof.
     split.
@@ -127,7 +127,7 @@ Definition unseal_eqs :=
 Ltac unseal := rewrite !unseal_eqs /=.
 
 Section primitive.
-Arguments siProp_holds !_ _ /.
+Local Arguments siProp_holds !_ _ /.
 
 Notation "P ⊢ Q" := (siProp_entails P Q)
   (at level 99, Q at level 200, right associativity).

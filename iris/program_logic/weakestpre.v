@@ -50,7 +50,7 @@ Definition wp_def `{!irisG Λ Σ} : Wp Λ (iProp Σ) stuckness :=
   λ s : stuckness, fixpoint (wp_pre s).
 Definition wp_aux : seal (@wp_def). Proof. by eexists. Qed.
 Definition wp' := wp_aux.(unseal).
-Arguments wp' {Λ Σ _}.
+Global Arguments wp' {Λ Σ _}.
 Existing Instance wp'.
 Lemma wp_eq `{!irisG Λ Σ} : wp = @wp_def Λ Σ _.
 Proof. rewrite -wp_aux.(seal_eq) //. Qed.
@@ -345,11 +345,11 @@ Section proofmode_classes.
   Qed.
 
   Global Instance elim_modal_fupd_wp_atomic p s E1 E2 e P Φ :
-    Atomic (stuckness_to_atomicity s) e →
-    ElimModal True p false (|={E1,E2}=> P) P
-            (WP e @ s; E1 {{ Φ }}) (WP e @ s; E2 {{ v, |={E2,E1}=> Φ v }})%I.
+    ElimModal (Atomic (stuckness_to_atomicity s) e) p false
+            (|={E1,E2}=> P) P
+            (WP e @ s; E1 {{ Φ }}) (WP e @ s; E2 {{ v, |={E2,E1}=> Φ v }})%I | 100.
   Proof.
-    intros. by rewrite /ElimModal intuitionistically_if_elim
+    intros ?. by rewrite intuitionistically_if_elim
       fupd_frame_r wand_elim_r wp_atomic.
   Qed.
 
@@ -359,47 +359,45 @@ Section proofmode_classes.
 
   Global Instance elim_acc_ncfupd_wp {X} E1 E2 α β γ e s Φ :
     Atomic (stuckness_to_atomicity s) e →
-    ElimAcc (X:=X) (ncfupd E1 E2) (ncfupd E2 E1)
+    ElimAcc (X:=X) True (ncfupd E1 E2) (ncfupd E2 E1)
             α β γ (WP e @ s; E1 {{ Φ }})
             (λ x, WP e @ s; E2 {{ v, |NC={E2}=> β x ∗ (γ x -∗? Φ v) }})%I.
   Proof.
     intros ?. rewrite /ElimAcc.
-    iIntros "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
+    iIntros (_) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
     iApply (wp_wand with "(Hinner Hα)").
     iIntros (v) ">[Hβ HΦ]". iApply "HΦ". by iApply "Hclose".
   Qed.
 
   Global Instance elim_acc_wp {X} E1 E2 α β γ e s Φ :
     Atomic (stuckness_to_atomicity s) e →
-    ElimAcc (X:=X) (fupd E1 E2) (fupd E2 E1)
+    ElimAcc (X:=X) (Atomic (stuckness_to_atomicity s) e) (fupd E1 E2) (fupd E2 E1)
             α β γ (WP e @ s; E1 {{ Φ }})
-            (λ x, WP e @ s; E2 {{ v, |={E2}=> β x ∗ (γ x -∗? Φ v) }})%I.
+            (λ x, WP e @ s; E2 {{ v, |={E2}=> β x ∗ (γ x -∗? Φ v) }})%I | 100.
   Proof.
-    intros ?. rewrite /ElimAcc.
-    iIntros "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
+    iIntros (??) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
     iApply (wp_wand with "(Hinner Hα)").
     iIntros (v) ">[Hβ HΦ]". iApply "HΦ". by iApply "Hclose".
   Qed.
 
   Global Instance elim_acc_ncfupd_wp_nonatomic {X} E α β γ e s Φ :
-    ElimAcc (X:=X) (ncfupd E E) (ncfupd E E)
+    ElimAcc (X:=X) True (ncfupd E E) (ncfupd E E)
             α β γ (WP e @ s; E {{ Φ }})
             (λ x, WP e @ s; E {{ v, |NC={E}=> β x ∗ (γ x -∗? Φ v) }})%I.
   Proof.
     rewrite /ElimAcc.
-    iIntros "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
+    iIntros (_) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
     iApply wp_ncfupd.
     iApply (wp_wand with "(Hinner Hα)").
     iIntros (v) ">[Hβ HΦ]". iApply "HΦ". by iApply "Hclose".
   Qed.
 
   Global Instance elim_acc_wp_nonatomic {X} E α β γ e s Φ :
-    ElimAcc (X:=X) (fupd E E) (fupd E E)
+    ElimAcc (X:=X) True (fupd E E) (fupd E E)
             α β γ (WP e @ s; E {{ Φ }})
             (λ x, WP e @ s; E {{ v, |={E}=> β x ∗ (γ x -∗? Φ v) }})%I.
   Proof.
-    rewrite /ElimAcc.
-    iIntros "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
+    iIntros (_) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
     iApply wp_fupd.
     iApply (wp_wand with "(Hinner Hα)").
     iIntros (v) ">[Hβ HΦ]". iApply "HΦ". by iApply "Hclose".

@@ -69,7 +69,7 @@ Proof. by constructor. Qed.
 Global Instance affine_env_bi `(BiAffine PROP) Γ : AffineEnv Γ | 0.
 Proof. induction Γ; apply _. Qed.
 
-Instance affine_env_spatial Δ :
+Local Instance affine_env_spatial Δ :
   AffineEnv (env_spatial Δ) → Affine ([∗] env_spatial Δ).
 Proof. intros H. induction H; simpl; apply _. Qed.
 
@@ -575,8 +575,8 @@ Qed.
 (** * Combining *)
 Class FromSeps {PROP : bi} (P : PROP) (Qs : list PROP) :=
   from_seps : [∗] Qs ⊢ P.
-Arguments FromSeps {_} _%I _%I.
-Arguments from_seps {_} _%I _%I {_}.
+Local Arguments FromSeps {_} _%I _%I.
+Local Arguments from_seps {_} _%I _%I {_}.
 
 Global Instance from_seps_nil : @FromSeps PROP emp [].
 Proof. by rewrite /FromSeps. Qed.

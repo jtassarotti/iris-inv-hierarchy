@@ -70,12 +70,12 @@ Inductive ident :=
   | INamed :> string → ident.
 End ident.
 
-Instance maybe_IAnon : Maybe IAnon := λ i,
+Global Instance maybe_IAnon : Maybe IAnon := λ i,
   match i with IAnon n => Some n | _ => None end.
-Instance maybe_INamed : Maybe INamed := λ i,
+Global Instance maybe_INamed : Maybe INamed := λ i,
   match i with INamed s => Some s | _ => None end.
 
-Instance beq_eq_dec : EqDecision ident.
+Global Instance beq_eq_dec : EqDecision ident.
 Proof. solve_decision. Defined.
 
 Definition positive_beq := Eval compute in Pos.eqb.
@@ -104,15 +104,15 @@ Fixpoint pm_app {A} (l1 l2 : list A) : list A :=
 
 Definition pm_option_bind {A B} (f : A → option B) (mx : option A) : option B :=
   match mx with Some x => f x | None => None end.
-Arguments pm_option_bind {_ _} _ !_ /.
+Global Arguments pm_option_bind {_ _} _ !_ /.
 
 Definition pm_from_option {A B} (f : A → B) (y : B) (mx : option A) : B :=
   match mx with None => y | Some x => f x end.
-Arguments pm_from_option {_ _} _ _ !_ /.
+Global Arguments pm_from_option {_ _} _ _ !_ /.
 
 Definition pm_option_fun {A B} (f : option (A → B)) (x : A) : option B :=
   match f with None => None | Some f => Some (f x) end.
-Arguments pm_option_fun {_ _} !_ _ /.
+Global Arguments pm_option_fun {_ _} !_ _ /.
 
 (* Can't write [id] here as that would not reduce. *)
 Notation pm_default := (pm_from_option (λ x, x)).

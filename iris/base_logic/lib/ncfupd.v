@@ -292,12 +292,12 @@ Global Instance add_modal_ncfupd E1 E2 P Q :
 Proof. by rewrite /AddModal ncfupd_frame_r wand_elim_r ncfupd_trans. Qed.
 
 Global Instance elim_acc_ncfupd {X} E1 E2 E α β mγ Q :
-  ElimAcc (X:=X) (ncfupd E1 E2) (ncfupd E2 E1) α β mγ
+  ElimAcc (X:=X) True (ncfupd E1 E2) (ncfupd E2 E1) α β mγ
           (|NC={E1,E}=> Q)
           (λ x, |NC={E2}=> β x ∗ (mγ x -∗? |NC={E1,E}=> Q))%I.
 Proof.
   rewrite /ElimAcc.
-  iIntros "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
+  iIntros (_) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
   iMod ("Hinner" with "Hα") as "[Hβ Hfin]".
   iMod ("Hclose" with "Hβ") as "Hγ". by iApply "Hfin".
 Qed.

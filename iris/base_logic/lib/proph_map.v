@@ -12,7 +12,7 @@ Class proph_mapG (P V : Type) (Σ : gFunctors) `{Countable P} := ProphMapG {
   proph_map_inG :> inG Σ (gmap_viewR P (listO $ leibnizO V));
   proph_map_name : gname
 }.
-Arguments proph_map_name {_ _ _ _ _} _ : assert.
+Global Arguments proph_map_name {_ _ _ _ _} _ : assert.
 
 Class proph_mapPreG (P V : Type) (Σ : gFunctors) `{Countable P} :=
   { proph_map_preG_inG :> inG Σ (gmap_viewR P (listO $ leibnizO V)) }.
@@ -20,7 +20,7 @@ Class proph_mapPreG (P V : Type) (Σ : gFunctors) `{Countable P} :=
 Definition proph_mapΣ (P V : Type) `{Countable P} : gFunctors :=
   #[GFunctor (gmap_viewR P (listO $ leibnizO V))].
 
-Instance subG_proph_mapPreG {Σ P V} `{Countable P} :
+Global Instance subG_proph_mapPreG {Σ P V} `{Countable P} :
   subG (proph_mapΣ P V) Σ → proph_mapPreG P V Σ.
 Proof. solve_inG. Qed.
 

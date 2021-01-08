@@ -89,11 +89,11 @@ End definition.
 (** Seal it *)
 Definition atomic_update_aux : seal (@atomic_update_def). Proof. by eexists. Qed.
 Definition atomic_update := atomic_update_aux.(unseal).
-Arguments atomic_update {PROP _ TA TB}.
+Global Arguments atomic_update {PROP _ TA TB}.
 Definition atomic_update_eq : @atomic_update = _ := atomic_update_aux.(seal_eq).
 
-Arguments atomic_acc {PROP _ TA TB} Eo Ei _ _ _ _ : simpl never.
-Arguments atomic_update {PROP _ TA TB} Eo Ei _ _ _ : simpl never.
+Global Arguments atomic_acc {PROP _ TA TB} Eo Ei _ _ _ _ : simpl never.
+Global Arguments atomic_update {PROP _ TA TB} Eo Ei _ _ _ : simpl never.
 
 (** Notation: Atomic updates *)
 Notation "'AU' '<<' ∀ x1 .. xn , α '>>' @ Eo , Ei '<<' ∃ y1 .. yn , β , 'COMM' Φ '>>'" :=
@@ -319,17 +319,16 @@ Section lemmas.
 
   (* This lets you open invariants etc. when the goal is an atomic accessor. *)
   Global Instance elim_acc_aacc {X} E1 E2 Ei (α' β' : X → PROP) γ' α β Pas Φ :
-    ElimAcc (X:=X) (fupd E1 E2) (fupd E2 E1) α' β' γ'
+    ElimAcc (X:=X) True (fupd E1 E2) (fupd E2 E1) α' β' γ'
             (atomic_acc E1 Ei α Pas β Φ)
             (λ x', atomic_acc E2 Ei α (β' x' ∗ (γ' x' -∗? Pas))%I β
                 (λ.. x y, β' x' ∗ (γ' x' -∗? Φ x y))
             )%I.
   Proof.
-    rewrite /ElimAcc.
     (* FIXME: Is there any way to prevent maybe_wand from unfolding?
        It gets unfolded by env_cbv in the proofmode, ideally we'd like that
        to happen only if one argument is a constructor. *)
-    iIntros "Hinner >Hacc". iDestruct "Hacc" as (x') "[Hα' Hclose]".
+    iIntros (_) "Hinner >Hacc". iDestruct "Hacc" as (x') "[Hα' Hclose]".
     iMod ("Hinner" with "Hα'") as (x) "[Hα Hclose']".
     iMod (fupd_intro_mask') as "Hclose''"; last iModIntro; first done.
     iExists x. iFrame. iSplitWith "Hclose'".

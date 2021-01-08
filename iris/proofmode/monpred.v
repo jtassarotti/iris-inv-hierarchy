@@ -6,7 +6,7 @@ From iris.prelude Require Import options.
 Class MakeMonPredAt {I : biIndex} {PROP : bi} (i : I)
       (P : monPred I PROP) (𝓟 : PROP) :=
   make_monPred_at : P i ⊣⊢ 𝓟.
-Arguments MakeMonPredAt {_ _} _ _%I _%I.
+Global Arguments MakeMonPredAt {_ _} _ _%I _%I.
 (** Since [MakeMonPredAt] is used by [AsEmpValid] to import lemmas into the
 proof mode, the index [I] and BI [PROP] often contain evars. Hence, it is
 important to use the mode [!] also for the first two arguments. *)
@@ -14,7 +14,7 @@ Global Hint Mode MakeMonPredAt ! ! - ! - : typeclass_instances.
 
 Class IsBiIndexRel {I : biIndex} (i j : I) := is_bi_index_rel : i ⊑ j.
 Global Hint Mode IsBiIndexRel + - - : typeclass_instances.
-Instance is_bi_index_rel_refl {I : biIndex} (i : I) : IsBiIndexRel i i | 0.
+Global Instance is_bi_index_rel_refl {I : biIndex} (i : I) : IsBiIndexRel i i | 0.
 Proof. by rewrite /IsBiIndexRel. Qed.
 Global Hint Extern 1 (IsBiIndexRel _ _) => unfold IsBiIndexRel; assumption
             : typeclass_instances.
@@ -24,7 +24,7 @@ Global Hint Extern 1 (IsBiIndexRel _ _) => unfold IsBiIndexRel; assumption
 Class FrameMonPredAt {I : biIndex} {PROP : bi} (p : bool) (i : I)
       (𝓡 : PROP) (P : monPred I PROP) (𝓠 : PROP) :=
   frame_monPred_at : □?p 𝓡 ∗ 𝓠 -∗ P i.
-Arguments FrameMonPredAt {_ _} _ _ _%I _%I _%I.
+Global Arguments FrameMonPredAt {_ _} _ _ _%I _%I _%I.
 Global Hint Mode FrameMonPredAt + + + - ! ! - : typeclass_instances.
 
 Section modalities.
@@ -569,26 +569,26 @@ Global Instance elim_modal_at_fupd_hyp `{BiFUpd PROP} φ p p' E1 E2 P 𝓟 𝓟'
   ElimModal φ p p' ((|={E1,E2}=> P) i) 𝓟' 𝓠 𝓠'.
 Proof. by rewrite /MakeMonPredAt /ElimModal monPred_at_fupd=><-. Qed.
 
-Global Instance elim_acc_at_None `{BiFUpd PROP} {X} E1 E2 E3 E4 α α' β β' P P'x i :
+Global Instance elim_acc_at_None `{BiFUpd PROP} {X} φ E1 E2 E3 E4 α α' β β' P P'x i :
   (∀ x, MakeEmbed (α x) (α' x)) → (∀ x, MakeEmbed (β x) (β' x)) →
-  ElimAcc (X:=X) (fupd E1 E2) (fupd E3 E4) α' β' (λ _, None) P P'x →
-  ElimAcc (X:=X) (fupd E1 E2) (fupd E3 E4) α β (λ _, None) (P i) (λ x, P'x x i).
+  ElimAcc (X:=X) φ (fupd E1 E2) (fupd E3 E4) α' β' (λ _, None) P P'x →
+  ElimAcc (X:=X) φ (fupd E1 E2) (fupd E3 E4) α β (λ _, None) (P i) (λ x, P'x x i).
 Proof.
-  rewrite /ElimAcc /MakeEmbed. iIntros (Hα Hβ HEA) "Hinner Hacc".
-  iApply (HEA with "[Hinner]").
+  rewrite /ElimAcc /MakeEmbed. iIntros (Hα Hβ HEA ?) "Hinner Hacc".
+  iApply (HEA with "[Hinner]"); first done.
   - iIntros (x).  iSpecialize ("Hinner" $! x). rewrite -Hα. by iIntros (? <-).
   - iMod "Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]". iModIntro. iExists x.
     rewrite -Hα -Hβ. iFrame. iIntros (? _) "Hβ". by iApply "Hclose".
 Qed.
-Global Instance elim_acc_at_Some `{BiFUpd PROP} {X} E1 E2 E3 E4 α α' β β' γ γ' P P'x i :
+Global Instance elim_acc_at_Some `{BiFUpd PROP} {X} φ E1 E2 E3 E4 α α' β β' γ γ' P P'x i :
   (∀ x, MakeEmbed (α x) (α' x)) →
   (∀ x, MakeEmbed (β x) (β' x)) →
   (∀ x, MakeEmbed (γ x) (γ' x)) →
-  ElimAcc (X:=X) (fupd E1 E2) (fupd E3 E4) α' β' (λ x, Some (γ' x)) P P'x →
-  ElimAcc (X:=X) (fupd E1 E2) (fupd E3 E4) α β (λ x, Some (γ x)) (P i) (λ x, P'x x i).
+  ElimAcc (X:=X) φ (fupd E1 E2) (fupd E3 E4) α' β' (λ x, Some (γ' x)) P P'x →
+  ElimAcc (X:=X) φ (fupd E1 E2) (fupd E3 E4) α β (λ x, Some (γ x)) (P i) (λ x, P'x x i).
 Proof.
-  rewrite /ElimAcc /MakeEmbed. iIntros (Hα Hβ Hγ HEA) "Hinner Hacc".
-  iApply (HEA with "[Hinner]").
+  rewrite /ElimAcc /MakeEmbed. iIntros (Hα Hβ Hγ HEA ?) "Hinner Hacc".
+  iApply (HEA with "[Hinner]"); first done.
   - iIntros (x).  iSpecialize ("Hinner" $! x). rewrite -Hα. by iIntros (? <-).
   - iMod "Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]". iModIntro. iExists x.
     rewrite -Hα -Hβ -Hγ. iFrame. iIntros (? _) "Hβ /=". by iApply "Hclose".

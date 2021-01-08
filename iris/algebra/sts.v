@@ -20,9 +20,9 @@ Structure stsT := Sts {
   prim_step : relation state;
   tok : state → propset token;
 }.
-Arguments Sts {_ _} _ _.
-Arguments prim_step {_} _ _.
-Arguments tok {_} _.
+Global Arguments Sts {_ _} _ _.
+Global Arguments prim_step {_} _ _.
+Global Arguments tok {_} _.
 Notation states sts := (propset (state sts)).
 Notation tokens sts := (propset (token sts)).
 
@@ -62,14 +62,14 @@ Local Hint Extern 50 (_ ⊆ _) => set_solver : sts.
 Local Hint Extern 50 (_ ## _) => set_solver : sts.
 
 (** ** Setoids *)
-Instance frame_step_mono : Proper (flip (⊆) ==> (=) ==> (=) ==> impl) frame_step.
+Local Instance frame_step_mono : Proper (flip (⊆) ==> (=) ==> (=) ==> impl) frame_step.
 Proof.
   intros ?? HT ?? <- ?? <-; destruct 1; econstructor;
     eauto with sts; set_solver.
 Qed.
 Global Instance frame_step_proper : Proper ((≡) ==> (=) ==> (=) ==> iff) frame_step.
 Proof. move=> ?? /set_equiv_spec [??]; split; by apply frame_step_mono. Qed.
-Instance closed_proper' : Proper ((≡) ==> (≡) ==> impl) closed.
+Local Instance closed_proper' : Proper ((≡) ==> (≡) ==> impl) closed.
 Proof. destruct 3; constructor; intros; setoid_subst; eauto. Qed.
 Global Instance closed_proper : Proper ((≡) ==> (≡) ==> iff) closed.
 Proof. by split; apply closed_proper'. Qed.
@@ -179,8 +179,8 @@ Notation frame_steps T := (rtc (frame_step T)).
 Inductive car (sts : stsT) :=
   | auth : state sts → propset (token sts) → car sts
   | frag : propset (state sts) → propset (token sts) → car sts.
-Arguments auth {_} _ _.
-Arguments frag {_} _ _.
+Global Arguments auth {_} _ _.
+Global Arguments frag {_} _ _.
 End sts.
 
 Notation stsT := sts.stsT.
@@ -197,12 +197,12 @@ Inductive sts_equiv : Equiv (car sts) :=
   | auth_equiv s T1 T2 : T1 ≡ T2 → auth s T1 ≡ auth s T2
   | frag_equiv S1 S2 T1 T2 : T1 ≡ T2 → S1 ≡ S2 → frag S1 T1 ≡ frag S2 T2.
 Existing Instance sts_equiv.
-Instance sts_valid : Valid (car sts) := λ x,
+Local Instance sts_valid : Valid (car sts) := λ x,
   match x with
   | auth s T => tok s ## T
   | frag S' T => closed S' T ∧ ∃ s, s ∈ S'
   end.
-Instance sts_core : PCore (car sts) := λ x,
+Local Instance sts_core : PCore (car sts) := λ x,
   Some match x with
   | frag S' _ => frag (up_set S' ∅ ) ∅
   | auth s _  => frag (up s ∅) ∅
@@ -213,7 +213,7 @@ Inductive sts_disjoint : Disjoint (car sts) :=
   | auth_frag_disjoint s S T1 T2 : s ∈ S → T1 ## T2 → auth s T1 ## frag S T2
   | frag_auth_disjoint s S T1 T2 : s ∈ S → T1 ## T2 → frag S T1 ## auth s T2.
 Existing Instance sts_disjoint.
-Instance sts_op : Op (car sts) := λ x1 x2,
+Local Instance sts_op : Op (car sts) := λ x1 x2,
   match x1, x2 with
   | frag S1 T1, frag S2 T2 => frag (S1 ∩ S2) (T1 ∪ T2)
   | auth s T1, frag _ T2 => auth s (T1 ∪ T2)
@@ -232,7 +232,7 @@ Proof. by constructor. Qed.
 Global Instance frag_proper : Proper ((≡) ==> (≡) ==> (≡)) (@frag sts).
 Proof. by constructor. Qed.
 
-Instance sts_equivalence: Equivalence ((≡) : relation (car sts)).
+Local Instance sts_equivalence: Equivalence ((≡) : relation (car sts)).
 Proof.
   split.
   - by intros []; constructor.
@@ -290,9 +290,9 @@ Section sts_definitions.
   Definition sts_frag_up (s : sts.state sts) (T : sts.tokens sts) : stsR sts :=
     sts_frag (sts.up s T) T.
 End sts_definitions.
-Instance: Params (@sts_auth) 2 := {}.
-Instance: Params (@sts_frag) 1 := {}.
-Instance: Params (@sts_frag_up) 2 := {}.
+Global Instance: Params (@sts_auth) 2 := {}.
+Global Instance: Params (@sts_frag) 1 := {}.
+Global Instance: Params (@sts_frag_up) 2 := {}.
 
 Section stsRA.
 Import sts.
@@ -300,7 +300,7 @@ Context {sts : stsT}.
 Implicit Types s : state sts.
 Implicit Types S : states sts.
 Implicit Types T : tokens sts.
-Arguments dra_valid _ !_/.
+Local Arguments dra_valid _ !_/.
 
 (** Setoids *)
 Global Instance sts_auth_proper s : Proper ((≡) ==> (≡)) (sts_auth s).
@@ -461,8 +461,8 @@ Structure stsT := Sts {
   state : Type;
   prim_step : relation state;
 }.
-Arguments Sts {_} _.
-Arguments prim_step {_} _ _.
+Global Arguments Sts {_} _.
+Global Arguments prim_step {_} _ _.
 Notation states sts := (propset (state sts)).
 
 Definition stsT_token := Empty_set.

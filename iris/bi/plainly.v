@@ -7,9 +7,9 @@ Import interface.bi derived_laws.bi derived_laws_later.bi.
 Set Default Proof Using "Type*".
 
 Class Plainly (A : Type) := plainly : A → A.
-Arguments plainly {A}%type_scope {_} _%I.
+Global Arguments plainly {A}%type_scope {_} _%I.
 Global Hint Mode Plainly ! : typeclass_instances.
-Instance: Params (@plainly) 2 := {}.
+Global Instance: Params (@plainly) 2 := {}.
 Notation "■ P" := (plainly P) : bi_scope.
 
 (* Mixins allow us to create instances easily without having to use Program *)
@@ -43,21 +43,21 @@ Class BiPlainly (PROP : bi) := {
   bi_plainly_mixin : BiPlainlyMixin PROP bi_plainly_plainly;
 }.
 Global Hint Mode BiPlainly ! : typeclass_instances.
-Arguments bi_plainly_plainly : simpl never.
+Global Arguments bi_plainly_plainly : simpl never.
 
 Class BiPlainlyExist `{!BiPlainly PROP} :=
   plainly_exist_1 A (Ψ : A → PROP) :
     ■ (∃ a, Ψ a) ⊢ ∃ a, ■ (Ψ a).
-Arguments BiPlainlyExist : clear implicits.
-Arguments BiPlainlyExist _ {_}.
-Arguments plainly_exist_1 _ {_ _} _.
+Global Arguments BiPlainlyExist : clear implicits.
+Global Arguments BiPlainlyExist _ {_}.
+Global Arguments plainly_exist_1 _ {_ _} _.
 Global Hint Mode BiPlainlyExist ! - : typeclass_instances.
 
 Class BiPropExt `{!BiPlainly PROP, !BiInternalEq PROP} :=
   prop_ext_2 (P Q : PROP) : ■ (P ∗-∗ Q) ⊢ P ≡ Q.
-Arguments BiPropExt : clear implicits.
-Arguments BiPropExt _ {_ _}.
-Arguments prop_ext_2 _ {_ _ _} _.
+Global Arguments BiPropExt : clear implicits.
+Global Arguments BiPropExt _ {_ _}.
+Global Arguments prop_ext_2 _ {_ _ _} _.
 Global Hint Mode BiPropExt ! - - : typeclass_instances.
 
 Section plainly_laws.
@@ -92,15 +92,15 @@ End plainly_laws.
 
 (* Derived properties and connectives *)
 Class Plain `{BiPlainly PROP} (P : PROP) := plain : P ⊢ ■ P.
-Arguments Plain {_ _} _%I : simpl never.
-Arguments plain {_ _} _%I {_}.
+Global Arguments Plain {_ _} _%I : simpl never.
+Global Arguments plain {_ _} _%I {_}.
 Global Hint Mode Plain + - ! : typeclass_instances.
-Instance: Params (@Plain) 1 := {}.
+Global Instance: Params (@Plain) 1 := {}.
 
 Definition plainly_if `{!BiPlainly PROP} (p : bool) (P : PROP) : PROP :=
   (if p then ■ P else P)%I.
-Arguments plainly_if {_ _} !_ _%I /.
-Instance: Params (@plainly_if) 2 := {}.
+Global Arguments plainly_if {_ _} !_ _%I /.
+Global Instance: Params (@plainly_if) 2 := {}.
 Typeclasses Opaque plainly_if.
 
 Notation "■? p P" := (plainly_if p P) : bi_scope.
@@ -362,8 +362,7 @@ Proof. intros; destruct p; simpl; apply _. Qed.
 Lemma plain_persistent P : Plain P → Persistent P.
 Proof. intros. by rewrite /Persistent -plainly_elim_persistently. Qed.
 
-(* Not an instance, see the bottom of this file *)
-Lemma impl_persistent P Q :
+Global Instance impl_persistent P Q :
   Absorbing P → Plain P → Persistent Q → Persistent (P → Q).
 Proof.
   intros. by rewrite /Persistent {2}(plain P) -persistently_impl_plainly
@@ -548,6 +547,13 @@ Global Instance big_sepMS_plain `{BiAffine PROP, Countable A} (Φ : A → PROP) 
   (∀ x, Plain (Φ x)) → Plain ([∗ mset] x ∈ X, Φ x).
 Proof. rewrite big_opMS_eq. apply _. Qed.
 
+Global Instance plainly_timeless P  `{!BiPlainlyExist PROP} :
+  Timeless P → Timeless (■ P).
+Proof.
+  intros. rewrite /Timeless /bi_except_0 later_plainly_1.
+  by rewrite (timeless P) /bi_except_0 plainly_or {1}plainly_elim.
+Qed.
+
 (* Interaction with equality *)
 Section internal_eq.
   Context `{!BiInternalEq PROP}.
@@ -604,6 +610,13 @@ Section prop_ext.
         (λ Q, ■ (True -∗ Q))%I ltac:(shelve)); last solve_proper.
       by rewrite -entails_wand // -(plainly_emp_intro True%I) True_impl.
   Qed.
+
+  (* This proof uses [BiPlainlyExist] and [BiLöb] via [plainly_timeless] and
+  [wand_timeless]. *)
+  Global Instance internal_eq_timeless `{!BiPlainlyExist PROP, !BiLöb PROP}
+      `{!Timeless P} `{!Timeless Q} :
+    Timeless (PROP := PROP) (P ≡ Q).
+  Proof. rewrite prop_ext. apply _. Qed.
 End prop_ext.
 
 (* Interaction with ▷ *)
@@ -629,12 +642,6 @@ Proof. induction n; apply _. Qed.
 Global Instance except_0_plain P : Plain P → Plain (◇ P).
 Proof. rewrite /bi_except_0; apply _. Qed.
 
-Global Instance plainly_timeless P  `{!BiPlainlyExist PROP} :
-  Timeless P → Timeless (■ P).
-Proof.
-  intros. rewrite /Timeless /bi_except_0 later_plainly_1.
-  by rewrite (timeless P) /bi_except_0 plainly_or {1}plainly_elim.
-Qed.
 End plainly_derived.
 
 (* When declared as an actual instance, [plain_persistent] will cause
@@ -645,10 +652,3 @@ To avoid that, we declare it using a [Hint Immediate], so that it will
 only be used at the leaves of the proof search tree, i.e. when the
 premise of the hint can be derived from just the current context. *)
 Global Hint Immediate plain_persistent : typeclass_instances.
-
-(* Not defined using an ordinary [Instance] because the default
-[class_apply @impl_persistent] shelves the [BiPlainly] premise, making proof
-search for the other premises fail. See the proof of [coreP_persistent] for an
-example where it would fail with a regular [Instance].*)
-Global Hint Extern 4 (Persistent _) =>
-  notypeclasses refine (impl_persistent _ _ _ _ _) : typeclass_instances.

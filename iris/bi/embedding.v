@@ -7,9 +7,9 @@ From iris.prelude Require Import options.
 Set Default Proof Using "Type*".
 
 Class Embed (A B : Type) := embed : A → B.
-Arguments embed {_ _ _} _%I : simpl never.
+Global Arguments embed {_ _ _} _%I : simpl never.
 Notation "⎡ P ⎤" := (embed P) : bi_scope.
-Instance: Params (@embed) 3 := {}.
+Global Instance: Params (@embed) 3 := {}.
 Typeclasses Opaque embed.
 
 Global Hint Mode Embed ! - : typeclass_instances.
@@ -49,7 +49,7 @@ Class BiEmbed (PROP1 PROP2 : bi) := {
 }.
 Global Hint Mode BiEmbed ! - : typeclass_instances.
 Global Hint Mode BiEmbed - ! : typeclass_instances.
-Arguments bi_embed_embed : simpl never.
+Global Arguments bi_embed_embed : simpl never.
 
 Class BiEmbedEmp (PROP1 PROP2 : bi) `{!BiEmbed PROP1 PROP2} :=
   embed_emp_1 : ⎡ emp : PROP1 ⎤ ⊢ emp.

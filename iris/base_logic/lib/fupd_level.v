@@ -624,12 +624,12 @@ Qed.
 *)
 
 Global Instance elim_acc_fupd_level {X} E1 E2 E k α β mγ Q :
-  ElimAcc (X:=X) (uPred_fupd_level E1 E2 k) (uPred_fupd_level E2 E1 k) α β mγ
+  ElimAcc (X:=X) True (uPred_fupd_level E1 E2 k) (uPred_fupd_level E2 E1 k) α β mγ
           (|k={E1,E}=> Q)
           (λ x, |k={E2}=> β x ∗ (mγ x -∗? |k={E1,E}=> Q))%I.
 Proof.
   rewrite /ElimAcc.
-  iIntros "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
+  iIntros (_) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
   iMod ("Hinner" with "Hα") as "[Hβ Hfin]".
   iMod ("Hclose" with "Hβ") as "Hγ". by iApply "Hfin".
 Qed.
@@ -799,12 +799,12 @@ Proof.
 Qed.
 
 Global Instance elim_acc_fupd_split_level {X} E1 E2 E k mj α β mγ Q :
-  ElimAcc (X:=X) (uPred_fupd_split_level E1 E2 k mj) (uPred_fupd_split_level E2 E1 k mj) α β mγ
+  ElimAcc (X:=X) True (uPred_fupd_split_level E1 E2 k mj) (uPred_fupd_split_level E2 E1 k mj) α β mγ
           (|k,mj={E1,E}=> Q)
           (λ x, |k,mj={E2}=> β x ∗ (mγ x -∗? |k,mj={E1,E}=> Q))%I.
 Proof.
   rewrite /ElimAcc.
-  iIntros "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
+  iIntros (_) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
   iMod ("Hinner" with "Hα") as "[Hβ Hfin]".
   iMod ("Hclose" with "Hβ") as "Hγ". by iApply "Hfin".
 Qed.

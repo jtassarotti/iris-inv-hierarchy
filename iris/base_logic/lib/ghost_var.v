@@ -15,7 +15,7 @@ Global Hint Mode ghost_varG - ! : typeclass_instances.
 Definition ghost_varΣ (A : Type) : gFunctors :=
   #[ GFunctor (frac_agreeR $ leibnizO A) ].
 
-Instance subG_ghost_varΣ Σ A : subG (ghost_varΣ A) Σ → ghost_varG Σ A.
+Global Instance subG_ghost_varΣ Σ A : subG (ghost_varΣ A) Σ → ghost_varG Σ A.
 Proof. solve_inG. Qed.
 
 Definition ghost_var_def `{!ghost_varG Σ A} (γ : gname) (q : Qp) (a : A) : iProp Σ :=
@@ -23,7 +23,7 @@ Definition ghost_var_def `{!ghost_varG Σ A} (γ : gname) (q : Qp) (a : A) : iPr
 Definition ghost_var_aux : seal (@ghost_var_def). Proof. by eexists. Qed.
 Definition ghost_var := ghost_var_aux.(unseal).
 Definition ghost_var_eq : @ghost_var = @ghost_var_def := ghost_var_aux.(seal_eq).
-Arguments ghost_var {Σ A _} γ q a.
+Global Arguments ghost_var {Σ A _} γ q a.
 
 Local Ltac unseal := rewrite ?ghost_var_eq /ghost_var_def.
 

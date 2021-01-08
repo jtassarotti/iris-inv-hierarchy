@@ -24,10 +24,10 @@ performance and horrible error messages, so we wrap it in a [once]. *)
 Ltac iSolveTC :=
   solve [once (typeclasses eauto)].
 
-(** Tactic used for solving side-conditions arising from TC resolution in iMod
-and iInv. *)
+(** Tactic used for solving side-conditions arising from TC resolution in [iMod]
+and [iInv]. *)
 Ltac iSolveSideCondition :=
-  split_and?; try solve [ fast_done | solve_ndisj ].
+  split_and?; try solve [ fast_done | solve_ndisj | iSolveTC ].
 
 (** Used for printing [string]s and [ident]s. *)
 Ltac pretty_ident H :=
@@ -740,7 +740,7 @@ Tactic Notation "iRevert" "(" ident(x1) ident(x2) ident(x3) ident(x4)
 (** * The specialize and pose proof tactics *)
 Record iTrm {X As S} :=
   ITrm { itrm : X ; itrm_vars : hlist As ; itrm_hyps : S }.
-Arguments ITrm {_ _ _} _ _ _.
+Global Arguments ITrm {_ _ _} _ _ _.
 
 Notation "( H $! x1 .. xn )" :=
   (ITrm H (hcons x1 .. (hcons xn hnil) ..) "") (at level 0, x1, xn at level 9).

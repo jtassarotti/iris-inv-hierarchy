@@ -4,15 +4,15 @@ From iris.prelude Require Import options.
 
 Class Fractional {PROP : bi} (Φ : Qp → PROP) :=
   fractional p q : Φ (p + q)%Qp ⊣⊢ Φ p ∗ Φ q.
-Arguments Fractional {_} _%I : simpl never.
+Global Arguments Fractional {_} _%I : simpl never.
 
 Class AsFractional {PROP : bi} (P : PROP) (Φ : Qp → PROP) (q : Qp) := {
   as_fractional : P ⊣⊢ Φ q;
   as_fractional_fractional :> Fractional Φ
 }.
-Arguments AsFractional {_} _%I _%I _%Qp.
+Global Arguments AsFractional {_} _%I _%I _%Qp.
 
-Arguments fractional {_ _ _} _ _.
+Global Arguments fractional {_ _ _} _ _.
 
 Global Hint Mode AsFractional - + - - : typeclass_instances.
 (* To make [as_fractional_fractional] a useful instance, we have to
@@ -114,13 +114,13 @@ Section fractional.
        - In the forward direction, they make the search not terminate
        - In the backward direction, the higher order unification of Φ
          with the goal does not work. *)
-  Instance mul_as_fractional_l P Φ p q :
+  Local Instance mul_as_fractional_l P Φ p q :
     AsFractional P Φ (q * p) → AsFractional P (λ q, Φ (q * p)%Qp) q.
   Proof.
     intros H. split; first apply H. eapply (mul_fractional_l _ Φ p).
     split; first done. apply H.
   Qed.
-  Instance mul_as_fractional_r P Φ p q :
+  Local Instance mul_as_fractional_r P Φ p q :
     AsFractional P Φ (p * q) → AsFractional P (λ q, Φ (p * q)%Qp) q.
   Proof.
     intros H. split; first apply H. eapply (mul_fractional_r _ Φ p).

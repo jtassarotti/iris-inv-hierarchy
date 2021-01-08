@@ -73,6 +73,8 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   been working properly for quite some time).
 * Strengthen `persistent_sep_dup` to support propositions that are persistent
   and either affine or absorbing.
+* Fix the statement of the lemma `fupd_plainly_laterN`; the old lemma was a
+  duplicate of `fupd_plain_laterN`.
 
 **Changes in `proofmode`:**
 
@@ -99,6 +101,8 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
 * Remove the laws `pure_forall_2 : (∀ a, ⌜ φ a ⌝) ⊢ ⌜ ∀ a, φ a ⌝` from the BI
   interface and factor it into a type class `BiPureForall`.
 * Add notation `¬ P` for `P → False` to `bi_scope`.
+* Add Coq side-condition `φ` to class `ElimAcc` (similar to what we already had
+  for `ElimInv` and `ElimModal`).
 
 **Changes in `base_logic`:**
 
@@ -174,6 +178,10 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
 * Generalize HeapLang's `mapsto` (`↦`), `array` (`↦∗`), and atomic heap
   connectives to discardable fractions. See the CHANGELOG entry in the category
   `base_logic` for more information.
+* Opening an invariant or eliminating a mask-changing update modality around a
+  non-atomic weakest precondition creates a side-condition `Atomic ...`.
+  Before, this would fail with the unspecific error "iMod: cannot eliminate
+  modality (|={E1,E2}=> ...) in (WP ...)".
 
 **Changes in `heap_lang`:**
 
@@ -182,6 +190,10 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   already at the top level).
 * The `wp_` tactics now preserve the possibility of doing a fancy update when
   the expression reduces to a value.
+* Move `IntoVal`, `AsVal`, `Atomic`, `AsRecV`, and `PureExec` instances to their
+  own file [heap_lang.class_instances](iris_heap_lang/class_instances.v).
+* Move `inv_head_step` tactic and `head_step` auto hints (now part of new hint
+  database `head_step`) to [heap_lang.tactics](iris_heap_lang/tactics.v).
 
 The following `sed` script helps adjust your code to the renaming (on macOS,
 replace `sed` by `gsed`, installed via e.g. `brew install gnu-sed`).

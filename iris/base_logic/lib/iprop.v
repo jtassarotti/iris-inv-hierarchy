@@ -28,7 +28,7 @@ Structure gFunctor := GFunctor {
   gFunctor_F :> rFunctor;
   gFunctor_map_contractive : rFunctorContractive gFunctor_F;
 }.
-Arguments GFunctor _ {_}.
+Global Arguments GFunctor _ {_}.
 Existing Instance gFunctor_map_contractive.
 Add Printing Constructor gFunctor.
 
@@ -97,14 +97,14 @@ Proof.
   - move=> i; move: H=> /(_ (Fin.R _ i)) [j] /=. rewrite fin_plus_inv_R; eauto.
 Qed.
 
-Instance subG_refl Σ : subG Σ Σ.
+Global Instance subG_refl Σ : subG Σ Σ.
 Proof. move=> i; by exists i. Qed.
-Instance subG_app_l Σ Σ1 Σ2 : subG Σ Σ1 → subG Σ (gFunctors.app Σ1 Σ2).
+Global Instance subG_app_l Σ Σ1 Σ2 : subG Σ Σ1 → subG Σ (gFunctors.app Σ1 Σ2).
 Proof.
   move=> H i; move: H=> /(_ i) [j ?].
   exists (Fin.L _ j). by rewrite /= fin_plus_inv_L.
 Qed.
-Instance subG_app_r Σ Σ1 Σ2 : subG Σ Σ2 → subG Σ (gFunctors.app Σ1 Σ2).
+Global Instance subG_app_r Σ Σ1 Σ2 : subG Σ Σ2 → subG Σ (gFunctors.app Σ1 Σ2).
 Proof.
   move=> H i; move: H=> /(_ i) [j ?].
   exists (Fin.R _ j). by rewrite /= fin_plus_inv_R.
