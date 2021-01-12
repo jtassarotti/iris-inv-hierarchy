@@ -336,11 +336,10 @@ Section proofmode_classes.
   Qed.
 
   Global Instance elim_modal_ncfupd_wp_atomic p s E1 E2 e P Φ :
-    Atomic (stuckness_to_atomicity s) e →
-    ElimModal True p false (|NC={E1,E2}=> P) P
-            (WP e @ s; E1 {{ Φ }}) (WP e @ s; E2 {{ v, |NC={E2,E1}=> Φ v }})%I.
+    ElimModal (Atomic (stuckness_to_atomicity s) e) p false (|NC={E1,E2}=> P) P
+            (WP e @ s; E1 {{ Φ }}) (WP e @ s; E2 {{ v, |NC={E2,E1}=> Φ v }})%I | 100.
   Proof.
-    intros. by rewrite /ElimModal intuitionistically_if_elim
+    intros ?. by rewrite /ElimModal intuitionistically_if_elim
       ncfupd_frame_r wand_elim_r wp_ncatomic.
   Qed.
 
@@ -358,24 +357,21 @@ Section proofmode_classes.
   Proof. by rewrite /AddModal fupd_frame_r wand_elim_r fupd_wp. Qed.
 
   Global Instance elim_acc_ncfupd_wp {X} E1 E2 α β γ e s Φ :
-    Atomic (stuckness_to_atomicity s) e →
-    ElimAcc (X:=X) True (ncfupd E1 E2) (ncfupd E2 E1)
+    ElimAcc (X:=X) (Atomic (stuckness_to_atomicity s) e) (ncfupd E1 E2) (ncfupd E2 E1)
             α β γ (WP e @ s; E1 {{ Φ }})
             (λ x, WP e @ s; E2 {{ v, |NC={E2}=> β x ∗ (γ x -∗? Φ v) }})%I.
   Proof.
-    intros ?. rewrite /ElimAcc.
-    iIntros (_) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
+    iIntros (?) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
     iApply (wp_wand with "(Hinner Hα)").
     iIntros (v) ">[Hβ HΦ]". iApply "HΦ". by iApply "Hclose".
   Qed.
 
   Global Instance elim_acc_wp {X} E1 E2 α β γ e s Φ :
-    Atomic (stuckness_to_atomicity s) e →
     ElimAcc (X:=X) (Atomic (stuckness_to_atomicity s) e) (fupd E1 E2) (fupd E2 E1)
             α β γ (WP e @ s; E1 {{ Φ }})
             (λ x, WP e @ s; E2 {{ v, |={E2}=> β x ∗ (γ x -∗? Φ v) }})%I | 100.
   Proof.
-    iIntros (??) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
+    iIntros (?) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
     iApply (wp_wand with "(Hinner Hα)").
     iIntros (v) ">[Hβ HΦ]". iApply "HΦ". by iApply "Hclose".
   Qed.
@@ -385,7 +381,7 @@ Section proofmode_classes.
             α β γ (WP e @ s; E {{ Φ }})
             (λ x, WP e @ s; E {{ v, |NC={E}=> β x ∗ (γ x -∗? Φ v) }})%I.
   Proof.
-    rewrite /ElimAcc.
+    rewrite /ElimAcc /accessor.
     iIntros (_) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
     iApply wp_ncfupd.
     iApply (wp_wand with "(Hinner Hα)").
