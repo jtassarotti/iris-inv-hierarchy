@@ -23,7 +23,7 @@ Section cmra_mlist.
     | MListBot_equiv : MListBot ≡ MListBot.
 
   Existing Instance mlist_equiv.
-  Instance mlist_equiv_Equivalence : @Equivalence mlist equiv.
+  Local Instance mlist_equiv_Equivalence : @Equivalence mlist equiv.
   Proof.
     split.
     - move => [|]; by constructor.
@@ -34,10 +34,10 @@ Section cmra_mlist.
 
   Canonical Structure mlistC : ofeT := discreteO mlist.
 
-  Instance mlist_valid : Valid mlist :=
+  Local Instance mlist_valid : Valid mlist :=
     λ x, match x with MList _ => True | MListBot => False end.
 
-  Instance mlist_op : Op mlist := λ x y,
+  Local Instance mlist_op : Op mlist := λ x y,
     match x, y with
     | MList D1, MList D2 =>
         if (decide (D1 `prefix_of` D2))
@@ -49,11 +49,11 @@ Section cmra_mlist.
     | _, _ => MListBot
     end.
 
-  Arguments op _ _ !_ !_ /.
+  Local Arguments op _ _ !_ !_ /.
 
-  Instance mlist_PCore : PCore mlist := Some.
+  Local Instance mlist_PCore : PCore mlist := Some.
 
-  Instance anti_symm_prefix_of : AntiSymm eq (@prefix A).
+  Local Instance anti_symm_prefix_of : AntiSymm eq (@prefix A).
   Proof.
     intros l1 l2 Hpre1 Hpre2.
     destruct Hpre1 as (D1'&Hpre1). destruct Hpre2 as (D2'&Hpre2).
@@ -134,7 +134,7 @@ Section cmra_mlist.
   Lemma mlist_core_self (X: mlist) : core X = X.
   Proof. done. Qed.
 
-  Instance mlist_unit : Unit mlist := MList [].
+  Local Instance mlist_unit : Unit mlist := MList [].
 
   Definition mlist_ra_mixin : RAMixin mlist.
   Proof.
@@ -182,7 +182,7 @@ Section cmra_mlist.
 
 End cmra_mlist.
 
-Arguments MList {_} _.
+Global Arguments MList {_} _.
 
 Definition fmlistUR (A: Type) {Heq: EqDecision A} := authUR (mlistUR A).
 Class fmlistG (A: Type) {Heq: EqDecision A} Σ :=
@@ -190,7 +190,7 @@ Class fmlistG (A: Type) {Heq: EqDecision A} Σ :=
 Definition fmlistΣ (A: Type) {Heq: EqDecision A} : gFunctors :=
   #[GFunctor (fmlistUR A)].
 
-Instance subG_fmlistΣ (A: Type) {Heq: EqDecision A} {Σ} : subG (fmlistΣ A) Σ → (fmlistG A) Σ.
+Global Instance subG_fmlistΣ (A: Type) {Heq: EqDecision A} {Σ} : subG (fmlistΣ A) Σ → (fmlistG A) Σ.
 Proof. solve_inG. Qed.
 
 Section fmlist_props.
@@ -201,7 +201,7 @@ Definition fmlist γ q l:= own γ (●{q} (MList l)).
 Definition fmlist_lb γ l := own γ (◯ (MList l)).
 Definition fmlist_idx γ i a := (∃ l, ⌜ l !! i = Some a ⌝ ∗ fmlist_lb γ l)%I.
 
-Instance inj_MList_equiv : Inj eq equiv (@MList A).
+Local Instance inj_MList_equiv : Inj eq equiv (@MList A).
 Proof. intros l1 l2. inversion 1. subst; eauto. Qed.
 
 Lemma fmlist_agree_1 γ q1 q2 l1 l2:

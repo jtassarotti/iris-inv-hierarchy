@@ -13,13 +13,13 @@ Class crashPreG Σ := { crash_inPreG :> inG Σ crashR }.
 Definition crashΣ : gFunctors :=
     #[GFunctor (csumR fracR (agreeR unitO))].
 
-Instance subG_crashG {Σ} : subG crashΣ Σ → crashPreG Σ.
+Global Instance subG_crashG {Σ} : subG crashΣ Σ → crashPreG Σ.
 Proof. solve_inG. Qed.
 
 Definition NC_def `{crashG Σ} q := own crash_name (NC_tok q).
 Definition NC_aux `{crashG Σ} : seal NC_def. by eexists. Qed.
 Definition NC `{crashG Σ} := NC_aux.(unseal).
-Arguments NC {_ _} _%Qp.
+Global Arguments NC {_ _} _%Qp.
 Definition C_def `{crashG Σ} := own crash_name C_tok.
 Definition C_aux `{crashG Σ} : seal C_def. by eexists. Qed.
 Definition C `{crashG Σ} := C_aux.(unseal).

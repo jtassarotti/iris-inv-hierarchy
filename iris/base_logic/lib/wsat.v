@@ -99,7 +99,7 @@ Global Instance: Params (@ownI) 3 := {}.
 Definition ownI_mut `{!invG Σ} {n} (lvl: nat) (i : positive) q (Qs : vec (iProp Σ) n) : iProp Σ :=
   (∃ (l: agree (list (later (iPropO Σ)) * bi_schema)) γs, fmlist_idx inv_list_name lvl γs ∗
          own (invariant_name γs) (◯ {[ i := (l, inv_mut_unfold q Qs) ]})).
-Arguments ownI_mut {_ _ _} _ _ _%I.
+Global Arguments ownI_mut {_ _ _} _ _ _%I.
 Typeclasses Opaque ownI_mut.
 Instance: Params (@inv_mut_unfold) 1 := {}.
 Instance: Params (@ownI_mut) 3 := {}.
@@ -173,8 +173,8 @@ Fixpoint bi_schema_interp `{!invG Σ} n (Ps Ps_mut: list (iProp Σ)) sch {struct
     ∗ wsat n
     | O => True
   end%I.
-Arguments bi_schema_interp {_ _} _ _ _ _.
-Arguments wsat {_ _} _.
+Global Arguments bi_schema_interp {_ _} _ _ _ _.
+Global Arguments wsat {_ _} _.
 
 Lemma wsat_unfold `{!invG Σ} n:
   wsat n =
@@ -243,7 +243,7 @@ Qed.
 Lemma dist_later_vec_to_list {A: ofeT} {m} n (l1 l2 : vec A m):
   dist_later n l1 l2 ↔ dist_later n (vec_to_list l1) (vec_to_list l2).
 Proof. destruct n => //=. Qed.
-Instance invariant_unfold_contractive' m sch : Contractive (@invariant_unfold Σ m sch).
+Local Instance invariant_unfold_contractive' m sch : Contractive (@invariant_unfold Σ m sch).
 Proof.
   intros n l1 l2 Hd.
   rewrite /invariant_unfold.
