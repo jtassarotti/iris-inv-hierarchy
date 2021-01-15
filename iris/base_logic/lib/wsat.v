@@ -39,13 +39,17 @@ Proof.
 Qed.
 
 Module invG.
-  Class invG (Σ : gFunctors) : Set := WsatG {
-    inv_inG :> inG Σ (authR (gmapUR positive
+  Class invPreG (Σ : gFunctors) : Set := WsatPreG {
+    inv_inPreG :> inG Σ (authR (gmapUR positive
                                     (prodR (agreeR (prodO (listO (laterO (iPropO Σ))) bi_schemaO))
                                            (optionR (prodR fracR (agreeR (listO (laterO (iPropO Σ)))))))));
-    enabled_inG :> inG Σ coPset_disjR;
-    disabled_inG :> inG Σ (gset_disjR positive);
-    mlist_inG :> fmlistG (invariant_level_names) Σ;
+    enabled_inPreG :> inG Σ coPset_disjR;
+    disabled_inPreG :> inG Σ (gset_disjR positive);
+    mlist_inPreG :> fmlistG (invariant_level_names) Σ;
+  }.
+
+  Class invG (Σ : gFunctors) : Set := WsatG {
+    inv_inG :> invPreG Σ;
     inv_list_name : gname;
     enabled_name : gname;
     disabled_name : gname;
@@ -59,15 +63,6 @@ Module invG.
       GFunctor (gset_disjR positive);
       fmlistΣ invariant_level_names
      ].
-
-  Class invPreG (Σ : gFunctors) : Set := WsatPreG {
-    inv_inPreG :> inG Σ (authR (gmapUR positive
-                                    (prodR (agreeR (prodO (listO (laterO (iPropO Σ))) bi_schemaO))
-                                           (optionR (prodR fracR (agreeR (listO (laterO (iPropO Σ)))))))));
-    enabled_inPreG :> inG Σ coPset_disjR;
-    disabled_inPreG :> inG Σ (gset_disjR positive);
-    mlist_inPreG :> fmlistG (invariant_level_names) Σ;
-  }.
 
   (* XXX: magic commands to make the next proof not take 2min. *)
   Local Strategy 100 [authR].
@@ -898,7 +893,7 @@ Proof.
   iMod (fmlist_alloc []) as (γI) "HI".
   iMod (own_alloc (CoPset ⊤)) as (γE) "HE"; first done.
   iMod (own_alloc (GSet ∅)) as (γD) "HD"; first done.
-  set (iG := (WsatG _ _ _ _ _ γI γE γD)).
+  set (iG := (WsatG _ _ γI γE γD)).
   iExists iG.
   rewrite /ownE. iFrame. iClear "HD".
   replace γI with (inv_list_name) by eauto.
