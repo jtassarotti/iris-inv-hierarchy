@@ -1,13 +1,13 @@
-From iris.algebra Require Export updates local_updates frac agree.
+From iris.algebra Require Export updates local_updates dfrac agree.
 From iris.algebra Require Import proofmode_classes big_op.
 From iris.prelude Require Import options.
 
 (** The view camera with fractional authoritative elements *)
 (** The view camera, which is reminiscent of the views framework, is used to
-provide a logical/"small-footprint" "view" of some "large-footprint" piece of
-data, which can be shared in the separation logic sense, i.e., different parts
-of the data can be separately owned by different functions or threads. This is
-achieved using the two elements of the view camera:
+  provide a logical/"small-footprint" "view" of some "large-footprint" piece of
+  data, which can be shared in the separation logic sense, i.e., different parts
+  of the data can be separately owned by different functions or threads. This is
+  achieved using the two elements of the view camera:
 
 - The authoritative element [●V a], which describes the data under consideration.
 - The fragment [◯V b], which provides a logical view of the data [a].
@@ -16,10 +16,10 @@ To enable sharing of the fragments, the type of fragments is equipped with a
 camera structure so ownership of fragments can be split. Concretely, fragments
 enjoy the rule [◯V (b1 ⋅ b2) = ◯V b1 ⋅ ◯V b2].
 
-To enable sharing of the authoritative element [●V{q} a], it is equipped with a
-fraction [q]. Updates are only possible with the full authoritative element
-[●V a] (syntax for [●V{1} a]]), while fractional authoritative elements have
-agreement, i.e., [✓ (●V{p1} a1 ⋅ ●V{p2} a2) → a1 ≡ a2]. *)
+To enable sharing of the authoritative element [●V{dq} a], it is equipped with a
+discardable fraction [dq]. Updates are only possible with the full authoritative
+element [●V a] (syntax for [●V{#1} a]]), while fractional authoritative elements
+have agreement, i.e., [✓ (●V{dq1} a1 ⋅ ●V{dq2} a2) → a1 ≡ a2]. *)
 
 (** * The view relation *)
 (** To relate the authoritative element [a] to its possible fragments [b], the
@@ -75,7 +75,7 @@ Class ViewRelDiscrete {A B} (rel : view_rel A B) :=
 always be constructed using [●V] and [◯V], and never using the constructor
 [View]. *)
 Record view {A B} (rel : nat → A → B → Prop) :=
-  View { view_auth_proj : option (frac * agree A) ; view_frag_proj : B }.
+  View { view_auth_proj : option (dfrac * agree A) ; view_frag_proj : B }.
 Add Printing Constructor view.
 Global Arguments View {_ _ _} _ _.
 Global Arguments view_auth_proj {_ _ _} _.
@@ -84,16 +84,20 @@ Global Instance: Params (@View) 3 := {}.
 Global Instance: Params (@view_auth_proj) 3 := {}.
 Global Instance: Params (@view_frag_proj) 3 := {}.
 
-Definition view_auth {A B} {rel : view_rel A B} (q : Qp) (a : A) : view rel :=
-  View (Some (q, to_agree a)) ε.
+Definition view_auth {A B} {rel : view_rel A B} (dq : dfrac) (a : A) : view rel :=
+  View (Some (dq, to_agree a)) ε.
 Definition view_frag {A B} {rel : view_rel A B} (b : B) : view rel := View None b.
 Typeclasses Opaque view_auth view_frag.
 
 Global Instance: Params (@view_auth) 3 := {}.
 Global Instance: Params (@view_frag) 3 := {}.
 
-Notation "●V{ q } a" := (view_auth q a) (at level 20, format "●V{ q }  a").
-Notation "●V a" := (view_auth 1 a) (at level 20).
+(** FIXME: Refactor these notations using custom entries once Coq bug #13654
+has been fixed. *)
+Notation "●V{ dq } a" := (view_auth dq a) (at level 20, format "●V{ dq }  a").
+Notation "●V{# q } a" := (view_auth (DfracOwn q) a) (at level 20, format "●V{# q }  a").
+Notation "●V□ a" := (view_auth DfracDiscarded a) (at level 20, format "●V□  a").
+Notation "●V a" := (view_auth (DfracOwn 1) a) (at level 20).
 Notation "◯V a" := (view_frag a) (at level 20).
 
 (** * The OFE structure *)
@@ -103,7 +107,7 @@ been needed in practice. *)
 Section ofe.
   Context {A B : ofe} (rel : nat → A → B → Prop).
   Implicit Types a : A.
-  Implicit Types ag : option (frac * agree A).
+  Implicit Types ag : option (dfrac * agree A).
   Implicit Types b : B.
   Implicit Types x y : view rel.
 
@@ -144,13 +148,13 @@ End ofe.
 Section cmra.
   Context {A B} (rel : view_rel A B).
   Implicit Types a : A.
-  Implicit Types ag : option (frac * agree A).
+  Implicit Types ag : option (dfrac * agree A).
   Implicit Types b : B.
   Implicit Types x y : view rel.
 
-  Global Instance view_auth_ne q : NonExpansive (@view_auth A B rel q).
+  Global Instance view_auth_ne dq : NonExpansive (@view_auth A B rel dq).
   Proof. solve_proper. Qed.
-  Global Instance view_auth_proper q : Proper ((≡) ==> (≡)) (@view_auth A B rel q).
+  Global Instance view_auth_proper dq : Proper ((≡) ==> (≡)) (@view_auth A B rel dq).
   Proof. solve_proper. Qed.
   Global Instance view_frag_ne : NonExpansive (@view_frag A B rel).
   Proof. done. Qed.
@@ -160,12 +164,12 @@ Section cmra.
   Global Instance view_auth_dist_inj n :
     Inj2 (=) (dist n) (dist n) (@view_auth A B rel).
   Proof.
-    intros p1 a1 p2 a2 [Hag ?]; inversion Hag as [?? [??]|]; simplify_eq/=.
+    intros dq1 a1 dq2 a2 [Hag ?]; inversion Hag as [?? [??]|]; simplify_eq/=.
     split; [done|]. by apply (inj to_agree).
   Qed.
   Global Instance view_auth_inj : Inj2 (=) (≡) (≡) (@view_auth A B rel).
   Proof.
-    intros p1 a1 p2 a2 [Hag ?]; inversion Hag as [?? [??]|]; simplify_eq/=.
+    intros dq1 a1 dq2 a2 [Hag ?]; inversion Hag as [?? [??]|]; simplify_eq/=.
     split; [done|]. by apply (inj to_agree).
   Qed.
   Global Instance view_frag_dist_inj n : Inj (dist n) (dist n) (@view_frag A B rel).
@@ -175,14 +179,14 @@ Section cmra.
 
   Local Instance view_valid_instance : Valid (view rel) := λ x,
     match view_auth_proj x with
-    | Some (q, ag) =>
-       ✓ q ∧ (∀ n, ∃ a, ag ≡{n}≡ to_agree a ∧ rel n a (view_frag_proj x))
+    | Some (dq, ag) =>
+       ✓ dq ∧ (∀ n, ∃ a, ag ≡{n}≡ to_agree a ∧ rel n a (view_frag_proj x))
     | None => ∀ n, ∃ a, rel n a (view_frag_proj x)
     end.
   Local Instance view_validN_instance : ValidN (view rel) := λ n x,
     match view_auth_proj x with
-    | Some (q, ag) =>
-       ✓{n} q ∧ ∃ a, ag ≡{n}≡ to_agree a ∧ rel n a (view_frag_proj x)
+    | Some (dq, ag) =>
+       ✓{n} dq ∧ ∃ a, ag ≡{n}≡ to_agree a ∧ rel n a (view_frag_proj x)
     | None => ∃ a, rel n a (view_frag_proj x)
     end.
   Local Instance view_pcore_instance : PCore (view rel) := λ x,
@@ -193,32 +197,32 @@ Section cmra.
   Local Definition view_valid_eq :
     valid = λ x,
       match view_auth_proj x with
-      | Some (q, ag) =>
-         ✓ q ∧ (∀ n, ∃ a, ag ≡{n}≡ to_agree a ∧ rel n a (view_frag_proj x))
+      | Some (dq, ag) =>
+         ✓ dq ∧ (∀ n, ∃ a, ag ≡{n}≡ to_agree a ∧ rel n a (view_frag_proj x))
       | None => ∀ n, ∃ a, rel n a (view_frag_proj x)
       end := eq_refl _.
   Local Definition view_validN_eq :
-    validN = λ n x, 
+    validN = λ n x,
       match view_auth_proj x with
-      | Some (q, ag) => ✓{n} q ∧ ∃ a, ag ≡{n}≡ to_agree a ∧ rel n a (view_frag_proj x)
+      | Some (dq, ag) => ✓{n} dq ∧ ∃ a, ag ≡{n}≡ to_agree a ∧ rel n a (view_frag_proj x)
       | None => ∃ a, rel n a (view_frag_proj x)
       end := eq_refl _.
 
   Lemma view_cmra_mixin : CmraMixin (view rel).
   Proof.
     apply (iso_cmra_mixin_restrict
-      (λ x : option (frac * agree A) * B, View x.1 x.2)
+      (λ x : option (dfrac * agree A) * B, View x.1 x.2)
       (λ x, (view_auth_proj x, view_frag_proj x))); try done.
     - intros [x b]. by rewrite /= pair_pcore !cmra_pcore_core.
-    - intros n [[[q ag]|] b]; rewrite /= view_validN_eq /=.
+    - intros n [[[dq ag]|] b]; rewrite /= view_validN_eq /=.
       + intros (?&a&->&?). repeat split; simpl; [done|]. by eapply view_rel_validN.
       + intros [a ?]. repeat split; simpl. by eapply view_rel_validN.
     - rewrite view_validN_eq.
       intros n [x1 b1] [x2 b2] [Hx ?]; simpl in *;
         destruct Hx as [[q1 ag1] [q2 ag2] [??]|]; intros ?; by ofe_subst.
     - rewrite view_valid_eq view_validN_eq.
-      intros [[[q aa]|] b]; rewrite /= ?cmra_valid_validN; naive_solver.
-    - rewrite view_validN_eq=> n [[[q ag]|] b] /=.
+      intros [[[dq aa]|] b]; rewrite /= ?cmra_valid_validN; naive_solver.
+    - rewrite view_validN_eq=> n [[[dq ag]|] b] /=.
       + intros [? (a&?&?)]; split; [done|].
         exists a; split; [by eauto using dist_S|].
         apply view_rel_mono with (S n) a b; auto with lia.
@@ -237,8 +241,8 @@ Section cmra.
   Qed.
   Canonical Structure viewR := Cmra (view rel) view_cmra_mixin.
 
-  Global Instance view_auth_discrete q a :
-    Discrete a → Discrete (ε : B) → Discrete (●V{q} a : view rel).
+  Global Instance view_auth_discrete dq a :
+    Discrete a → Discrete (ε : B) → Discrete (●V{dq} a : view rel).
   Proof. intros. apply View_discrete; apply _. Qed.
   Global Instance view_frag_discrete b :
     Discrete b → Discrete (◯V b : view rel).
@@ -247,7 +251,7 @@ Section cmra.
     OfeDiscrete A → CmraDiscrete B → ViewRelDiscrete rel →
     CmraDiscrete viewR.
   Proof.
-    split; [apply _|]=> -[[[q ag]|] b]; rewrite view_valid_eq view_validN_eq /=.
+    split; [apply _|]=> -[[[dq ag]|] b]; rewrite view_valid_eq view_validN_eq /=.
     - rewrite -cmra_discrete_valid_iff.
       setoid_rewrite <-(discrete_iff _ ag). naive_solver.
     - naive_solver.
@@ -264,13 +268,13 @@ Section cmra.
   Canonical Structure viewUR := Ucmra (view rel) view_ucmra_mixin.
 
   (** Operation *)
-  Lemma view_auth_frac_op p1 p2 a : ●V{p1 + p2} a ≡ ●V{p1} a ⋅ ●V{p2} a.
+  Lemma view_auth_frac_op dq1 dq2 a : ●V{dq1 ⋅ dq2} a ≡ ●V{dq1} a ⋅ ●V{dq2} a.
   Proof.
     intros; split; simpl; last by rewrite left_id.
     by rewrite -Some_op -pair_op agree_idemp.
   Qed.
-  Global Instance view_auth_frac_is_op q q1 q2 a :
-    IsOp q q1 q2 → IsOp' (●V{q} a) (●V{q1} a) (●V{q2} a).
+  Global Instance view_auth_frac_is_op dq dq1 dq2 a :
+    IsOp dq dq1 dq2 → IsOp' (●V{dq} a) (●V{dq1} a) (●V{dq2} a).
   Proof. rewrite /IsOp' /IsOp => ->. by rewrite -view_auth_frac_op. Qed.
 
   Lemma view_frag_op b1 b2 : ◯V (b1 ⋅ b2) = ◯V b1 ⋅ ◯V b2.
@@ -302,31 +306,31 @@ Section cmra.
   Proof. apply (big_opMS_commute _). Qed.
 
   (** Validity *)
-  Lemma view_auth_frac_op_invN n p1 a1 p2 a2 :
-    ✓{n} (●V{p1} a1 ⋅ ●V{p2} a2) → a1 ≡{n}≡ a2.
+  Lemma view_auth_frac_op_invN n dq1 a1 dq2 a2 :
+    ✓{n} (●V{dq1} a1 ⋅ ●V{dq2} a2) → a1 ≡{n}≡ a2.
   Proof.
     rewrite /op /view_op_instance /= left_id -Some_op -pair_op view_validN_eq /=.
     intros (?&?& Eq &?). apply (inj to_agree), agree_op_invN. by rewrite Eq.
   Qed.
-  Lemma view_auth_frac_op_inv p1 a1 p2 a2 : ✓ (●V{p1} a1 ⋅ ●V{p2} a2) → a1 ≡ a2.
+  Lemma view_auth_frac_op_inv dq1 a1 dq2 a2 : ✓ (●V{dq1} a1 ⋅ ●V{dq2} a2) → a1 ≡ a2.
   Proof.
     intros ?. apply equiv_dist. intros n.
     by eapply view_auth_frac_op_invN, cmra_valid_validN.
   Qed.
-  Lemma view_auth_frac_op_inv_L `{!LeibnizEquiv A} p1 a1 p2 a2 :
-    ✓ (●V{p1} a1 ⋅ ●V{p2} a2) → a1 = a2.
+  Lemma view_auth_frac_op_inv_L `{!LeibnizEquiv A} dq1 a1 dq2 a2 :
+    ✓ (●V{dq1} a1 ⋅ ●V{dq2} a2) → a1 = a2.
   Proof. by intros ?%view_auth_frac_op_inv%leibniz_equiv. Qed.
 
-  Lemma view_auth_frac_validN n q a : ✓{n} (●V{q} a) ↔ (q ≤ 1)%Qp ∧ rel n a ε.
+  Lemma view_auth_frac_validN n dq a : ✓{n} (●V{dq} a) ↔ ✓{n}dq ∧ rel n a ε.
   Proof.
     rewrite view_validN_eq /=. apply and_iff_compat_l. split; [|by eauto].
     by intros [? [->%(inj to_agree) ?]].
   Qed.
   Lemma view_auth_validN n a : ✓{n} (●V a) ↔ rel n a ε.
-  Proof. rewrite view_auth_frac_validN. naive_solver. Qed.
+  Proof. rewrite view_auth_frac_validN. split; [naive_solver|done]. Qed.
 
-  Lemma view_auth_frac_op_validN n q1 q2 a1 a2 :
-    ✓{n} (●V{q1} a1 ⋅ ●V{q2} a2) ↔ (q1 + q2 ≤ 1)%Qp ∧ a1 ≡{n}≡ a2 ∧ rel n a1 ε.
+  Lemma view_auth_frac_op_validN n dq1 dq2 a1 a2 :
+    ✓{n} (●V{dq1} a1 ⋅ ●V{dq2} a2) ↔ ✓(dq1 ⋅ dq2) ∧ a1 ≡{n}≡ a2 ∧ rel n a1 ε.
   Proof.
     split.
     - intros Hval. assert (a1 ≡{n}≡ a2) as Ha by eauto using view_auth_frac_op_invN.
@@ -339,28 +343,28 @@ Section cmra.
   Lemma view_frag_validN n b : ✓{n} (◯V b) ↔ ∃ a, rel n a b.
   Proof. done. Qed.
 
-  Lemma view_both_frac_validN n q a b :
-    ✓{n} (●V{q} a ⋅ ◯V b) ↔ (q ≤ 1)%Qp ∧ rel n a b.
+  Lemma view_both_frac_validN n dq a b :
+    ✓{n} (●V{dq} a ⋅ ◯V b) ↔ ✓dq ∧ rel n a b.
   Proof.
     rewrite view_validN_eq /=. apply and_iff_compat_l.
     setoid_rewrite (left_id _ _ b). split; [|by eauto].
     by intros [?[->%(inj to_agree)]].
   Qed.
   Lemma view_both_validN n a b : ✓{n} (●V a ⋅ ◯V b) ↔ rel n a b.
-  Proof. rewrite view_both_frac_validN. naive_solver. Qed.
+  Proof. rewrite view_both_frac_validN. split; [naive_solver|done]. Qed.
 
-  Lemma view_auth_frac_valid q a : ✓ (●V{q} a) ↔ (q ≤ 1)%Qp ∧ ∀ n, rel n a ε.
+  Lemma view_auth_frac_valid dq a : ✓ (●V{dq} a) ↔ ✓dq ∧ ∀ n, rel n a ε.
   Proof.
     rewrite view_valid_eq /=. apply and_iff_compat_l. split; [|by eauto].
     intros H n. by destruct (H n) as [? [->%(inj to_agree) ?]].
   Qed.
   Lemma view_auth_valid a : ✓ (●V a) ↔ ∀ n, rel n a ε.
-  Proof. rewrite view_auth_frac_valid. naive_solver. Qed.
+  Proof. rewrite view_auth_frac_valid. split; [naive_solver|done]. Qed.
 
-  Lemma view_auth_frac_op_valid q1 q2 a1 a2 :
-    ✓ (●V{q1} a1 ⋅ ●V{q2} a2) ↔ (q1 + q2 ≤ 1)%Qp ∧ a1 ≡ a2 ∧ ∀ n, rel n a1 ε.
+  Lemma view_auth_frac_op_valid dq1 dq2 a1 a2 :
+    ✓ (●V{dq1} a1 ⋅ ●V{dq2} a2) ↔ ✓(dq1 ⋅ dq2) ∧ a1 ≡ a2 ∧ ∀ n, rel n a1 ε.
   Proof.
-    rewrite !cmra_valid_validN equiv_dist. setoid_rewrite view_auth_frac_op_validN.
+    rewrite 1!cmra_valid_validN equiv_dist. setoid_rewrite view_auth_frac_op_validN.
     split; last naive_solver. intros Hv.
     split; last naive_solver. apply (Hv 0).
   Qed.
@@ -370,37 +374,37 @@ Section cmra.
   Lemma view_frag_valid b : ✓ (◯V b) ↔ ∀ n, ∃ a, rel n a b.
   Proof. done. Qed.
 
-  Lemma view_both_frac_valid q a b : ✓ (●V{q} a ⋅ ◯V b) ↔ (q ≤ 1)%Qp ∧ ∀ n, rel n a b.
+  Lemma view_both_frac_valid dq a b : ✓ (●V{dq} a ⋅ ◯V b) ↔ ✓dq ∧ ∀ n, rel n a b.
   Proof.
     rewrite view_valid_eq /=. apply and_iff_compat_l.
     setoid_rewrite (left_id _ _ b). split; [|by eauto].
     intros H n. by destruct (H n) as [?[->%(inj to_agree)]].
   Qed.
   Lemma view_both_valid a b : ✓ (●V a ⋅ ◯V b) ↔ ∀ n, rel n a b.
-  Proof. rewrite view_both_frac_valid. naive_solver. Qed.
+  Proof. rewrite view_both_frac_valid. split; [naive_solver|done]. Qed.
 
   (** Inclusion *)
-  Lemma view_auth_frac_includedN n p1 p2 a1 a2 b :
-    ●V{p1} a1 ≼{n} ●V{p2} a2 ⋅ ◯V b ↔ (p1 ≤ p2)%Qp ∧ a1 ≡{n}≡ a2.
+  Lemma view_auth_frac_includedN n dq1 dq2 a1 a2 b :
+    ●V{dq1} a1 ≼{n} ●V{dq2} a2 ⋅ ◯V b ↔ (dq1 ≼ dq2 ∨ dq1 = dq2) ∧ a1 ≡{n}≡ a2.
   Proof.
     split.
     - intros [[[[qf agf]|] bf]
         [[?%(discrete_iff _ _) ?]%(inj Some) _]]; simplify_eq/=.
-      + split; [apply Qp_le_add_l|]. apply to_agree_includedN. by exists agf.
-      + split; [done|]. by apply (inj to_agree).
-    - intros [[[q ->]%frac_included| ->]%Qp_le_lteq ->].
+      + split; [left; apply cmra_included_l|]. apply to_agree_includedN. by exists agf.
+      + split; [right; done|]. by apply (inj to_agree).
+    - intros [[[? ->]| ->] ->].
       + rewrite view_auth_frac_op -assoc. apply cmra_includedN_l.
       + apply cmra_includedN_l.
   Qed.
-  Lemma view_auth_frac_included p1 p2 a1 a2 b :
-    ●V{p1} a1 ≼ ●V{p2} a2 ⋅ ◯V b ↔ (p1 ≤ p2)%Qp ∧ a1 ≡ a2.
+  Lemma view_auth_frac_included dq1 dq2 a1 a2 b :
+    ●V{dq1} a1 ≼ ●V{dq2} a2 ⋅ ◯V b ↔ (dq1 ≼ dq2 ∨ dq1 = dq2) ∧ a1 ≡ a2.
   Proof.
     intros. split.
     - split.
       + by eapply (view_auth_frac_includedN 0), cmra_included_includedN.
       + apply equiv_dist=> n.
         by eapply view_auth_frac_includedN, cmra_included_includedN.
-    - intros [[[q ->]%frac_included| ->]%Qp_le_lteq ->].
+    - intros [[[dq ->]| ->] ->].
       + rewrite view_auth_frac_op -assoc. apply cmra_included_l.
       + apply cmra_included_l.
   Qed.
@@ -430,8 +434,9 @@ Section cmra.
 
   (** The weaker [view_both_included] lemmas below are a consequence of the
   [view_auth_included] and [view_frag_included] lemmas above. *)
-  Lemma view_both_frac_includedN n p1 p2 a1 a2 b1 b2 :
-    ●V{p1} a1 ⋅ ◯V b1 ≼{n} ●V{p2} a2 ⋅ ◯V b2 ↔ (p1 ≤ p2)%Qp ∧ a1 ≡{n}≡ a2 ∧ b1 ≼{n} b2.
+  Lemma view_both_frac_includedN n dq1 dq2 a1 a2 b1 b2 :
+    ●V{dq1} a1 ⋅ ◯V b1 ≼{n} ●V{dq2} a2 ⋅ ◯V b2 ↔
+      (dq1 ≼ dq2 ∨ dq1 = dq2) ∧ a1 ≡{n}≡ a2 ∧ b1 ≼{n} b2.
   Proof.
     split.
     - intros. rewrite assoc. split.
@@ -440,8 +445,9 @@ Section cmra.
     - intros (?&->&?bf&->). rewrite (comm _ b1) view_frag_op assoc.
       by apply cmra_monoN_r, view_auth_frac_includedN.
   Qed.
-  Lemma view_both_frac_included p1 p2 a1 a2 b1 b2 :
-    ●V{p1} a1 ⋅ ◯V b1 ≼ ●V{p2} a2 ⋅ ◯V b2 ↔ (p1 ≤ p2)%Qp ∧ a1 ≡ a2 ∧ b1 ≼ b2.
+  Lemma view_both_frac_included dq1 dq2 a1 a2 b1 b2 :
+    ●V{dq1} a1 ⋅ ◯V b1 ≼ ●V{dq2} a2 ⋅ ◯V b2 ↔
+      (dq1 ≼ dq2 ∨ dq1 = dq2) ∧ a1 ≡ a2 ∧ b1 ≼ b2.
   Proof.
     split.
     - intros. rewrite assoc. split.
@@ -462,7 +468,7 @@ Section cmra.
     (∀ n bf, rel n a (b ⋅ bf) → rel n a' (b' ⋅ bf)) →
     ●V a ⋅ ◯V b ~~> ●V a' ⋅ ◯V b'.
   Proof.
-    intros Hup; apply cmra_total_update=> n [[[q ag]|] bf] [/=].
+    intros Hup; apply cmra_total_update=> n [[[dq ag]|] bf] [/=].
     { by intros []%(exclusiveN_l _ _). }
     intros _ (a0 & <-%(inj to_agree) & Hrel). split; simpl; [done|].
     exists a'; split; [done|]. revert Hrel. rewrite !left_id. apply Hup.
@@ -490,16 +496,23 @@ Section cmra.
     intros Hup. rewrite -(right_id _ _ (●V a)) -(right_id _ _ (●V a')).
     apply view_update=> n bf. rewrite !left_id. apply Hup.
   Qed.
+  Lemma view_update_auth_persist dq a : ●V{dq} a ~~> ●V□ a.
+  Proof.
+    apply cmra_total_update.
+    move=> n [[[dq' ag]|] bf] [Hv ?]; last done. split; last done.
+    by apply (dfrac_discard_update dq _ (Some dq')).
+  Qed.
+
   Lemma view_update_frag b b' :
     (∀ a n bf, rel n a (b ⋅ bf) → rel n a (b' ⋅ bf)) →
     ◯V b ~~> ◯V b'.
   Proof.
-    rewrite !cmra_total_update view_validN_eq=> ? n [[[q ag]|] bf]; naive_solver.
+    rewrite !cmra_total_update view_validN_eq=> ? n [[[dq ag]|] bf]; naive_solver.
   Qed.
 
-  Lemma view_update_frac_alloc q a b :
+  Lemma view_update_frac_alloc dq a b :
     (∀ n bf, rel n a bf → rel n a (b ⋅ bf)) →
-    ●V{q} a ~~> ●V{q} a ⋅ ◯V b.
+    ●V{dq} a ~~> ●V{dq} a ⋅ ◯V b.
   Proof.
     intros Hup. apply cmra_total_update=> n [[[p ag]|] bf] [/=].
     - intros ? (a0 & Hag & Hrel). split; simpl; [done|].
@@ -512,18 +525,19 @@ Section cmra.
   Qed.
 
   Lemma view_local_update a b0 b1 a' b0' b1' :
-    (b0, b1) ~l~> (b0', b1') → 
+    (b0, b1) ~l~> (b0', b1') →
     (∀ n, view_rel_holds rel n a b0 → view_rel_holds rel n a' b0') →
     (●V a ⋅ ◯V b0, ●V a ⋅ ◯V b1) ~l~> (●V a' ⋅ ◯V b0', ●V a' ⋅ ◯V b1').
   Proof.
     rewrite !local_update_unital.
-    move=> Hup Hrel n [[[q ag]|] bf] /view_both_validN Hrel' [/=].
-    - rewrite right_id -Some_op -pair_op frac_op=> /Some_dist_inj [/= H1q _].
-      by destruct (Qp_add_id_free 1 q).
+    move=> Hup Hrel n [[[qd ag]|] bf] /view_both_validN Hrel' [/=].
+    - rewrite right_id -Some_op -pair_op => /Some_dist_inj [/= H1q _].
+      by destruct (id_free_r (DfracOwn 1) qd).
     - rewrite !left_id=> _ Hb0.
       destruct (Hup n bf) as [? Hb0']; [by eauto using view_rel_validN..|].
       split; [apply view_both_validN; by auto|]. by rewrite -assoc Hb0'.
   Qed.
+
 End cmra.
 
 (** * Utilities to construct functors *)
@@ -592,6 +606,6 @@ Proof.
     by rewrite -agree_map_to_agree -Hag.
   - intros [o bf]. apply Some_proper; rewrite /view_map /=.
     f_equiv; by rewrite cmra_morphism_core.
-  - intros [[[p1 ag1]|] bf1] [[[p2 ag2]|] bf2];
+  - intros [[[dq1 ag1]|] bf1] [[[dq2 ag2]|] bf2];
       try apply View_proper=> //=; by rewrite cmra_morphism_op.
 Qed.

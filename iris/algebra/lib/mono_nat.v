@@ -14,7 +14,7 @@ fragment at the same value so that lemma [mono_nat_included], which states that
 [mono_nat_lb n ≼ mono_nat_auth q n], does not require a frame-preserving
 update. *)
 Definition mono_nat_auth (q : Qp) (n : nat) : mono_nat :=
-  ●{q} MaxNat n ⋅ ◯ MaxNat n.
+  ●{#q} MaxNat n ⋅ ◯ MaxNat n.
 Definition mono_nat_lb (n : nat) : mono_nat := ◯ MaxNat n.
 
 Section mono_nat.
@@ -26,8 +26,8 @@ Section mono_nat.
   Lemma mono_nat_auth_frac_op q1 q2 n :
     mono_nat_auth q1 n ⋅ mono_nat_auth q2 n ≡ mono_nat_auth (q1 + q2) n.
   Proof.
-    rewrite /mono_nat_auth auth_auth_frac_op.
-    rewrite (comm _ (●{q2} _)) -!assoc (assoc _ (◯ _)).
+    rewrite /mono_nat_auth -dfrac_op_own auth_auth_frac_op.
+    rewrite (comm _ (●{#q2} _)) -!assoc (assoc _ (◯ _)).
     by rewrite -core_id_dup (comm _ (◯ _)).
   Qed.
 
@@ -60,7 +60,7 @@ Section mono_nat.
   Lemma mono_nat_auth_frac_op_valid q1 q2 n1 n2 :
     ✓ (mono_nat_auth q1 n1 ⋅ mono_nat_auth q2 n2) ↔ (q1 + q2 ≤ 1)%Qp ∧ n1 = n2.
   Proof.
-    rewrite /mono_nat_auth (comm _ (●{q2} _)) -!assoc (assoc _ (◯ _)).
+    rewrite /mono_nat_auth (comm _ (●{#q2} _)) -!assoc (assoc _ (◯ _)).
     rewrite -auth_frag_op (comm _ (◯ _)) assoc. split.
     - move=> /cmra_valid_op_l /auth_auth_frac_op_valid. naive_solver.
     - intros [? ->]. rewrite -core_id_dup -auth_auth_frac_op.

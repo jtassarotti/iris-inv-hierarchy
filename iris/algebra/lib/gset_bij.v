@@ -106,7 +106,7 @@ Definition gset_bijUR A B `{Countable A, Countable B} : ucmra :=
   viewUR (gset_bij_view_rel (A:=A) (B:=B)).
 
 Definition gset_bij_auth `{Countable A, Countable B}
-  (q : Qp) (L : gset (A * B)) : gset_bij A B := ●V{q} L ⋅ ◯V L.
+  (dq : dfrac) (L : gset (A * B)) : gset_bij A B := ●V{dq} L ⋅ ◯V L.
 Definition gset_bij_elem `{Countable A, Countable B}
   (a : A) (b : B) : gset_bij A B := ◯V {[a, b]}.
 
@@ -118,11 +118,11 @@ Section gset_bij.
   Global Instance gset_bij_elem_core_id a b : CoreId (gset_bij_elem a b).
   Proof. apply _. Qed.
 
-  Lemma gset_bij_auth_frac_op q1 q2 L :
-    gset_bij_auth q1 L ⋅ gset_bij_auth q2 L ≡ gset_bij_auth (q1 + q2) L.
+  Lemma gset_bij_auth_frac_op dq1 dq2 L :
+    gset_bij_auth dq1 L ⋅ gset_bij_auth dq2 L ≡ gset_bij_auth (dq1 ⋅ dq2) L.
   Proof.
     rewrite /gset_bij_auth view_auth_frac_op.
-    rewrite (comm _ (●V{q2} _)) -!assoc (assoc _ (◯V _)).
+    rewrite (comm _ (●V{dq2} _)) -!assoc (assoc _ (◯V _)).
     by rewrite -core_id_dup (comm _ (◯V _)).
   Qed.
 
@@ -132,21 +132,21 @@ Section gset_bij.
     setoid_rewrite gset_bij_view_rel_iff.
     naive_solver eauto using O.
   Qed.
-  Lemma gset_bij_auth_valid L : ✓ gset_bij_auth 1 L ↔ gset_bijective L.
+  Lemma gset_bij_auth_valid L : ✓ gset_bij_auth (DfracOwn 1) L ↔ gset_bijective L.
   Proof. rewrite gset_bij_auth_frac_valid. naive_solver by done. Qed.
 
   Lemma gset_bij_auth_empty_frac_valid q : ✓ gset_bij_auth (A:=A) (B:=B) q ∅ ↔ ✓ q.
   Proof.
     rewrite gset_bij_auth_frac_valid. naive_solver eauto using gset_bijective_empty.
   Qed.
-  Lemma gset_bij_auth_empty_valid : ✓ gset_bij_auth (A:=A) (B:=B) 1 ∅.
+  Lemma gset_bij_auth_empty_valid : ✓ gset_bij_auth (A:=A) (B:=B) (DfracOwn 1) ∅.
   Proof. by apply gset_bij_auth_empty_frac_valid. Qed.
 
-  Lemma gset_bij_auth_frac_op_valid q1 q2 L1 L2 :
-    ✓ (gset_bij_auth q1 L1 ⋅ gset_bij_auth q2 L2)
-    ↔ ✓ (q1 + q2)%Qp ∧ L1 = L2 ∧ gset_bijective L1.
+  Lemma gset_bij_auth_frac_op_valid dq1 dq2 L1 L2 :
+    ✓ (gset_bij_auth dq1 L1 ⋅ gset_bij_auth dq2 L2)
+    ↔ ✓ (dq1 ⋅ dq2) ∧ L1 = L2 ∧ gset_bijective L1.
   Proof.
-    rewrite /gset_bij_auth (comm _ (●V{q2} _)) -!assoc (assoc _ (◯V _)).
+    rewrite /gset_bij_auth (comm _ (●V{dq2} _)) -!assoc (assoc _ (◯V _)).
     rewrite -view_frag_op (comm _ (◯V _)) assoc. split.
     - move=> /cmra_valid_op_l /view_auth_frac_op_valid.
       setoid_rewrite gset_bij_view_rel_iff. naive_solver eauto using 0.
@@ -154,7 +154,7 @@ Section gset_bij.
       apply view_both_frac_valid. setoid_rewrite gset_bij_view_rel_iff. naive_solver.
   Qed.
   Lemma gset_bij_auth_op_valid L1 L2 :
-    ✓ (gset_bij_auth 1 L1 ⋅ gset_bij_auth 1 L2) ↔ False.
+    ✓ (gset_bij_auth (DfracOwn 1) L1 ⋅ gset_bij_auth (DfracOwn 1) L2) ↔ False.
   Proof. rewrite gset_bij_auth_frac_op_valid. naive_solver. Qed.
 
   Lemma bij_both_frac_valid q L a b :
@@ -165,7 +165,7 @@ Section gset_bij.
     set_solver by eauto using O.
   Qed.
   Lemma bij_both_valid L a b :
-    ✓ (gset_bij_auth 1 L ⋅ gset_bij_elem a b) ↔ gset_bijective L ∧ (a, b) ∈ L.
+    ✓ (gset_bij_auth (DfracOwn 1) L ⋅ gset_bij_elem a b) ↔ gset_bijective L ∧ (a, b) ∈ L.
   Proof. rewrite bij_both_frac_valid. naive_solver by done. Qed.
 
   Lemma gset_bij_elem_agree a1 b1 a2 b2 :
@@ -185,7 +185,7 @@ Section gset_bij.
 
   Lemma gset_bij_auth_extend {L} a b :
     (∀ b', (a, b') ∉ L) → (∀ a', (a', b) ∉ L) →
-    gset_bij_auth 1 L ~~> gset_bij_auth 1 ({[(a, b)]} ∪ L).
+    gset_bij_auth (DfracOwn 1) L ~~> gset_bij_auth (DfracOwn 1) ({[(a, b)]} ∪ L).
   Proof.
     intros. apply view_update=> n bijL.
     rewrite !gset_bij_view_rel_iff gset_op.

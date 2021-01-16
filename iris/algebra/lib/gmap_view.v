@@ -1,5 +1,5 @@
 From Coq.QArith Require Import Qcanon.
-From iris.algebra Require Export view gmap dfrac.
+From iris.algebra Require Export view gmap frac dfrac.
 From iris.algebra Require Import local_updates proofmode_classes big_op.
 From iris.prelude Require Import options.
 
@@ -12,7 +12,7 @@ persistent read-only ownership of a key.
 
 The key frame-preserving updates are [gmap_view_alloc] to allocate a new key,
 [gmap_view_update] to update a key given full ownership of the corresponding
-fragment, and [gmap_view_freeze] to make a key read-only by discarding any
+fragment, and [gmap_view_persist] to make a key read-only by discarding any
 fraction of the corresponding fragment. Crucially, the latter does not require
 owning the authoritative element.
 
@@ -138,7 +138,7 @@ Section definitions.
   Context {K : Type} `{Countable K} {V : ofe}.
 
   Definition gmap_view_auth (q : frac) (m : gmap K V) : gmap_viewR K V :=
-    ●V{q} m.
+    ●V{#q} m.
   Definition gmap_view_frag (k : K) (dq : dfrac) (v : V) : gmap_viewR K V :=
     ◯V {[k := (dq, to_agree v)]}.
 End definitions.
@@ -178,7 +178,7 @@ Section lemmas.
   (** Composition and validity *)
   Lemma gmap_view_auth_frac_op p q m :
     gmap_view_auth (p + q) m ≡ gmap_view_auth p m ⋅ gmap_view_auth q m.
-  Proof. apply view_auth_frac_op. Qed.
+  Proof. by rewrite /gmap_view_auth -dfrac_op_own view_auth_frac_op. Qed.
   Global Instance gmap_view_auth_frac_is_op q q1 q2 m :
     IsOp q q1 q2 → IsOp' (gmap_view_auth q m) (gmap_view_auth q1 m) (gmap_view_auth q2 m).
   Proof. rewrite /gmap_view_auth. apply _. Qed.
