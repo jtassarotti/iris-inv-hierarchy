@@ -32,7 +32,7 @@ Section cmra_mlist.
       inversion 1; inversion 1; subst; by constructor.
   Qed.
 
-  Canonical Structure mlistC : ofeT := discreteO mlist.
+  Canonical Structure mlistC : ofe := discreteO mlist.
 
   Local Instance mlist_valid : Valid mlist :=
     λ x, match x with MList _ => True | MListBot => False end.
@@ -161,7 +161,7 @@ Section cmra_mlist.
   Qed.
 
   Canonical Structure mlistUR :=
-    UcmraT mlist mlist_ucmra_mixin.
+    Ucmra mlist mlist_ucmra_mixin.
 
   Lemma mlist_local_update D1 X D2 :
     D1 `prefix_of` D2 → (MList D1, X) ~l~> (MList D2, MList D2).

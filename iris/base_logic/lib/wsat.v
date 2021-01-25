@@ -235,7 +235,7 @@ Proof.
 Qed.
 
 (* Invariants *)
-Lemma dist_later_vec_to_list {A: ofeT} {m} n (l1 l2 : vec A m):
+Lemma dist_later_vec_to_list {A: ofe} {m} n (l1 l2 : vec A m):
   dist_later n l1 l2 ↔ dist_later n (vec_to_list l1) (vec_to_list l2).
 Proof. destruct n => //=. Qed.
 Local Instance invariant_unfold_contractive' m sch : Contractive (@invariant_unfold Σ m sch).
@@ -300,25 +300,25 @@ Qed.
 Lemma ownD_singleton_twice i : ownD {[i]} ∗ ownD {[i]} ⊢ False.
 Proof. rewrite ownD_disjoint. iIntros (?); set_solver. Qed.
 
-Lemma list_equivI_O {A: ofeT} {M} (m1 m2: list A) : m1 ≡ m2 ⊣⊢@{uPredI M} ∀ i, m1 !! i ≡ m2 !! i.
+Lemma list_equivI_O {A: ofe} {M} (m1 m2: list A) : m1 ≡ m2 ⊣⊢@{uPredI M} ∀ i, m1 !! i ≡ m2 !! i.
 Proof.
   uPred.unseal => //=.
   split => n x Hval. split.
   - intros ? Hequiv. apply list_dist_lookup; eauto.
   - intros Hequiv. apply list_dist_lookup; eauto.
 Qed.
-Lemma list_equivI_1 {A: ofeT} {M} (m1 m2: list A) : m1 ≡ m2 ⊢@{uPredI M} ∀ i, m1 !! i ≡ m2 !! i.
+Lemma list_equivI_1 {A: ofe} {M} (m1 m2: list A) : m1 ≡ m2 ⊢@{uPredI M} ∀ i, m1 !! i ≡ m2 !! i.
 Proof.
   uPred.unseal => //=.
   split => n x Hval Hequiv i. apply list_dist_lookup; eauto.
 Qed.
-Lemma list_equivI_length {A: ofeT} {M} (m1 m2: list A) : m1 ≡ m2 ⊢@{uPredI M} ⌜ length m1 = length m2 ⌝.
+Lemma list_equivI_length {A: ofe} {M} (m1 m2: list A) : m1 ≡ m2 ⊢@{uPredI M} ⌜ length m1 = length m2 ⌝.
 Proof.
   uPred.unseal => //=.
   split => n x Hval Hequiv.
   eapply (Forall2_length _ m1 m2 Hequiv).
 Qed.
-Lemma vec_equivI_1 {A: ofeT} {M} {n} (m1 m2: vec A n) :
+Lemma vec_equivI_1 {A: ofe} {M} {n} (m1 m2: vec A n) :
   m1 ≡ m2 ⊢@{uPredI M} ∀ i, vec_to_list m1 !! i ≡ vec_to_list m2 !! i.
 Proof.
   uPred.unseal => //=.
@@ -363,13 +363,13 @@ Proof.
   { rewrite //= ?later_equivI //=. iNext. by iRewrite "Hequiv". }
 Qed.
 
-Lemma agree_equiv_inclI {M} {A: ofeT} (a b: A) c : to_agree a ≡ to_agree b ⋅ c ⊢@{uPredI M} (b ≡ a).
+Lemma agree_equiv_inclI {M} {A: ofe} (a b: A) c : to_agree a ≡ to_agree b ⋅ c ⊢@{uPredI M} (b ≡ a).
 Proof.
   uPred.unseal. split.
   intros n ? Hx Heq. apply (to_agree_includedN n b a). exists c; eauto.
 Qed.
 
-Lemma agree_op_invI {M} {A : ofeT} (x y : agree A): ✓ (x ⋅ y) ⊢@{uPredI M} x ≡ y.
+Lemma agree_op_invI {M} {A : ofe} (x y : agree A): ✓ (x ⋅ y) ⊢@{uPredI M} x ≡ y.
 Proof. uPred.unseal. split. intros n ? Hx Heq. by apply agree_op_invN. Qed.
 
 Lemma invariant_lookup_strong I {n m} γ i q sch (Ps: vec _ n) (Ps_mut: vec _ m) :
@@ -447,7 +447,7 @@ Proof.
 Qed.
 
 
-Lemma equivI_elim_own {A: cmraT} `{Hin: inG Σ A} γ (a b: A):
+Lemma equivI_elim_own {A: cmra} `{Hin: inG Σ A} γ (a b: A):
   (a ≡ b) -∗ own γ a -∗ own γ b.
 Proof. iIntros "Hequiv". iRewrite "Hequiv". eauto. Qed.
 
@@ -540,7 +540,7 @@ Proof.
   - iDestruct (ownE_singleton_twice with "[$HiE $HiE']") as %[].
 Qed.
 
-Lemma gmap_validI_singleton `{Countable K} {A: cmraT} {M: ucmraT} (i: K) (a: A) :
+Lemma gmap_validI_singleton `{Countable K} {A: cmra} {M: ucmra} (i: K) (a: A) :
   ✓ {[ i := a ]} ⊣⊢@{uPredI M} ✓ a.
 Proof.
   rewrite gmap_validI. iSplit.
