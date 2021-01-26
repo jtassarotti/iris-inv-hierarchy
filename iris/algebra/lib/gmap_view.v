@@ -176,43 +176,43 @@ Section lemmas.
   Qed.
 
   (** Composition and validity *)
-  Lemma gmap_view_auth_frac_op p q m :
+  Lemma gmap_view_auth_dfrac_op p q m :
     gmap_view_auth (p + q) m ≡ gmap_view_auth p m ⋅ gmap_view_auth q m.
-  Proof. by rewrite /gmap_view_auth -dfrac_op_own view_auth_frac_op. Qed.
-  Global Instance gmap_view_auth_frac_is_op q q1 q2 m :
+  Proof. by rewrite /gmap_view_auth -dfrac_op_own view_auth_dfrac_op. Qed.
+  Global Instance gmap_view_auth_dfrac_is_op q q1 q2 m :
     IsOp q q1 q2 → IsOp' (gmap_view_auth q m) (gmap_view_auth q1 m) (gmap_view_auth q2 m).
   Proof. rewrite /gmap_view_auth. apply _. Qed.
 
-  Lemma gmap_view_auth_frac_op_invN n p m1 q m2 :
+  Lemma gmap_view_auth_dfrac_op_invN n p m1 q m2 :
     ✓{n} (gmap_view_auth p m1 ⋅ gmap_view_auth q m2) → m1 ≡{n}≡ m2.
-  Proof. apply view_auth_frac_op_invN. Qed.
-  Lemma gmap_view_auth_frac_op_inv p m1 q m2 :
+  Proof. apply view_auth_dfrac_op_invN. Qed.
+  Lemma gmap_view_auth_dfrac_op_inv p m1 q m2 :
     ✓ (gmap_view_auth p m1 ⋅ gmap_view_auth q m2) → m1 ≡ m2.
-  Proof. apply view_auth_frac_op_inv. Qed.
-  Lemma gmap_view_auth_frac_op_inv_L `{!LeibnizEquiv V} q m1 p m2 :
+  Proof. apply view_auth_dfrac_op_inv. Qed.
+  Lemma gmap_view_auth_dfrac_op_inv_L `{!LeibnizEquiv V} q m1 p m2 :
     ✓ (gmap_view_auth p m1 ⋅ gmap_view_auth q m2) → m1 = m2.
-  Proof. apply view_auth_frac_op_inv_L, _. Qed.
+  Proof. apply view_auth_dfrac_op_inv_L, _. Qed.
 
-  Lemma gmap_view_auth_frac_valid m q : ✓ gmap_view_auth q m ↔ (q ≤ 1)%Qp.
+  Lemma gmap_view_auth_dfrac_valid m q : ✓ gmap_view_auth q m ↔ (q ≤ 1)%Qp.
   Proof.
-    rewrite view_auth_frac_valid. intuition eauto using gmap_view_rel_unit.
+    rewrite view_auth_dfrac_valid. intuition eauto using gmap_view_rel_unit.
   Qed.
   Lemma gmap_view_auth_valid m : ✓ gmap_view_auth 1 m.
-  Proof. rewrite gmap_view_auth_frac_valid. done. Qed.
+  Proof. rewrite gmap_view_auth_dfrac_valid. done. Qed.
 
-  Lemma gmap_view_auth_frac_op_validN n q1 q2 m1 m2 :
+  Lemma gmap_view_auth_dfrac_op_validN n q1 q2 m1 m2 :
     ✓{n} (gmap_view_auth q1 m1 ⋅ gmap_view_auth q2 m2) ↔ ✓ (q1 + q2)%Qp ∧ m1 ≡{n}≡ m2.
   Proof.
-    rewrite view_auth_frac_op_validN. intuition eauto using gmap_view_rel_unit.
+    rewrite view_auth_dfrac_op_validN. intuition eauto using gmap_view_rel_unit.
   Qed.
-  Lemma gmap_view_auth_frac_op_valid q1 q2 m1 m2 :
+  Lemma gmap_view_auth_dfrac_op_valid q1 q2 m1 m2 :
     ✓ (gmap_view_auth q1 m1 ⋅ gmap_view_auth q2 m2) ↔ (q1 + q2 ≤ 1)%Qp ∧ m1 ≡ m2.
   Proof.
-    rewrite view_auth_frac_op_valid. intuition eauto using gmap_view_rel_unit.
+    rewrite view_auth_dfrac_op_valid. intuition eauto using gmap_view_rel_unit.
   Qed.
-  Lemma gmap_view_auth_frac_op_valid_L `{!LeibnizEquiv V} q1 q2 m1 m2 :
+  Lemma gmap_view_auth_dfrac_op_valid_L `{!LeibnizEquiv V} q1 q2 m1 m2 :
     ✓ (gmap_view_auth q1 m1 ⋅ gmap_view_auth q2 m2) ↔ ✓ (q1 + q2)%Qp ∧ m1 = m2.
-  Proof. unfold_leibniz. apply gmap_view_auth_frac_op_valid. Qed.
+  Proof. unfold_leibniz. apply gmap_view_auth_dfrac_op_valid. Qed.
 
   Lemma gmap_view_auth_op_validN n m1 m2 :
     ✓{n} (gmap_view_auth 1 m1 ⋅ gmap_view_auth 1 m2) ↔ False.
@@ -260,24 +260,24 @@ Section lemmas.
     ✓ (gmap_view_frag k dq1 v1 ⋅ gmap_view_frag k dq2 v2) ↔ ✓ (dq1 ⋅ dq2) ∧ v1 = v2.
   Proof. unfold_leibniz. apply gmap_view_frag_op_valid. Qed.
 
-  Lemma gmap_view_both_frac_validN n q m k dq v :
+  Lemma gmap_view_both_dfrac_validN n q m k dq v :
     ✓{n} (gmap_view_auth q m ⋅ gmap_view_frag k dq v) ↔
       (q ≤ 1)%Qp ∧ ✓ dq ∧ m !! k ≡{n}≡ Some v.
   Proof.
     rewrite /gmap_view_auth /gmap_view_frag.
-    rewrite view_both_frac_validN gmap_view_rel_lookup.
+    rewrite view_both_dfrac_validN gmap_view_rel_lookup.
     naive_solver.
   Qed.
   Lemma gmap_view_both_validN n m k dq v :
     ✓{n} (gmap_view_auth 1 m ⋅ gmap_view_frag k dq v) ↔
       ✓ dq ∧ m !! k ≡{n}≡ Some v.
-  Proof. rewrite gmap_view_both_frac_validN. naive_solver done. Qed.
-  Lemma gmap_view_both_frac_valid q m k dq v :
+  Proof. rewrite gmap_view_both_dfrac_validN. naive_solver done. Qed.
+  Lemma gmap_view_both_dfrac_valid q m k dq v :
     ✓ (gmap_view_auth q m ⋅ gmap_view_frag k dq v) ↔
     (q ≤ 1)%Qp ∧ ✓ dq ∧ m !! k ≡ Some v.
   Proof.
     rewrite /gmap_view_auth /gmap_view_frag.
-    rewrite view_both_frac_valid. setoid_rewrite gmap_view_rel_lookup.
+    rewrite view_both_dfrac_valid. setoid_rewrite gmap_view_rel_lookup.
     split=>[[Hq Hm]|[Hq Hm]].
     - split; first done. split.
       + apply (Hm 0%nat).
@@ -286,14 +286,14 @@ Section lemmas.
       + apply Hm.
       + revert n. apply equiv_dist. apply Hm.
   Qed.
-  Lemma gmap_view_both_frac_valid_L `{!LeibnizEquiv V} q m k dq v :
+  Lemma gmap_view_both_dfrac_valid_L `{!LeibnizEquiv V} q m k dq v :
     ✓ (gmap_view_auth q m ⋅ gmap_view_frag k dq v) ↔
     ✓ q ∧ ✓ dq ∧ m !! k = Some v.
-  Proof. unfold_leibniz. apply gmap_view_both_frac_valid. Qed.
+  Proof. unfold_leibniz. apply gmap_view_both_dfrac_valid. Qed.
   Lemma gmap_view_both_valid m k dq v :
     ✓ (gmap_view_auth 1 m ⋅ gmap_view_frag k dq v) ↔
     ✓ dq ∧ m !! k ≡ Some v.
-  Proof. rewrite gmap_view_both_frac_valid. naive_solver done. Qed.
+  Proof. rewrite gmap_view_both_dfrac_valid. naive_solver done. Qed.
   (* FIXME: Having a [valid_L] lemma is not consistent with [auth] and [view]; they
      have [inv_L] lemmas instead that just have an equality on the RHS. *)
   Lemma gmap_view_both_valid_L `{!LeibnizEquiv V} m k dq v :

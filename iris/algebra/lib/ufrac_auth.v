@@ -95,7 +95,7 @@ Section ufrac_auth.
 
   Lemma ufrac_auth_auth_validN n q a : ✓{n} (●U{q} a) ↔ ✓{n} a.
   Proof.
-    rewrite auth_auth_frac_validN Some_validN. split.
+    rewrite auth_auth_dfrac_validN Some_validN. split.
     - by intros [?[]].
     - intros. by split.
   Qed.

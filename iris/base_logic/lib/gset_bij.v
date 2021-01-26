@@ -71,7 +71,7 @@ Section gset_bij.
   Global Instance gset_bij_own_auth_fractional γ L :
     Fractional (λ q, gset_bij_own_auth γ (DfracOwn q) L).
   Proof.
-    intros p q. rewrite gset_bij_own_auth_eq -own_op gset_bij_auth_frac_op //.
+    intros p q. rewrite gset_bij_own_auth_eq -own_op gset_bij_auth_dfrac_op //.
   Qed.
   Global Instance gset_bij_own_auth_as_fractional γ q L :
     AsFractional (gset_bij_own_auth γ (DfracOwn q) L) (λ q, gset_bij_own_auth γ (DfracOwn q) L) q.
@@ -82,7 +82,7 @@ Section gset_bij.
     ⌜✓ (dq1 ⋅ dq2) ∧ L1 = L2 ∧ gset_bijective L1⌝.
   Proof.
     rewrite gset_bij_own_auth_eq. iIntros "H1 H2".
-    by iDestruct (own_valid_2 with "H1 H2") as %?%gset_bij_auth_frac_op_valid.
+    by iDestruct (own_valid_2 with "H1 H2") as %?%gset_bij_auth_dfrac_op_valid.
   Qed.
   Lemma gset_bij_own_auth_exclusive γ L1 L2 :
     gset_bij_own_auth γ (DfracOwn 1) L1 -∗ gset_bij_own_auth γ (DfracOwn 1) L2 -∗ False.
@@ -95,7 +95,7 @@ Section gset_bij.
     gset_bij_own_auth γ q L -∗ ⌜✓ q ∧ gset_bijective L⌝.
   Proof.
     rewrite gset_bij_own_auth_eq. iIntros "Hauth".
-    by iDestruct (own_valid with "Hauth") as %?%gset_bij_auth_frac_valid.
+    by iDestruct (own_valid with "Hauth") as %?%gset_bij_auth_dfrac_valid.
   Qed.
 
   Lemma gset_bij_own_elem_agree γ L a a' b b' :
