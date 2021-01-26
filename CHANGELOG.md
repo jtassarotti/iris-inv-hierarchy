@@ -81,6 +81,13 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   and either affine or absorbing.
 * Fix the statement of the lemma `fupd_plainly_laterN`; the old lemma was a
   duplicate of `fupd_plain_laterN`.
+* Strengthen `big_sepL2_app_inv` by weakening a premise (it is sufficient for
+  one of the two pairs of lists to have equal length).
+* Add lemmas to big-ops that provide ownership of a single element and permit
+  changing the quantified-over predicate when re-assembling the big-op:
+  `big_sepL_lookup_acc_impl`, `big_sepL2_lookup_acc_impl`,
+  `big_sepM_lookup_acc_impl`, `big_sepM2_lookup_acc_impl`,
+  `big_sepS_elem_of_acc_impl`, `big_sepMS_elem_of_acc_impl`.
 
 **Changes in `proofmode`:**
 
@@ -200,6 +207,9 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   own file [heap_lang.class_instances](iris_heap_lang/class_instances.v).
 * Move `inv_head_step` tactic and `head_step` auto hints (now part of new hint
   database `head_step`) to [heap_lang.tactics](iris_heap_lang/tactics.v).
+* The tactic `wp_apply` no longer performs `wp_pures` before applying the given
+  lemma. The new tactic `wp_smart_apply` repeatedly performs single `wp_pure`
+  steps until the lemma matches the goal.
 
 The following `sed` script helps adjust your code to the renaming (on macOS,
 replace `sed` by `gsed`, installed via e.g. `brew install gnu-sed`).

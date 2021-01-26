@@ -91,6 +91,9 @@ Section sep_list.
     ([∗ list] k↦y ∈ l1 ++ l2, Φ k y)
     ⊣⊢ ([∗ list] k↦y ∈ l1, Φ k y) ∗ ([∗ list] k↦y ∈ l2, Φ (length l1 + k) y).
   Proof. by rewrite big_opL_app. Qed.
+  Lemma big_sepL_snoc Φ l x :
+    ([∗ list] k↦y ∈ l ++ [x], Φ k y) ⊣⊢ ([∗ list] k↦y ∈ l, Φ k y) ∗ Φ (length l) x.
+  Proof. by rewrite big_opL_snoc. Qed.
 
   Lemma big_sepL_submseteq `{BiAffine PROP} (Φ : A → PROP) l1 l2 :
     l1 ⊆+ l2 → ([∗ list] y ∈ l2, Φ y) ⊢ [∗ list] y ∈ l1, Φ y.
@@ -223,8 +226,8 @@ Section sep_list.
 
   Lemma big_sepL_delete Φ l i x :
     l !! i = Some x →
-    ([∗ list] k↦y ∈ l, Φ k y)
-    ⊣⊢ Φ i x ∗ [∗ list] k↦y ∈ l, if decide (k = i) then emp else Φ k y.
+    ([∗ list] k↦y ∈ l, Φ k y) ⊣⊢
+    Φ i x ∗ [∗ list] k↦y ∈ l, if decide (k = i) then emp else Φ k y.
   Proof.
     intros. rewrite -(take_drop_middle l i x) // !big_sepL_app /= Nat.add_0_r.
     rewrite take_length_le; last eauto using lookup_lt_Some, Nat.lt_le_incl.
@@ -234,13 +237,34 @@ Section sep_list.
       rewrite take_length in Hk. by rewrite decide_False; last lia.
     - apply big_sepL_proper=> k y _. by rewrite decide_False; last lia.
   Qed.
-
   Lemma big_sepL_delete' `{!BiAffine PROP} Φ l i x :
     l !! i = Some x →
     ([∗ list] k↦y ∈ l, Φ k y) ⊣⊢ Φ i x ∗ [∗ list] k↦y ∈ l, ⌜ k ≠ i ⌝ → Φ k y.
   Proof.
     intros. rewrite big_sepL_delete //. (do 2 f_equiv)=> k y.
     rewrite -decide_emp. by repeat case_decide.
+  Qed.
+
+  Lemma big_sepL_lookup_acc_impl {Φ l} i x :
+    l !! i = Some x →
+    ([∗ list] k↦y ∈ l, Φ k y) -∗
+    (* We obtain [Φ] for [x] *)
+    Φ i x ∗
+    (* We reobtain the bigop for a predicate [Ψ] selected by the user *)
+    ∀ Ψ,
+      □ (∀ k y, ⌜ l !! k = Some y ⌝ → ⌜ k ≠ i ⌝ → Φ k y -∗ Ψ k y) -∗
+      Ψ i x -∗
+      [∗ list] k↦y ∈ l, Ψ k y.
+  Proof.
+    intros. rewrite big_sepL_delete //. apply sep_mono_r, forall_intro=> Ψ.
+    apply wand_intro_r, wand_intro_l.
+    rewrite (big_sepL_delete Ψ l i x) //. apply sep_mono_r.
+    eapply wand_apply; [apply big_sepL_impl|apply sep_mono_r].
+    apply intuitionistically_intro', forall_intro=> k; apply forall_intro=> y.
+    apply impl_intro_l, pure_elim_l=> ?; apply wand_intro_r.
+    rewrite (forall_elim ) (forall_elim y) pure_True // left_id.
+    destruct (decide _) as [->|]; [by apply: affine|].
+    by rewrite pure_True //left_id intuitionistically_elim wand_elim_l.
   Qed.
 
   Lemma big_sepL_replicate l P :
@@ -291,25 +315,35 @@ Section sep_list.
   Proof. induction 1; simpl; apply _. Qed.
 End sep_list.
 
-Section sep_list_more.
-  Context {A : Type}.
-  Implicit Types l : list A.
-  Implicit Types Φ Ψ : nat → A → PROP.
-  (* Some lemmas depend on the generalized versions of the above ones. *)
+(* Some lemmas depend on the generalized versions of the above ones. *)
+Lemma big_sepL_sep_zip_with {A B C} (f : A → B → C) (g1 : C → A) (g2 : C → B)
+    (Φ1 : nat → A → PROP) (Φ2 : nat → B → PROP) l1 l2 :
+  (∀ x y, g1 (f x y) = x) →
+  (∀ x y, g2 (f x y) = y) →
+  length l1 = length l2 →
+  ([∗ list] k↦xy ∈ zip_with f l1 l2, Φ1 k (g1 xy) ∗ Φ2 k (g2 xy)) ⊣⊢
+  ([∗ list] k↦x ∈ l1, Φ1 k x) ∗ ([∗ list] k↦y ∈ l2, Φ2 k y).
+Proof. apply big_opL_sep_zip_with. Qed.
 
-  Lemma big_sepL_zip_with {B C} Φ f (l1 : list B) (l2 : list C) :
-    ([∗ list] k↦x ∈ zip_with f l1 l2, Φ k x)
-    ⊣⊢ ([∗ list] k↦x ∈ l1, if l2 !! k is Some y then Φ k (f x y) else emp).
-  Proof.
-    revert Φ l2; induction l1 as [|x l1 IH]=> Φ [|y l2] //=.
-    - by rewrite big_sepL_emp left_id.
-    - by rewrite IH.
-  Qed.
-End sep_list_more.
+Lemma big_sepL_sep_zip {A B} (Φ1 : nat → A → PROP) (Φ2 : nat → B → PROP) l1 l2 :
+  length l1 = length l2 →
+  ([∗ list] k↦xy ∈ zip l1 l2, Φ1 k xy.1 ∗ Φ2 k xy.2) ⊣⊢
+  ([∗ list] k↦x ∈ l1, Φ1 k x) ∗ ([∗ list] k↦y ∈ l2, Φ2 k y).
+Proof. apply big_opL_sep_zip. Qed.
 
+Lemma big_sepL_zip_with {A B C} (Φ : nat → A → PROP) f (l1 : list B) (l2 : list C) :
+  ([∗ list] k↦x ∈ zip_with f l1 l2, Φ k x) ⊣⊢
+  ([∗ list] k↦x ∈ l1, if l2 !! k is Some y then Φ k (f x y) else emp).
+Proof.
+  revert Φ l2; induction l1 as [|x l1 IH]=> Φ [|y l2] //=.
+  - by rewrite big_sepL_emp left_id.
+  - by rewrite IH.
+Qed.
+
+(** ** Big ops over two lists *)
 Lemma big_sepL2_alt {A B} (Φ : nat → A → B → PROP) l1 l2 :
-  ([∗ list] k↦y1;y2 ∈ l1; l2, Φ k y1 y2)
-  ⊣⊢ ⌜ length l1 = length l2 ⌝ ∧ [∗ list] k ↦ y ∈ zip l1 l2, Φ k (y.1) (y.2).
+  ([∗ list] k↦y1;y2 ∈ l1; l2, Φ k y1 y2) ⊣⊢
+  ⌜ length l1 = length l2 ⌝ ∧ [∗ list] k ↦ xy ∈ zip l1 l2, Φ k (xy.1) (xy.2).
 Proof.
   apply (anti_symm _).
   - apply and_intro.
@@ -323,7 +357,6 @@ Proof.
     induction Hl as [|x1 l1 x2 l2 _ _ IH]=> Φ //=. by rewrite -IH.
 Qed.
 
-(** ** Big ops over two lists *)
 Section sep_list2.
   Context {A B : Type}.
   Implicit Types Φ Ψ : nat → A → B → PROP.
@@ -404,14 +437,36 @@ Section sep_list2.
     by rewrite IH -assoc.
   Qed.
   Lemma big_sepL2_app_inv Φ l1 l2 l1' l2' :
-    length l1 = length l1' →
+    length l1 = length l1' ∨ length l2 = length l2' →
     ([∗ list] k↦y1;y2 ∈ l1 ++ l2; l1' ++ l2', Φ k y1 y2) -∗
     ([∗ list] k↦y1;y2 ∈ l1; l1', Φ k y1 y2) ∗
     ([∗ list] k↦y1;y2 ∈ l2; l2', Φ (length l1 + k)%nat y1 y2).
   Proof.
-    revert Φ l1'. induction l1 as [|x1 l1 IH]=> Φ -[|x1' l1'] //= ?; simplify_eq.
+    revert Φ l1'. induction l1 as [|x1 l1 IH]=> Φ -[|x1' l1'] /= Hlen.
     - by rewrite left_id.
-    - by rewrite -assoc IH.
+    - destruct Hlen as [[=]|Hlen]. rewrite big_sepL2_length Hlen /= app_length.
+      apply pure_elim'; lia.
+    - destruct Hlen as [[=]|Hlen]. rewrite big_sepL2_length -Hlen /= app_length.
+      apply pure_elim'; lia.
+    - by rewrite -assoc IH; last lia.
+  Qed.
+  Lemma big_sepL2_app_same_length Φ l1 l2 l1' l2' :
+    length l1 = length l1' ∨ length l2 = length l2' →
+    ([∗ list] k↦y1;y2 ∈ l1 ++ l2; l1' ++ l2', Φ k y1 y2) ⊣⊢
+    ([∗ list] k↦y1;y2 ∈ l1; l1', Φ k y1 y2) ∗
+    ([∗ list] k↦y1;y2 ∈ l2; l2', Φ (length l1 + k)%nat y1 y2).
+  Proof.
+    intros. apply (anti_symm _).
+    - by apply big_sepL2_app_inv.
+    - apply wand_elim_l'. apply big_sepL2_app.
+  Qed.
+
+  Lemma big_sepL2_snoc Φ x1 x2 l1 l2 :
+    ([∗ list] k↦y1;y2 ∈ l1 ++ [x1]; l2 ++ [x2], Φ k y1 y2) ⊣⊢
+    ([∗ list] k↦y1;y2 ∈ l1; l2, Φ k y1 y2) ∗ Φ (length l1) x1 x2.
+  Proof.
+    rewrite big_sepL2_app_same_length; last by auto.
+    by rewrite big_sepL2_singleton Nat.add_0_r.
   Qed.
 
   (** The lemmas [big_sepL2_mono], [big_sepL2_ne] and [big_sepL2_proper] are more
@@ -591,6 +646,57 @@ Section sep_list2.
     apply bi.wand_intro_l. rewrite -big_sepL2_sep. by setoid_rewrite wand_elim_l.
   Qed.
 
+  Lemma big_sepL2_delete Φ l1 l2 i x1 x2 :
+    l1 !! i = Some x1 → l2 !! i = Some x2 →
+    ([∗ list] k↦y1;y2 ∈ l1;l2, Φ k y1 y2) ⊣⊢
+    Φ i x1 x2 ∗ [∗ list] k↦y1;y2 ∈ l1;l2, if decide (k = i) then emp else Φ k y1 y2.
+  Proof.
+    intros. rewrite -(take_drop_middle l1 i x1) // -(take_drop_middle l2 i x2) //.
+    assert (i < length l1 ∧ i < length l2) as [??] by eauto using lookup_lt_Some.
+    rewrite !big_sepL2_app_same_length /=; [|rewrite ?take_length; lia..].
+    rewrite Nat.add_0_r take_length_le; [|lia].
+    rewrite decide_True // left_id.
+    rewrite assoc -!(comm _ (Φ _ _ _)) -assoc. do 2 f_equiv.
+    - apply big_sepL2_proper=> k y1 y2 Hk. apply lookup_lt_Some in Hk.
+      rewrite take_length in Hk. by rewrite decide_False; last lia.
+    - apply big_sepL2_proper=> k y1 y2 _. by rewrite decide_False; last lia.
+  Qed.
+  Lemma big_sepL2_delete' `{!BiAffine PROP} Φ l1 l2 i x1 x2 :
+    l1 !! i = Some x1 → l2 !! i = Some x2 →
+    ([∗ list] k↦y1;y2 ∈ l1;l2, Φ k y1 y2) ⊣⊢
+    Φ i x1 x2 ∗ [∗ list] k↦y1;y2 ∈ l1;l2, ⌜ k ≠ i ⌝ → Φ k y1 y2.
+  Proof.
+    intros. rewrite big_sepL2_delete //. (do 2 f_equiv)=> k y1 y2.
+    rewrite -decide_emp. by repeat case_decide.
+  Qed.
+
+  Lemma big_sepL2_lookup_acc_impl {Φ l1 l2} i x1 x2 :
+    l1 !! i = Some x1 →
+    l2 !! i = Some x2 →
+    ([∗ list] k↦y1;y2 ∈ l1;l2, Φ k y1 y2) -∗
+    (* We obtain [Φ] for the [x1] and [x2] *)
+    Φ i x1 x2 ∗
+    (* We reobtain the bigop for a predicate [Ψ] selected by the user *)
+    ∀ Ψ,
+      □ (∀ k y1 y2,
+        ⌜ l1 !! k = Some y1 ⌝ → ⌜ l2 !! k = Some y2 ⌝ → ⌜ k ≠ i ⌝ →
+        Φ k y1 y2 -∗ Ψ k y1 y2) -∗
+      Ψ i x1 x2 -∗
+      [∗ list] k↦y1;y2 ∈ l1;l2, Ψ k y1 y2.
+  Proof.
+    intros. rewrite big_sepL2_delete //. apply sep_mono_r, forall_intro=> Ψ.
+    apply wand_intro_r, wand_intro_l.
+    rewrite (big_sepL2_delete Ψ l1 l2 i) //. apply sep_mono_r.
+    eapply wand_apply; [apply big_sepL2_impl|apply sep_mono_r].
+    apply intuitionistically_intro', forall_intro=> k;
+      apply forall_intro=> y1; apply forall_intro=> y2.
+    do 2 (apply impl_intro_l, pure_elim_l=> ?); apply wand_intro_r.
+    rewrite (forall_elim k) (forall_elim y1) (forall_elim y2).
+    rewrite !(pure_True (_ = Some _)) // !left_id.
+    destruct (decide _) as [->|]; [by apply: affine|].
+    by rewrite pure_True //left_id intuitionistically_elim wand_elim_l.
+  Qed.
+
   Lemma big_sepL2_later_1 `{BiAffine PROP} Φ l1 l2 :
     (▷ [∗ list] k↦y1;y2 ∈ l1;l2, Φ k y1 y2) ⊢ ◇ [∗ list] k↦y1;y2 ∈ l1;l2, ▷ Φ k y1 y2.
   Proof.
@@ -619,6 +725,20 @@ Section sep_list2.
     by rewrite IH.
   Qed.
 
+  Lemma big_sepL_sepL2 (Φ1 : nat → A → PROP) (Φ2 : nat → B → PROP) l1 l2 :
+    length l1 = length l2 →
+    ([∗ list] k↦y1;y2 ∈ l1;l2, Φ1 k y1 ∗ Φ2 k y2) ⊣⊢
+    ([∗ list] k↦y1 ∈ l1, Φ1 k y1) ∗ ([∗ list] k↦y2 ∈ l2, Φ2 k y2).
+  Proof.
+    intros. rewrite -big_sepL_sep_zip // big_sepL2_alt pure_True // left_id //.
+  Qed.
+  Lemma big_sepL_sepL2_2 (Φ1 : nat → A → PROP) (Φ2 : nat → B → PROP) l1 l2 :
+    length l1 = length l2 →
+    ([∗ list] k↦y1 ∈ l1, Φ1 k y1) -∗
+    ([∗ list] k↦y2 ∈ l2, Φ2 k y2) -∗
+    [∗ list] k↦y1;y2 ∈ l1;l2, Φ1 k y1 ∗ Φ2 k y2.
+  Proof. intros. apply wand_intro_r. by rewrite big_sepL_sepL2. Qed.
+
   Global Instance big_sepL2_nil_persistent Φ :
     Persistent ([∗ list] k↦y1;y2 ∈ []; [], Φ k y1 y2).
   Proof. simpl; apply _. Qed.
@@ -643,6 +763,14 @@ Section sep_list2.
     Timeless ([∗ list] k↦y1;y2 ∈ l1;l2, Φ k y1 y2).
   Proof. rewrite big_sepL2_alt. apply _. Qed.
 End sep_list2.
+
+Lemma big_sepL_sepL2_diag {A} (Φ : nat → A → A → PROP) (l : list A) :
+  ([∗ list] k↦y ∈ l, Φ k y y) -∗
+  ([∗ list] k↦y1;y2 ∈ l;l, Φ k y1 y2).
+Proof.
+  rewrite big_sepL2_alt. rewrite pure_True // left_id.
+  rewrite zip_diag big_sepL_fmap /=. done.
+Qed.
 
 Lemma big_sepL2_ne_2 {A B : ofe}
     (Φ Ψ : nat → A → B → PROP) l1 l2 l1' l2' n :
@@ -1073,6 +1201,26 @@ Section map.
     rewrite assoc wand_elim_r -assoc. apply sep_mono; done.
   Qed.
 
+  Lemma big_sepM_lookup_acc_impl {Φ m} i x :
+    m !! i = Some x →
+    ([∗ map] k↦y ∈ m, Φ k y) -∗
+    (* We obtain [Φ] for [x] *)
+    Φ i x ∗
+    (* We reobtain the bigop for a predicate [Ψ] selected by the user *)
+    ∀ Ψ,
+      □ (∀ k y, ⌜ m !! k = Some y ⌝ → ⌜ k ≠ i ⌝ → Φ k y -∗ Ψ k y) -∗
+      Ψ i x -∗
+      [∗ map] k↦y ∈ m, Ψ k y.
+  Proof.
+    intros. rewrite big_sepM_delete //. apply sep_mono_r, forall_intro=> Ψ.
+    apply wand_intro_r, wand_intro_l.
+    rewrite (big_sepM_delete Ψ m i x) //. apply sep_mono_r.
+    eapply wand_apply; [apply big_sepM_impl|apply sep_mono_r].
+    f_equiv; f_equiv=> k; f_equiv=> y.
+    rewrite impl_curry -pure_and lookup_delete_Some.
+    do 2 f_equiv. intros ?; naive_solver.
+  Qed.
+
   Lemma big_sepM_later `{BiAffine PROP} Φ m :
     ▷ ([∗ map] k↦x ∈ m, Φ k x) ⊣⊢ ([∗ map] k↦x ∈ m, ▷ Φ k x).
   Proof. apply (big_opM_commute _). Qed.
@@ -1109,7 +1257,31 @@ Section map.
   Proof. rewrite big_opM_eq. intros. apply big_sepL_timeless=> _ [??]; apply _. Qed.
 End map.
 
+(* Some lemmas depend on the generalized versions of the above ones. *)
+Lemma big_sepM_sep_zip_with `{Countable K} {A B C}
+    (f : A → B → C) (g1 : C → A) (g2 : C → B)
+    (Φ1 : K → A → PROP) (Φ2 : K → B → PROP) m1 m2 :
+  (∀ x y, g1 (f x y) = x) →
+  (∀ x y, g2 (f x y) = y) →
+  (∀ k, is_Some (m1 !! k) ↔ is_Some (m2 !! k)) →
+  ([∗ map] k↦xy ∈ map_zip_with f m1 m2, Φ1 k (g1 xy) ∗ Φ2 k (g2 xy)) ⊣⊢
+  ([∗ map] k↦x ∈ m1, Φ1 k x) ∗ ([∗ map] k↦y ∈ m2, Φ2 k y).
+Proof. apply big_opM_sep_zip_with. Qed.
+
+Lemma big_sepM_sep_zip `{Countable K} {A B}
+    (Φ1 : K → A → PROP) (Φ2 : K → B → PROP) m1 m2 :
+  (∀ k, is_Some (m1 !! k) ↔ is_Some (m2 !! k)) →
+  ([∗ map] k↦xy ∈ map_zip m1 m2, Φ1 k xy.1 ∗ Φ2 k xy.2) ⊣⊢
+  ([∗ map] k↦x ∈ m1, Φ1 k x) ∗ ([∗ map] k↦y ∈ m2, Φ2 k y).
+Proof. apply big_opM_sep_zip. Qed.
+
 (** ** Big ops over two maps *)
+Lemma big_sepM2_alt `{Countable K} {A B} (Φ : K → A → B → PROP) m1 m2 :
+  ([∗ map] k↦y1;y2 ∈ m1; m2, Φ k y1 y2) ⊣⊢
+  ⌜ ∀ k, is_Some (m1 !! k) ↔ is_Some (m2 !! k) ⌝ ∧
+  [∗ map] k ↦ xy ∈ map_zip m1 m2, Φ k xy.1 xy.2.
+Proof. by rewrite big_sepM2_eq. Qed.
+
 Section map2.
   Context `{Countable K} {A B : Type}.
   Implicit Types Φ Ψ : K → A → B → PROP.
@@ -1449,6 +1621,29 @@ Section map2.
     apply bi.wand_intro_l. rewrite -big_sepM2_sep. by setoid_rewrite wand_elim_l.
   Qed.
 
+  Lemma big_sepM2_lookup_acc_impl {Φ m1 m2} i x1 x2 :
+    m1 !! i = Some x1 →
+    m2 !! i = Some x2 →
+    ([∗ map] k↦y1;y2 ∈ m1;m2, Φ k y1 y2) -∗
+    (* We obtain [Φ] for [x1] and [x2] *)
+    Φ i x1 x2 ∗
+    (* We reobtain the bigop for a predicate [Ψ] selected by the user *)
+    ∀ Ψ,
+      □ (∀ k y1 y2,
+        ⌜ m1 !! k = Some y1 ⌝ → ⌜ m2 !! k = Some y2 ⌝ → ⌜ k ≠ i ⌝ →
+        Φ k y1 y2 -∗ Ψ k y1 y2) -∗
+      Ψ i x1 x2 -∗
+      [∗ map] k↦y1;y2 ∈ m1;m2, Ψ k y1 y2.
+  Proof.
+    intros. rewrite big_sepM2_delete //. apply sep_mono_r, forall_intro=> Ψ.
+    apply wand_intro_r, wand_intro_l.
+    rewrite (big_sepM2_delete Ψ m1 m2 i) //. apply sep_mono_r.
+    eapply wand_apply; [apply big_sepM2_impl|apply sep_mono_r].
+    f_equiv; f_equiv=> k; f_equiv=> y1; f_equiv=> y2.
+    rewrite !impl_curry -!pure_and !lookup_delete_Some.
+    do 2 f_equiv. intros ?; naive_solver.
+  Qed.
+
   Lemma big_sepM2_later_1 `{BiAffine PROP} Φ m1 m2 :
     (▷ [∗ map] k↦x1;x2 ∈ m1;m2, Φ k x1 x2)
     ⊢ ◇ ([∗ map] k↦x1;x2 ∈ m1;m2, ▷ Φ k x1 x2).
@@ -1474,6 +1669,20 @@ Section map2.
     apply big_sepM2_mono. eauto.
   Qed.
 
+  Lemma big_sepM_sepM2 (Φ1 : K → A → PROP) (Φ2 : K → B → PROP) m1 m2 :
+    (∀ k, is_Some (m1 !! k) ↔ is_Some (m2 !! k)) →
+    ([∗ map] k↦y1;y2 ∈ m1;m2, Φ1 k y1 ∗ Φ2 k y2) ⊣⊢
+    ([∗ map] k↦y1 ∈ m1, Φ1 k y1) ∗ ([∗ map] k↦y2 ∈ m2, Φ2 k y2).
+  Proof.
+    intros. rewrite -big_sepM_sep_zip // big_sepM2_alt pure_True // left_id //.
+  Qed.
+  Lemma big_sepM_sepM2_2 (Φ1 : K → A → PROP) (Φ2 : K → B → PROP) m1 m2 :
+    (∀ k, is_Some (m1 !! k) ↔ is_Some (m2 !! k)) →
+    ([∗ map] k↦y1 ∈ m1, Φ1 k y1) -∗
+    ([∗ map] k↦y2 ∈ m2, Φ2 k y2) -∗
+    [∗ map] k↦y1;y2 ∈ m1;m2, Φ1 k y1 ∗ Φ2 k y2.
+  Proof. intros. apply wand_intro_r. by rewrite big_sepM_sepM2. Qed.
+
   Global Instance big_sepM2_empty_persistent Φ :
     Persistent ([∗ map] k↦y1;y2 ∈ ∅; ∅, Φ k y1 y2).
   Proof. rewrite big_sepM2_empty. apply _. Qed.
@@ -1498,6 +1707,14 @@ Section map2.
     Timeless ([∗ map] k↦x1;x2 ∈ m1;m2, Φ k x1 x2).
   Proof. intros. rewrite big_sepM2_eq /big_sepM2_def. apply _. Qed.
 End map2.
+
+Lemma big_sepM_sepM2_diag `{Countable K} {A} (Φ : K → A → A → PROP) (m : gmap K A) :
+  ([∗ map] k↦y ∈ m, Φ k y y) -∗
+  ([∗ map] k↦y1;y2 ∈ m;m, Φ k y1 y2).
+Proof.
+  rewrite big_sepM2_alt. rewrite pure_True; last naive_solver. rewrite left_id.
+  rewrite map_zip_diag big_sepM_fmap. done.
+Qed.
 
 Lemma big_sepM2_ne_2 `{Countable K} (A B : ofe)
     (Φ Ψ : K → A → B → PROP) m1 m2 m1' m2' n :
@@ -1680,6 +1897,25 @@ Section gset.
     by setoid_rewrite wand_elim_l.
   Qed.
 
+  Lemma big_sepS_elem_of_acc_impl {Φ X} x :
+    x ∈ X →
+    ([∗ set] y ∈ X, Φ y) -∗
+    (* we get [Φ] for the element [x] *)
+    Φ x ∗
+    (* we reobtain the bigop for a predicate [Ψ] selected by the user *)
+    ∀ Ψ,
+      □ (∀ y, ⌜ y ∈ X ⌝ → ⌜ x ≠ y ⌝ → Φ y -∗ Ψ y) -∗
+      Ψ x -∗
+      [∗ set] y ∈ X, Ψ y.
+  Proof.
+    intros. rewrite big_sepS_delete //. apply sep_mono_r, forall_intro=> Ψ.
+    apply wand_intro_r, wand_intro_l.
+    rewrite (big_sepS_delete Ψ X x) //. apply sep_mono_r.
+    eapply wand_apply; [apply big_sepS_impl|apply sep_mono_r].
+    f_equiv; f_equiv=> y. rewrite impl_curry -pure_and.
+    do 2 f_equiv. intros ?; set_solver.
+  Qed.
+
   Lemma big_sepS_dup P `{!Affine P} X :
     □ (P -∗ P ∗ P) -∗ P -∗ [∗ set] x ∈ X, P.
   Proof.
@@ -1857,6 +2093,23 @@ Section gmultiset.
     rewrite !big_sepMS_disj_union big_sepMS_singleton.
     rewrite intuitionistically_sep_dup {1}intuitionistically_elim.
     rewrite assoc wand_elim_r -assoc. apply sep_mono; done.
+  Qed.
+
+  Lemma big_sepMS_elem_of_acc_impl {Φ X} x :
+    x ∈ X →
+    ([∗ mset] y ∈ X, Φ y) -∗
+    (* we get [Φ] for [x] *)
+    Φ x ∗
+    (* we reobtain the bigop for a predicate [Ψ] selected by the user *)
+    ∀ Ψ,
+      □ (∀ y, ⌜ y ∈ X ∖ {[ x ]} ⌝ → Φ y -∗ Ψ y) -∗
+      Ψ x -∗
+      [∗ mset] y ∈ X, Ψ y.
+  Proof.
+    intros. rewrite big_sepMS_delete //. apply sep_mono_r, forall_intro=> Ψ.
+    apply wand_intro_r, wand_intro_l.
+    rewrite (big_sepMS_delete Ψ X x) //. apply sep_mono_r.
+    apply wand_elim_l', big_sepMS_impl.
   Qed.
 
   Global Instance big_sepMS_empty_persistent Φ :
