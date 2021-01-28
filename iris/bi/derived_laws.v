@@ -29,15 +29,18 @@ Notation "P ⊣⊢ Q" := (P ⊣⊢@{PROP} Q).
 
 (* Derived stuff about the entailment *)
 Global Instance entails_anti_sym : AntiSymm (⊣⊢) (@bi_entails PROP).
-Proof. intros P Q ??. by apply equiv_spec. Qed.
-Lemma equiv_entails P Q : (P ⊣⊢ Q) → (P ⊢ Q).
-Proof. apply equiv_spec. Qed.
-Lemma equiv_entails_sym P Q : (Q ⊣⊢ P) → (P ⊢ Q).
-Proof. apply equiv_spec. Qed.
+Proof. intros P Q ??. by apply equiv_entails. Qed.
+Lemma equiv_entails_1_1 P Q : (P ⊣⊢ Q) → (P ⊢ Q).
+Proof. apply equiv_entails. Qed.
+Lemma equiv_entails_1_2 P Q : (P ⊣⊢ Q) → (Q ⊢ P).
+Proof. apply equiv_entails. Qed.
+Lemma equiv_entails_2 P Q : (P ⊢ Q) → (Q ⊢ P) → (P ⊣⊢ Q).
+Proof. intros. by apply equiv_entails. Qed.
+
 Global Instance entails_proper :
   Proper ((⊣⊢) ==> (⊣⊢) ==> iff) ((⊢) : relation PROP).
 Proof.
-  move => P1 P2 /equiv_spec [HP1 HP2] Q1 Q2 /equiv_spec [HQ1 HQ2]; split=>?.
+  move => P1 P2 /equiv_entails [HP1 HP2] Q1 Q2 /equiv_entails [HQ1 HQ2]; split=>?.
   - by trans P1; [|trans Q1].
   - by trans P2; [|trans Q2].
 Qed.
@@ -119,14 +122,14 @@ Local Hint Immediate False_elim : core.
 Lemma entails_eq_True P Q : (P ⊢ Q) ↔ ((P → Q)%I ≡ True%I).
 Proof.
   split=>EQ.
-  - apply bi.equiv_spec; split; [by apply True_intro|].
+  - apply bi.equiv_entails; split; [by apply True_intro|].
     apply impl_intro_r. rewrite and_elim_r //.
   - trans (P ∧ True)%I.
     + apply and_intro; first done. by apply pure_intro.
     + rewrite -EQ impl_elim_r. done.
 Qed.
 Lemma entails_impl_True P Q : (P ⊢ Q) ↔ (True ⊢ (P → Q)).
-Proof. rewrite entails_eq_True equiv_spec; naive_solver. Qed.
+Proof. rewrite entails_eq_True equiv_entails; naive_solver. Qed.
 
 Lemma and_mono P P' Q Q' : (P ⊢ Q) → (P' ⊢ Q') → P ∧ P' ⊢ Q ∧ Q'.
 Proof. auto. Qed.
@@ -229,7 +232,7 @@ Qed.
 Lemma exist_impl_forall {A} P (Ψ : A → PROP) :
   ((∃ x : A, Ψ x) → P) ⊣⊢ ∀ x : A, Ψ x → P.
 Proof.
-  apply equiv_spec; split.
+  apply equiv_entails; split.
   - apply forall_intro=>x. by rewrite -exist_intro.
   - apply impl_intro_r, impl_elim_r', exist_elim=>x.
     apply impl_intro_r. by rewrite (forall_elim x) impl_elim_r.
@@ -457,7 +460,7 @@ Proof. by apply forall_intro=> a; rewrite forall_elim. Qed.
 Lemma exist_wand_forall {A} P (Ψ : A → PROP) :
   ((∃ x : A, Ψ x) -∗ P) ⊣⊢ ∀ x : A, Ψ x -∗ P.
 Proof.
-  apply equiv_spec; split.
+  apply equiv_entails; split.
   - apply forall_intro=>x. by rewrite -exist_intro.
   - apply wand_intro_r, wand_elim_r', exist_elim=>x.
     apply wand_intro_r. by rewrite (forall_elim x) wand_elim_r.
@@ -1598,7 +1601,7 @@ Lemma limit_preserving_equiv {A : ofe} `{Cofe A} (Φ Ψ : A → PROP) :
   NonExpansive Φ → NonExpansive Ψ → LimitPreserving (λ x, Φ x ⊣⊢ Ψ x).
 Proof.
   intros HΦ HΨ. eapply limit_preserving_ext.
-  { intros x. symmetry; apply equiv_spec. }
+  { intros x. symmetry; apply equiv_entails. }
   apply limit_preserving_and; by apply limit_preserving_entails.
 Qed.
 Global Instance limit_preserving_Persistent {A:ofe} `{Cofe A} (Φ : A → PROP) :

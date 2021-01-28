@@ -18,7 +18,7 @@ Lemma uPred_bi_mixin (M : ucmra) :
 Proof.
   split.
   - exact: entails_po.
-  - exact: equiv_spec.
+  - exact: equiv_entails.
   - exact: pure_ne.
   - exact: and_ne.
   - exact: or_ne.

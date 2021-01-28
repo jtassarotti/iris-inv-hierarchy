@@ -101,6 +101,8 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   `big_sepS` lemmas.
 * Add lemmas for big-ops of magic wands: `big_sepL_wand`, `big_sepL2_wand`,
   `big_sepM_wand`, `big_sepM2_wand`, `big_sepS_wand`, `big_sepMS_wand`.
+* Rename `equiv_entails` → `equiv_entails_1_1`,
+  `equiv_entails_sym` → `equiv_entails_1_2`, and `equiv_spec` → `equiv_entails`.
 
 **Changes in `proofmode`:**
 
@@ -267,6 +269,10 @@ s/\b(gmultiset_op)_disj_union\b/\1/g
 s/\b(gmultiset_core)_empty\b/\1/g
 s/\b(nat_op)_plus\b/\1/g
 s/\b(max_nat_op)_max\b/\1/g
+# equiv_spec
+s/\bequiv_entails\b/equiv_entails_1_1/g
+s/\bequiv_entails_sym\b/equiv_entails_1_2/g
+s/\bequiv_spec\b/equiv_entails/g
 EOF
 ```
 

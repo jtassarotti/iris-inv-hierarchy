@@ -439,7 +439,7 @@ Global Instance of_envs_proper' :
   Proper (env_Forall2 (⊣⊢) ==> env_Forall2 (⊣⊢) ==> (⊣⊢)) (@of_envs' PROP).
 Proof.
   intros Γp1 Γp2 Hp Γs1 Γs2 Hs; apply (anti_symm (⊢)); apply of_envs_mono';
-    eapply (env_Forall2_impl (⊣⊢)); by eauto using equiv_entails.
+    eapply (env_Forall2_impl (⊣⊢)); by eauto using equiv_entails_1_1.
 Qed.
 
 Global Instance of_envs_mono : Proper (envs_Forall2 (⊢) ==> (⊢)) (@of_envs PROP).
