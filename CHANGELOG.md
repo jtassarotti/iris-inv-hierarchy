@@ -88,6 +88,10 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   `big_sepL_lookup_acc_impl`, `big_sepL2_lookup_acc_impl`,
   `big_sepM_lookup_acc_impl`, `big_sepM2_lookup_acc_impl`,
   `big_sepS_elem_of_acc_impl`, `big_sepMS_elem_of_acc_impl`.
+* Add lemmas `big_sepM_filter'` and `big_sepM_filter` matching the corresponding
+  `big_sepS` lemmas.
+* Add lemmas for big-ops of magic wands: `big_sepL_wand`, `big_sepL2_wand`,
+  `big_sepM_wand`, `big_sepM2_wand`, `big_sepS_wand`, `big_sepMS_wand`.
 
 **Changes in `proofmode`:**
 

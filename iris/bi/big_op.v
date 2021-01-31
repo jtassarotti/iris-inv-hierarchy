@@ -215,6 +215,15 @@ Section sep_list.
     by setoid_rewrite wand_elim_l.
   Qed.
 
+  Lemma big_sepL_wand Φ Ψ l :
+    ([∗ list] k↦x ∈ l, Φ k x) -∗
+    ([∗ list] k↦x ∈ l, Φ k x -∗ Ψ k x) -∗
+    [∗ list] k↦x ∈ l, Ψ k x.
+  Proof.
+    apply wand_intro_r. rewrite -big_sepL_sep.
+    setoid_rewrite wand_elim_r. done.
+  Qed.
+
   Lemma big_sepL_dup P `{!Affine P} l :
     □ (P -∗ P ∗ P) -∗ P -∗ [∗ list] k↦x ∈ l, P.
   Proof.
@@ -644,6 +653,15 @@ Section sep_list2.
     rewrite -(idemp bi_and (big_sepL2 _ _ _)) {1}big_sepL2_length.
     apply pure_elim_l=> ?. rewrite big_sepL2_intuitionistically_forall //.
     apply bi.wand_intro_l. rewrite -big_sepL2_sep. by setoid_rewrite wand_elim_l.
+  Qed.
+
+  Lemma big_sepL2_wand Φ Ψ l1 l2 :
+    ([∗ list] k↦y1;y2 ∈ l1;l2, Φ k y1 y2) -∗
+    ([∗ list] k↦y1;y2 ∈ l1;l2, Φ k y1 y2 -∗ Ψ k y1 y2) -∗
+    [∗ list] k↦y1;y2 ∈ l1;l2, Ψ k y1 y2.
+  Proof.
+    apply wand_intro_r. rewrite -big_sepL2_sep.
+    setoid_rewrite wand_elim_r. done.
   Qed.
 
   Lemma big_sepL2_delete Φ l1 l2 i x1 x2 :
@@ -1137,6 +1155,16 @@ Section map.
     ([∗ map] k↦y ∈ <[i:=x]> m, <[i:=P]> Φ k) ⊣⊢ (P ∗ [∗ map] k↦y ∈ m, Φ k).
   Proof. apply big_opM_fn_insert'. Qed.
 
+  Lemma big_sepM_filter' (φ : K * A → Prop) `{∀ kx, Decision (φ kx)} Φ m :
+    ([∗ map] k ↦ x ∈ filter φ m, Φ k x) ⊣⊢
+    ([∗ map] k ↦ x ∈ m, if decide (φ (k, x)) then Φ k x else emp).
+  Proof. apply: big_opM_filter'. Qed.
+  Lemma big_sepM_filter `{BiAffine PROP}
+      (φ : K * A → Prop) `{∀ kx, Decision (φ kx)} Φ m :
+    ([∗ map] k ↦ x ∈ filter φ m, Φ k x) ⊣⊢
+    ([∗ map] k ↦ x ∈ m, ⌜φ (k, x)⌝ → Φ k x).
+  Proof. setoid_rewrite <-decide_emp. apply big_sepM_filter'. Qed.
+
   Lemma big_sepM_union Φ m1 m2 :
     m1 ##ₘ m2 →
     ([∗ map] k↦y ∈ m1 ∪ m2, Φ k y)
@@ -1189,6 +1217,15 @@ Section map.
   Proof.
     apply wand_intro_l. rewrite big_sepM_intuitionistically_forall -big_sepM_sep.
     by setoid_rewrite wand_elim_l.
+  Qed.
+
+  Lemma big_sepM_wand Φ Ψ m :
+    ([∗ map] k↦x ∈ m, Φ k x) -∗
+    ([∗ map] k↦x ∈ m, Φ k x -∗ Ψ k x) -∗
+    [∗ map] k↦x ∈ m, Ψ k x.
+  Proof.
+    apply wand_intro_r. rewrite -big_sepM_sep.
+    setoid_rewrite wand_elim_r. done.
   Qed.
 
   Lemma big_sepM_dup P `{!Affine P} m :
@@ -1621,6 +1658,15 @@ Section map2.
     apply bi.wand_intro_l. rewrite -big_sepM2_sep. by setoid_rewrite wand_elim_l.
   Qed.
 
+  Lemma big_sepM2_wand Φ Ψ m1 m2 :
+    ([∗ map] k↦y1;y2 ∈ m1;m2, Φ k y1 y2) -∗
+    ([∗ map] k↦y1;y2 ∈ m1;m2, Φ k y1 y2 -∗ Ψ k y1 y2) -∗
+    [∗ map] k↦y1;y2 ∈ m1;m2, Ψ k y1 y2.
+  Proof.
+    apply wand_intro_r. rewrite -big_sepM2_sep.
+    setoid_rewrite wand_elim_r. done.
+  Qed.
+
   Lemma big_sepM2_lookup_acc_impl {Φ m1 m2} i x1 x2 :
     m1 !! i = Some x1 →
     m2 !! i = Some x2 →
@@ -1809,43 +1855,32 @@ Section gset.
   Lemma big_sepS_singleton Φ x : ([∗ set] y ∈ {[ x ]}, Φ y) ⊣⊢ Φ x.
   Proof. apply big_opS_singleton. Qed.
 
-  Lemma big_sepS_filter' (P : A → Prop) `{∀ x, Decision (P x)} Φ X :
-    ([∗ set] y ∈ filter P X, Φ y)
-    ⊣⊢ ([∗ set] y ∈ X, if decide (P y) then Φ y else emp).
-  Proof.
-    induction X as [|x X ? IH] using set_ind_L.
-    { by rewrite filter_empty_L !big_sepS_empty. }
-    destruct (decide (P x)).
-    - rewrite filter_union_L filter_singleton_L //.
-      rewrite !big_sepS_insert //; last set_solver.
-      by rewrite decide_True // IH.
-    - rewrite filter_union_L filter_singleton_not_L // left_id_L.
-      by rewrite !big_sepS_insert // decide_False // IH left_id.
-  Qed.
+  Lemma big_sepS_filter' (φ : A → Prop) `{∀ x, Decision (φ x)} Φ X :
+    ([∗ set] y ∈ filter φ X, Φ y)
+    ⊣⊢ ([∗ set] y ∈ X, if decide (φ y) then Φ y else emp).
+  Proof. apply: big_opS_filter'. Qed.
+  Lemma big_sepS_filter `{BiAffine PROP}
+      (φ : A → Prop) `{∀ x, Decision (φ x)} Φ X :
+    ([∗ set] y ∈ filter φ X, Φ y) ⊣⊢ ([∗ set] y ∈ X, ⌜φ y⌝ → Φ y).
+  Proof. setoid_rewrite <-decide_emp. apply big_sepS_filter'. Qed.
 
-  Lemma big_sepS_filter_acc' (P : A → Prop) `{∀ y, Decision (P y)} Φ X Y :
-    (∀ y, y ∈ Y → P y → y ∈ X) →
+  Lemma big_sepS_filter_acc' (φ : A → Prop) `{∀ y, Decision (φ y)} Φ X Y :
+    (∀ y, y ∈ Y → φ y → y ∈ X) →
     ([∗ set] y ∈ X, Φ y) -∗
-      ([∗ set] y ∈ Y, if decide (P y) then Φ y else emp) ∗
-      (([∗ set] y ∈ Y, if decide (P y) then Φ y else emp) -∗ [∗ set] y ∈ X, Φ y).
+      ([∗ set] y ∈ Y, if decide (φ y) then Φ y else emp) ∗
+      (([∗ set] y ∈ Y, if decide (φ y) then Φ y else emp) -∗ [∗ set] y ∈ X, Φ y).
   Proof.
-    intros ?. destruct (proj1 (subseteq_disjoint_union_L (filter P Y) X))
+    intros ?. destruct (proj1 (subseteq_disjoint_union_L (filter φ Y) X))
       as (Z&->&?); first set_solver.
     rewrite big_sepS_union // big_sepS_filter'.
     by apply sep_mono_r, wand_intro_l.
   Qed.
-
-  Lemma big_sepS_filter `{BiAffine PROP}
-      (P : A → Prop) `{∀ x, Decision (P x)} Φ X :
-    ([∗ set] y ∈ filter P X, Φ y) ⊣⊢ ([∗ set] y ∈ X, ⌜P y⌝ → Φ y).
-  Proof. setoid_rewrite <-decide_emp. apply big_sepS_filter'. Qed.
-
   Lemma big_sepS_filter_acc `{BiAffine PROP}
-      (P : A → Prop) `{∀ y, Decision (P y)} Φ X Y :
-    (∀ y, y ∈ Y → P y → y ∈ X) →
+      (φ : A → Prop) `{∀ y, Decision (φ y)} Φ X Y :
+    (∀ y, y ∈ Y → φ y → y ∈ X) →
     ([∗ set] y ∈ X, Φ y) -∗
-      ([∗ set] y ∈ Y, ⌜P y⌝ → Φ y) ∗
-      (([∗ set] y ∈ Y, ⌜P y⌝ → Φ y) -∗ [∗ set] y ∈ X, Φ y).
+      ([∗ set] y ∈ Y, ⌜φ y⌝ → Φ y) ∗
+      (([∗ set] y ∈ Y, ⌜φ y⌝ → Φ y) -∗ [∗ set] y ∈ X, Φ y).
   Proof. intros. setoid_rewrite <-decide_emp. by apply big_sepS_filter_acc'. Qed.
 
   Lemma big_sepS_list_to_set Φ (l : list A) :
@@ -1895,6 +1930,15 @@ Section gset.
   Proof.
     apply wand_intro_l. rewrite big_sepS_intuitionistically_forall -big_sepS_sep.
     by setoid_rewrite wand_elim_l.
+  Qed.
+
+  Lemma big_sepS_wand Φ Ψ X :
+    ([∗ set] x ∈ X, Φ x) -∗
+    ([∗ set] x ∈ X, Φ x -∗ Ψ x) -∗
+    [∗ set] x ∈ X, Ψ x.
+  Proof.
+    apply wand_intro_r. rewrite -big_sepS_sep.
+    setoid_rewrite wand_elim_r. done.
   Qed.
 
   Lemma big_sepS_elem_of_acc_impl {Φ X} x :
@@ -2083,6 +2127,15 @@ Section gmultiset.
   Proof.
     apply wand_intro_l. rewrite big_sepMS_intuitionistically_forall -big_sepMS_sep.
     by setoid_rewrite wand_elim_l.
+  Qed.
+
+  Lemma big_sepMS_wand Φ Ψ X :
+    ([∗ mset] x ∈ X, Φ x) -∗
+    ([∗ mset] x ∈ X, Φ x -∗ Ψ x) -∗
+    [∗ mset] x ∈ X, Ψ x.
+  Proof.
+    apply wand_intro_r. rewrite -big_sepMS_sep.
+    setoid_rewrite wand_elim_r. done.
   Qed.
 
   Lemma big_sepMS_dup P `{!Affine P} X :
