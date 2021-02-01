@@ -68,7 +68,7 @@ Proof.
     eauto with sts; set_solver.
 Qed.
 Global Instance frame_step_proper : Proper ((≡) ==> (=) ==> (=) ==> iff) frame_step.
-Proof. move=> ?? /set_equiv_spec [??]; split; by apply frame_step_mono. Qed.
+Proof. move=> ?? /set_equiv_subseteq [??]; split; by apply frame_step_mono. Qed.
 Local Instance closed_proper' : Proper ((≡) ==> (≡) ==> impl) closed.
 Proof. destruct 3; constructor; intros; setoid_subst; eauto. Qed.
 Global Instance closed_proper : Proper ((≡) ==> (≡) ==> iff) closed.
@@ -81,7 +81,7 @@ Proof.
 Qed.
 Global Instance up_proper : Proper ((=) ==> (≡) ==> (≡)) up.
 Proof.
-  by move=> ??? ?? /set_equiv_spec [??]; split; apply up_preserving.
+  by move=> ??? ?? /set_equiv_subseteq [??]; split; apply up_preserving.
 Qed.
 Global Instance up_set_preserving : Proper ((⊆) ==> flip (⊆) ==> (⊆)) up_set.
 Proof.
@@ -90,7 +90,7 @@ Proof.
 Qed.
 Global Instance up_set_proper : Proper ((≡) ==> (≡) ==> (≡)) up_set.
 Proof.
-  move=> S1 S2 /set_equiv_spec [??] T1 T2 /set_equiv_spec [??];
+  move=> S1 S2 /set_equiv_subseteq [??] T1 T2 /set_equiv_subseteq [??];
     split; by apply up_set_preserving.
 Qed.
 
@@ -155,7 +155,7 @@ Lemma closed_up_empty s : closed (up s ∅) ∅.
 Proof. eauto using closed_up with sts. Qed.
 Lemma up_closed S T : closed S T → up_set S T ≡ S.
 Proof.
-  intros ?; apply set_equiv_spec; split; auto using subseteq_up_set.
+  intros ?; apply set_equiv_subseteq; split; auto using subseteq_up_set.
   intros s; unfold up_set; rewrite elem_of_bind; intros (s'&Hstep&?).
   induction Hstep; eauto using closed_step.
 Qed.
@@ -197,12 +197,12 @@ Inductive sts_equiv : Equiv (car sts) :=
   | auth_equiv s T1 T2 : T1 ≡ T2 → auth s T1 ≡ auth s T2
   | frag_equiv S1 S2 T1 T2 : T1 ≡ T2 → S1 ≡ S2 → frag S1 T1 ≡ frag S2 T2.
 Existing Instance sts_equiv.
-Local Instance sts_valid : Valid (car sts) := λ x,
+Local Instance sts_valid_instance : Valid (car sts) := λ x,
   match x with
   | auth s T => tok s ## T
   | frag S' T => closed S' T ∧ ∃ s, s ∈ S'
   end.
-Local Instance sts_core : PCore (car sts) := λ x,
+Local Instance sts_core_instance : PCore (car sts) := λ x,
   Some match x with
   | frag S' _ => frag (up_set S' ∅ ) ∅
   | auth s _  => frag (up s ∅) ∅
@@ -213,7 +213,7 @@ Inductive sts_disjoint : Disjoint (car sts) :=
   | auth_frag_disjoint s S T1 T2 : s ∈ S → T1 ## T2 → auth s T1 ## frag S T2
   | frag_auth_disjoint s S T1 T2 : s ∈ S → T1 ## T2 → frag S T1 ## auth s T2.
 Existing Instance sts_disjoint.
-Local Instance sts_op : Op (car sts) := λ x1 x2,
+Local Instance sts_op_instance : Op (car sts) := λ x1 x2,
   match x1, x2 with
   | frag S1 T1, frag S2 T2 => frag (S1 ∩ S2) (T1 ∪ T2)
   | auth s T1, frag _ T2 => auth s (T1 ∪ T2)

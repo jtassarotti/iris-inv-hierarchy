@@ -141,11 +141,11 @@ Section cmra.
 Context `{Countable K} {A : cmra}.
 Implicit Types m : gmap K A.
 
-Local Instance gmap_unit : Unit (gmap K A) := (∅ : gmap K A).
-Local Instance gmap_op : Op (gmap K A) := merge op.
-Local Instance gmap_pcore : PCore (gmap K A) := λ m, Some (omap pcore m).
-Local Instance gmap_valid : Valid (gmap K A) := λ m, ∀ i, ✓ (m !! i).
-Local Instance gmap_validN : ValidN (gmap K A) := λ n m, ∀ i, ✓{n} (m !! i).
+Local Instance gmap_unit_instance : Unit (gmap K A) := (∅ : gmap K A).
+Local Instance gmap_op_instance : Op (gmap K A) := merge op.
+Local Instance gmap_pcore_instance : PCore (gmap K A) := λ m, Some (omap pcore m).
+Local Instance gmap_valid_instance : Valid (gmap K A) := λ m, ∀ i, ✓ (m !! i).
+Local Instance gmap_validN_instance : ValidN (gmap K A) := λ n m, ∀ i, ✓{n} (m !! i).
 
 Lemma lookup_op m1 m2 i : (m1 ⋅ m2) !! i = m1 !! i ⋅ m2 !! i.
 Proof. by apply lookup_merge. Qed.
@@ -409,7 +409,7 @@ Qed.
 
 Lemma dom_op m1 m2 : dom (gset K) (m1 ⋅ m2) = dom _ m1 ∪ dom _ m2.
 Proof.
-  apply elem_of_equiv_L=> i; rewrite elem_of_union !elem_of_dom.
+  apply set_eq=> i; rewrite elem_of_union !elem_of_dom.
   unfold is_Some; setoid_rewrite lookup_op.
   destruct (m1 !! i), (m2 !! i); naive_solver.
 Qed.
