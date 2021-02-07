@@ -149,6 +149,36 @@ Section tests.
     ⊢ WP e + #0 [{ _, True }].
   Proof. wp_bind (e + #0)%E. Abort.
 
+  Check "wp_load_fail".
+  Lemma wp_load_fail :
+    ⊢ WP Fork #() {{ _, True }}.
+  Proof. Fail wp_load. Abort.
+  Lemma twp_load_fail :
+    ⊢ WP Fork #() [{ _, True }].
+  Proof. Fail wp_load. Abort.
+  Check "wp_load_no_ptsto".
+  Lemma wp_load_fail_no_ptsto (l : loc) :
+    ⊢ WP ! #l {{ _, True }}.
+  Proof. Fail wp_load. Abort.
+
+  Check "wp_store_fail".
+  Lemma wp_store_fail :
+    ⊢ WP Fork #() {{ _, True }}.
+  Proof. Fail wp_store. Abort.
+  Lemma twp_store_fail :
+    ⊢ WP Fork #() [{ _, True }].
+  Proof. Fail wp_store. Abort.
+  Check "wp_store_no_ptsto".
+  Lemma wp_store_fail_no_ptsto (l : loc) :
+    ⊢ WP #l <- #0 {{ _, True }}.
+  Proof. Fail wp_store. Abort.
+
+  Check "(t)wp_bind_fail".
+  Lemma wp_bind_fail : ⊢ WP #() {{ v, True }}.
+  Proof. Fail wp_bind (!_)%E. Abort.
+  Lemma twp_bind_fail : ⊢ WP #() [{ v, True }].
+  Proof. Fail wp_bind (!_)%E. Abort.
+
   Lemma wp_apply_evar e P :
     P -∗ (∀ Q Φ, Q -∗ WP e {{ Φ }}) -∗ WP e {{ _, True }}.
   Proof. iIntros "HP HW". wp_apply "HW". iExact "HP". Qed.
