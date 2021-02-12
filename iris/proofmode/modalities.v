@@ -136,7 +136,7 @@ Section modality.
   Global Instance modality_flip_mono' : Proper (flip (⊢) ==> flip (⊢)) M.
   Proof. intros P Q. apply modality_mono. Qed.
   Global Instance modality_proper : Proper ((≡) ==> (≡)) M.
-  Proof. intros P Q. rewrite !equiv_spec=> -[??]; eauto using modality_mono. Qed.
+  Proof. intros P Q. rewrite !equiv_entails=> -[??]; eauto using modality_mono. Qed.
 End modality.
 
 Section modality1.

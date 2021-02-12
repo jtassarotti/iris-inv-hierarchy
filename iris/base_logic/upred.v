@@ -467,7 +467,7 @@ Proof.
 Qed.
 Lemma entails_anti_sym : AntiSymm (⊣⊢) (⊢).
 Proof. intros P Q HPQ HQP; split=> x n; by split; [apply HPQ|apply HQP]. Qed.
-Lemma equiv_spec P Q : (P ⊣⊢ Q) ↔ (P ⊢ Q) ∧ (Q ⊢ P).
+Lemma equiv_entails P Q : (P ⊣⊢ Q) ↔ (P ⊢ Q) ∧ (Q ⊢ P).
 Proof.
   split.
   - intros HPQ; split; split=> x i; apply HPQ.
