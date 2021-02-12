@@ -30,7 +30,7 @@ Such an action can be one of the following:
   second parameter is the output. Hypotheses that cannot be transformed (i.e.
   for which no instance of `C` can be found) will be cleared.
 - Introduction will clear the context.
-- Introduction will keep the context as-if.
+- Introduction will keep the context as-is.
 
 Formally, these actions correspond to the inductive type [modality_action].
 For each of those actions you have to prove that the transformation is valid.
