@@ -636,7 +636,7 @@ Proof.
   subst. rewrite ?lookup_singleton /=.
   rewrite -Some_op -pair_op agree_idemp /inv_mut_unfold.
   rewrite -Some_op -pair_op agree_idemp.
-  repeat f_equiv. by rewrite frac_op' Qp_div_2.
+  repeat f_equiv. by rewrite frac_op Qp_div_2.
 Qed.
 
 Lemma ownI_full_split_comp γ x y i:
