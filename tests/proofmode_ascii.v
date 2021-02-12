@@ -6,6 +6,10 @@ From iris.bi Require Import ascii.
 
 Set Default Proof Using "Type".
 
+(* Remove this and the [Set Printing Raw Literals.] below once we require Coq
+8.14. *)
+Set Warnings "-unknown-option".
+
 Section base_logic_tests.
   Context {M : ucmra}.
   Implicit Types P Q R : uPred M.
