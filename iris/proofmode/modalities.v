@@ -30,7 +30,7 @@ Such an action can be one of the following:
   second parameter is the output. Hypotheses that cannot be transformed (i.e.
   for which no instance of `C` can be found) will be cleared.
 - Introduction will clear the context.
-- Introduction will keep the context as-if.
+- Introduction will keep the context as-is.
 
 Formally, these actions correspond to the inductive type [modality_action].
 For each of those actions you have to prove that the transformation is valid.
@@ -136,7 +136,7 @@ Section modality.
   Global Instance modality_flip_mono' : Proper (flip (⊢) ==> flip (⊢)) M.
   Proof. intros P Q. apply modality_mono. Qed.
   Global Instance modality_proper : Proper ((≡) ==> (≡)) M.
-  Proof. intros P Q. rewrite !equiv_spec=> -[??]; eauto using modality_mono. Qed.
+  Proof. intros P Q. rewrite !equiv_entails=> -[??]; eauto using modality_mono. Qed.
 End modality.
 
 Section modality1.

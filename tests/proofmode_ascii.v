@@ -6,6 +6,10 @@ From iris.bi Require Import ascii.
 
 Set Default Proof Using "Type".
 
+(* Remove this and the [Set Printing Raw Literals.] below once we require Coq
+8.14. *)
+Set Warnings "-unknown-option".
+
 Section base_logic_tests.
   Context {M : ucmra}.
   Implicit Types P Q R : uPred M.
@@ -297,61 +301,61 @@ Lemma test_entails_annot_sections_space_close P :
   (P -|-@{PROP} P ) /\ (-|-@{PROP} ) P P.
 Proof. naive_solver. Qed.
 
-
+(* Make sure these all parse as they should.
+To make the [Check] print correctly, we need to set and reset the printing
+settings each time. *)
 Check "p1".
 Lemma p1 : forall P, True -> P |- P.
 Proof.
-  Unset Printing Notations. Show. Set Printing Notations.
+  Unset Printing Notations. Set Printing Raw Literals. Show. Set Printing Notations. Unset Printing Raw Literals.
 Abort.
 
 Check "p2".
 Lemma p2 : forall P, True /\ (P |- P).
 Proof.
-  Unset Printing Notations. Show. Set Printing Notations.
+  Unset Printing Notations. Set Printing Raw Literals. Show. Set Printing Notations. Unset Printing Raw Literals.
 Abort.
 
 Check "p3".
 Lemma p3 : exists P, P |- P.
 Proof.
-  Unset Printing Notations. Show. Set Printing Notations.
+  Unset Printing Notations. Set Printing Raw Literals. Show. Set Printing Notations. Unset Printing Raw Literals.
 Abort.
 
 Check "p4".
 Lemma p4 : |-@{PROP} exists (x : nat), ⌜x = 0⌝.
 Proof.
-  Unset Printing Notations. Show. Set Printing Notations.
+  Unset Printing Notations. Set Printing Raw Literals. Show. Set Printing Notations. Unset Printing Raw Literals.
 Abort.
 
 Check "p5".
 Lemma p5 : |-@{PROP} exists (x : nat), ⌜forall y : nat, y = y⌝.
 Proof.
-  Unset Printing Notations. Show. Set Printing Notations.
+  Unset Printing Notations. Set Printing Raw Literals. Show. Set Printing Notations. Unset Printing Raw Literals.
 Abort.
 
 Check "p6".
 Lemma p6 : exists! (z : nat), |-@{PROP} exists (x : nat), ⌜forall y : nat, y = y⌝ ** ⌜z = 0⌝.
 Proof.
-  Unset Printing Notations. Show. Set Printing Notations.
+  Unset Printing Notations. Set Printing Raw Literals. Show. Set Printing Notations. Unset Printing Raw Literals.
 Abort.
 
 Check "p7".
 Lemma p7 : forall (a : nat), a = 0 -> forall y, True |-@{PROP} ⌜y >= 0⌝.
 Proof.
-  Unset Printing Notations. Show. Set Printing Notations.
+  Unset Printing Notations. Set Printing Raw Literals. Show. Set Printing Notations. Unset Printing Raw Literals.
 Abort.
 
 Check "p8".
 Lemma p8 : forall (a : nat), a = 0 -> forall y, |-@{PROP} ⌜y >= 0⌝.
 Proof.
-  Unset Printing Notations. Show. Set Printing Notations.
+  Unset Printing Notations. Set Printing Raw Literals. Show. Set Printing Notations. Unset Printing Raw Literals.
 Abort.
 
 Check "p9".
 Lemma p9 : forall (a : nat), a = 0 -> forall y : nat, |-@{PROP} forall z : nat, ⌜z >= 0⌝.
 Proof.
-  Unset Printing Notations. Show. Set Printing Notations.
+  Unset Printing Notations. Set Printing Raw Literals. Show. Set Printing Notations. Unset Printing Raw Literals.
 Abort.
-
-Set Printing Notations.
 
 End parsing_tests.

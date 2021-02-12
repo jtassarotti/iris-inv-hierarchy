@@ -47,7 +47,7 @@ Section bi_mixin.
 
   Record BiMixin := {
     bi_mixin_entails_po : PreOrder bi_entails;
-    bi_mixin_equiv_spec P Q : (P ≡ Q) ↔ (P ⊢ Q) ∧ (Q ⊢ P);
+    bi_mixin_equiv_entails P Q : (P ≡ Q) ↔ (P ⊢ Q) ∧ (Q ⊢ P);
 
     (** Non-expansiveness *)
     bi_mixin_pure_ne n : Proper (iff ==> dist n) bi_pure;
@@ -278,8 +278,8 @@ Implicit Types A : Type.
 (* About the entailment *)
 Global Instance entails_po : PreOrder (@bi_entails PROP).
 Proof. eapply bi_mixin_entails_po, bi_bi_mixin. Qed.
-Lemma equiv_spec P Q : P ≡ Q ↔ (P ⊢ Q) ∧ (Q ⊢ P).
-Proof. eapply bi_mixin_equiv_spec, bi_bi_mixin. Qed.
+Lemma equiv_entails P Q : P ≡ Q ↔ (P ⊢ Q) ∧ (Q ⊢ P).
+Proof. eapply bi_mixin_equiv_entails, bi_bi_mixin. Qed.
 
 (* Non-expansiveness *)
 Global Instance pure_ne n : Proper (iff ==> dist n) (@bi_pure PROP).

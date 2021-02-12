@@ -36,7 +36,7 @@ Section modalities.
   Proof.
     split; simpl; split_and?; intros;
       try select (TCDiag _ _ _) (fun H => destruct H);
-      eauto using bi.equiv_entails_sym, objective_objectively,
+      eauto using bi.equiv_entails_1_2, objective_objectively,
         monPred_objectively_mono, monPred_objectively_and,
         monPred_objectively_sep_2 with typeclass_instances.
   Qed.

@@ -169,7 +169,7 @@ Module inv. Section inv.
   Proof. intros P Q ?. by apply fupd_mono. Qed.
   Global Instance fupd_proper E : Proper ((⊣⊢) ==> (⊣⊢)) (fupd E).
   Proof.
-    intros P Q; rewrite !bi.equiv_spec=> -[??]; split; by apply fupd_mono.
+    intros P Q; rewrite !bi.equiv_entails=> -[??]; split; by apply fupd_mono.
   Qed.
 
   Lemma fupd_frame_r E P Q : fupd E P ∗ Q ⊢ fupd E (P ∗ Q).
@@ -307,7 +307,7 @@ Module linear. Section linear.
   Proof. intros P Q ?. by apply fupd_mono. Qed.
   Global Instance fupd_proper E1 E2 : Proper ((⊣⊢) ==> (⊣⊢)) (fupd E1 E2).
   Proof.
-    intros P Q; rewrite !bi.equiv_spec=> -[??]; split; by apply fupd_mono.
+    intros P Q; rewrite !bi.equiv_entails=> -[??]; split; by apply fupd_mono.
   Qed.
 
   Lemma fupd_frame_r E1 E2 P Q : fupd E1 E2 P ∗ Q ⊢ fupd E1 E2 (P ∗ Q).

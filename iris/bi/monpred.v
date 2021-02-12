@@ -98,7 +98,7 @@ Global Instance monPred_at_ne (R : relation I) :
   ∀ n, Proper (dist n ==> R ==> dist n) monPred_at.
 Proof.
   intros ????? [Hd] ?? HR. rewrite Hd.
-  apply equiv_dist, bi.equiv_spec; split; f_equiv; rewrite ->HR; done.
+  apply equiv_dist, bi.equiv_entails; split; f_equiv; rewrite ->HR; done.
 Qed.
 Global Instance monPred_at_proper (R : relation I) :
   Proper (R ==> R ==> iff) (⊑) → Reflexive R →
@@ -255,8 +255,8 @@ Proof.
     + intros P. by split.
     + intros P Q R [H1] [H2]. split => ?. by rewrite H1 H2.
   - split.
-    + intros [HPQ]. split; split => i; move: (HPQ i); by apply bi.equiv_spec.
-    + intros [[] []]. split=>i. by apply bi.equiv_spec.
+    + intros [HPQ]. split; split => i; move: (HPQ i); by apply bi.equiv_entails.
+    + intros [[] []]. split=>i. by apply bi.equiv_entails.
   - intros P φ ?. split=> i. by apply bi.pure_intro.
   - intros φ P HP. split=> i. apply bi.pure_elim'=> ?. by apply HP.
   - intros P Q. split=> i. by apply bi.and_elim_l.
@@ -508,18 +508,18 @@ Lemma monPred_objectively_elim P : <obj> P ⊢ P.
 Proof. rewrite monPred_objectively_unfold. unseal. split=>?. apply bi.forall_elim. Qed.
 Lemma monPred_objectively_idemp P : <obj> <obj> P ⊣⊢ <obj> P.
 Proof.
-  apply bi.equiv_spec; split; [by apply monPred_objectively_elim|].
+  apply bi.equiv_entails; split; [by apply monPred_objectively_elim|].
   unseal. split=>i /=. by apply bi.forall_intro=>_.
 Qed.
 
 Lemma monPred_objectively_forall {A} (Φ : A → monPred) : <obj> (∀ x, Φ x) ⊣⊢ ∀ x, <obj> (Φ x).
 Proof.
-  unseal. split=>i. apply bi.equiv_spec; split=>/=;
+  unseal. split=>i. apply bi.equiv_entails; split=>/=;
     do 2 apply bi.forall_intro=>?; by do 2 rewrite bi.forall_elim.
 Qed.
 Lemma monPred_objectively_and P Q : <obj> (P ∧ Q) ⊣⊢ <obj> P ∧ <obj> Q.
 Proof.
-  unseal. split=>i. apply bi.equiv_spec; split=>/=.
+  unseal. split=>i. apply bi.equiv_entails; split=>/=.
   - apply bi.and_intro; do 2 f_equiv.
     + apply bi.and_elim_l.
     + apply bi.and_elim_r.
@@ -539,12 +539,12 @@ Lemma monPred_objectively_sep_2 P Q : <obj> P ∗ <obj> Q ⊢ <obj> (P ∗ Q).
 Proof. unseal. split=>i /=. apply bi.forall_intro=>?. by rewrite !bi.forall_elim. Qed.
 Lemma monPred_objectively_sep `{BiIndexBottom bot} P Q : <obj> (P ∗ Q) ⊣⊢ <obj> P ∗ <obj> Q.
 Proof.
-  apply bi.equiv_spec, conj, monPred_objectively_sep_2. unseal. split=>i /=.
+  apply bi.equiv_entails, conj, monPred_objectively_sep_2. unseal. split=>i /=.
   rewrite (bi.forall_elim bot). by f_equiv; apply bi.forall_intro=>j; f_equiv.
 Qed.
 Lemma monPred_objectively_embed (P : PROP) : <obj> ⎡P⎤ ⊣⊢ ⎡P⎤.
 Proof.
-  apply bi.equiv_spec; split; unseal; split=>i /=.
+  apply bi.equiv_entails; split; unseal; split=>i /=.
   - by rewrite (bi.forall_elim inhabitant).
   - by apply bi.forall_intro.
 Qed.
@@ -567,12 +567,12 @@ Proof.
 Qed.
 Lemma monPred_subjectively_exist {A} (Φ : A → monPred) : <subj> (∃ x, Φ x) ⊣⊢ ∃ x, <subj> (Φ x).
 Proof.
-  unseal. split=>i. apply bi.equiv_spec; split=>/=;
+  unseal. split=>i. apply bi.equiv_entails; split=>/=;
     do 2 apply bi.exist_elim=>?; by do 2 rewrite -bi.exist_intro.
 Qed.
 Lemma monPred_subjectively_or P Q : <subj> (P ∨ Q) ⊣⊢ <subj> P ∨ <subj> Q.
 Proof.
-  unseal. split=>i. apply bi.equiv_spec; split=>/=.
+  unseal. split=>i. apply bi.equiv_entails; split=>/=.
   - apply bi.exist_elim=>?. by rewrite -!bi.exist_intro.
   - apply bi.or_elim; do 2 f_equiv.
     + apply bi.or_intro_l.
@@ -584,7 +584,7 @@ Proof. unseal. split=>i /=. apply bi.exist_elim=>?. by rewrite -!bi.exist_intro.
 
 Lemma monPred_subjectively_idemp P : <subj> <subj> P ⊣⊢ <subj> P.
 Proof.
-  apply bi.equiv_spec; split; [|by apply monPred_subjectively_intro].
+  apply bi.equiv_entails; split; [|by apply monPred_subjectively_intro].
   unseal. split=>i /=. by apply bi.exist_elim=>_.
 Qed.
 
@@ -869,7 +869,7 @@ Proof. rewrite monPred_internal_eq_unfold. by apply monPred_at_embed. Qed.
 Lemma monPred_equivI `{!BiInternalEq PROP'} P Q :
   P ≡ Q ⊣⊢@{PROP'} ∀ i, P i ≡ Q i.
 Proof.
-  apply bi.equiv_spec. split.
+  apply bi.equiv_entails. split.
   - apply bi.forall_intro=> ?. apply (f_equivI (flip monPred_at _)).
   - by rewrite -{2}(sig_monPred_sig P) -{2}(sig_monPred_sig Q)
                -f_equivI -sig_equivI !discrete_fun_equivI.

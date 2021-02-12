@@ -134,7 +134,7 @@ Section embed.
 
   Global Instance embed_inj : Inj (≡) (≡) embed.
   Proof.
-    intros P Q EQ. apply bi.equiv_spec, conj; apply (inj embed); rewrite EQ //.
+    intros P Q EQ. apply bi.equiv_entails, conj; apply (inj embed); rewrite EQ //.
   Qed.
 
   Lemma embed_emp_valid (P : PROP1) : (⊢ ⎡P⎤) ↔ (⊢ P).
@@ -149,12 +149,12 @@ Section embed.
 
   Lemma embed_forall A (Φ : A → PROP1) : ⎡∀ x, Φ x⎤ ⊣⊢ ∀ x, ⎡Φ x⎤.
   Proof.
-    apply bi.equiv_spec; split; [|apply embed_forall_2].
+    apply bi.equiv_entails; split; [|apply embed_forall_2].
     apply bi.forall_intro=>?. by rewrite bi.forall_elim.
   Qed.
   Lemma embed_exist A (Φ : A → PROP1) : ⎡∃ x, Φ x⎤ ⊣⊢ ∃ x, ⎡Φ x⎤.
   Proof.
-    apply bi.equiv_spec; split; [apply embed_exist_1|].
+    apply bi.equiv_entails; split; [apply embed_exist_1|].
     apply bi.exist_elim=>?. by rewrite -bi.exist_intro.
   Qed.
   Lemma embed_and P Q : ⎡P ∧ Q⎤ ⊣⊢ ⎡P⎤ ∧ ⎡Q⎤.
@@ -163,18 +163,18 @@ Section embed.
   Proof. rewrite !bi.or_alt embed_exist. by f_equiv=>-[]. Qed.
   Lemma embed_impl P Q : ⎡P → Q⎤ ⊣⊢ (⎡P⎤ → ⎡Q⎤).
   Proof.
-    apply bi.equiv_spec; split; [|apply embed_impl_2].
+    apply bi.equiv_entails; split; [|apply embed_impl_2].
     apply bi.impl_intro_l. by rewrite -embed_and bi.impl_elim_r.
   Qed.
   Lemma embed_wand P Q : ⎡P -∗ Q⎤ ⊣⊢ (⎡P⎤ -∗ ⎡Q⎤).
   Proof.
-    apply bi.equiv_spec; split; [|apply embed_wand_2].
+    apply bi.equiv_entails; split; [|apply embed_wand_2].
     apply bi.wand_intro_l. by rewrite -embed_sep bi.wand_elim_r.
   Qed.
   Lemma embed_pure φ : ⎡⌜φ⌝⎤ ⊣⊢ ⌜φ⌝.
   Proof.
     rewrite (@bi.pure_alt PROP1) (@bi.pure_alt PROP2) embed_exist.
-    do 2 f_equiv. apply bi.equiv_spec. split; [apply bi.True_intro|].
+    do 2 f_equiv. apply bi.equiv_entails. split; [apply bi.True_intro|].
     rewrite -(_ : (emp → emp : PROP1) ⊢ True) ?embed_impl;
       last apply bi.True_intro.
     apply bi.impl_intro_l. by rewrite right_id.
@@ -293,7 +293,7 @@ Section embed.
 
     Lemma embed_internal_eq (A : ofe) (x y : A) : ⎡x ≡ y⎤ ⊣⊢@{PROP2} x ≡ y.
     Proof.
-      apply bi.equiv_spec; split; [apply embed_internal_eq_1|].
+      apply bi.equiv_entails; split; [apply embed_internal_eq_1|].
       etrans; [apply (internal_eq_rewrite x y (λ y, ⎡x ≡ y⎤%I)); solve_proper|].
       rewrite -(internal_eq_refl True%I) embed_pure.
       eapply bi.impl_elim; [done|]. apply bi.True_intro.

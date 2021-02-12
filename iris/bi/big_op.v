@@ -499,7 +499,7 @@ Section sep_list2.
     ([∗ list] k ↦ y1;y2 ∈ l1;l2, Φ k y1 y2) ⊣⊢ [∗ list] k ↦ y1;y2 ∈ l1;l2, Ψ k y1 y2.
   Proof.
     intros; apply (anti_symm _);
-      apply big_sepL2_mono; auto using equiv_entails, equiv_entails_sym.
+      apply big_sepL2_mono; auto using equiv_entails_1_1, equiv_entails_1_2.
   Qed.
   Lemma big_sepL2_proper_2 `{!Equiv A, !Equiv B} Φ Ψ l1 l2 l1' l2' :
     l1 ≡ l1' → l2 ≡ l2' →
@@ -1375,7 +1375,7 @@ Section map2.
     ([∗ map] k ↦ y1;y2 ∈ m1;m2, Φ k y1 y2) ⊣⊢ [∗ map] k ↦ y1;y2 ∈ m1;m2, Ψ k y1 y2.
   Proof.
     intros; apply (anti_symm _);
-      apply big_sepM2_mono; auto using equiv_entails, equiv_entails_sym.
+      apply big_sepM2_mono; auto using equiv_entails_1_1, equiv_entails_1_2.
   Qed.
   Lemma big_sepM2_proper_2 `{!Equiv A, !Equiv B} Φ Ψ m1 m2 m1' m2' :
     m1 ≡ m1' → m2 ≡ m2' →
