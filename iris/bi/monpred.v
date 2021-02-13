@@ -27,8 +27,7 @@ Record monPred :=
             monPred_mono : Proper ((⊑) ==> (⊢)) monPred_at }.
 Local Existing Instance monPred_mono.
 
-Declare Scope monPred.
-Bind Scope monPred with bi.
+Bind Scope bi_scope with monPred.
 
 Implicit Types P Q : monPred.
 
