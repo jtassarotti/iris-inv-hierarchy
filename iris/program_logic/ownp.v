@@ -146,8 +146,8 @@ Section lifting.
     iIntros (Hsafe Hstep) "H"; iApply wp_lift_step.
     { specialize (Hsafe inhabitant). destruct s; last done.
       by eapply reducible_not_val. }
-    iIntros (σ1 κ κs n) "Hσ". iMod (fupd_intro_mask' E ∅) as "Hclose"; first set_solver.
-    iModIntro; iSplit; [by destruct s|]; iNext; iIntros (e2 σ2 efs ?).
+    iIntros (σ1 κ κs n) "Hσ". iApply fupd_mask_intro; first set_solver.
+    iIntros "Hclose". iSplit; [by destruct s|]; iNext; iIntros (e2 σ2 efs ?).
     destruct (Hstep σ1 κ e2 σ2 efs); auto; subst.
     by iMod "Hclose"; iModIntro; iFrame; iApply "H".
   Qed.
@@ -162,8 +162,8 @@ Section lifting.
     ⊢ WP e1 @ s; E {{ Φ }}.
   Proof.
     iIntros (?) "[Hσ H]"; iApply ownP_lift_step.
-    iMod (fupd_intro_mask' E ∅) as "Hclose"; first set_solver.
-    iModIntro; iExists σ1; iFrame; iSplit; first by destruct s.
+    iApply fupd_mask_intro; first set_solver.
+    iIntros "Hclose". iExists σ1; iFrame; iSplit; first by destruct s.
     iNext; iIntros (κ e2 σ2 efs ?) "Hσ".
     iDestruct ("H" $! κ e2 σ2 efs with "[] [Hσ]") as "[HΦ $]"; [by eauto..|].
     destruct (to_val e2) eqn:?; last by iExFalso.

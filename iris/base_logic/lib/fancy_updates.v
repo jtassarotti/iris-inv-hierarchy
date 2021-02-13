@@ -65,7 +65,7 @@ Lemma fupd_plain_soundness `{!invPreG Σ} E1 E2 (P: iProp Σ) `{!Plain P} :
 Proof.
   iIntros (Hfupd). apply later_soundness. iMod wsat_alloc as (Hinv) "[Hw HE]".
   iAssert (|={⊤,E2}=> P)%I as "H".
-  { iMod fupd_intro_mask'; last iApply Hfupd. done. }
+  { iApply (fupd_mask_weaken E1); first done. iIntros "_". iApply Hfupd. }
   rewrite uPred_fupd_eq /uPred_fupd_def.
   iMod ("H" with "[$]") as "[Hw [HE >H']]"; iFrame.
 Qed.
@@ -94,5 +94,5 @@ Lemma step_fupdN_soundness' `{!invPreG Σ} φ n :
 Proof.
   iIntros (Hiter). eapply (step_fupdN_soundness _ n).
   iIntros (Hinv). iPoseProof (Hiter Hinv) as "Hiter".
-  iApply (step_fupdN_wand with "Hiter"). by iApply fupd_mask_weaken.
+  iApply (step_fupdN_wand with "Hiter"). by iApply fupd_mask_intro_discard.
 Qed.
