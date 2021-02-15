@@ -19,9 +19,9 @@ Lemma uPred_fupd_mixin `{!invG Σ} : BiFUpdMixin (uPredI (iResUR Σ)) uPred_fupd
 Proof.
   split.
   - rewrite uPred_fupd_eq. solve_proper.
-  - intros E1 E2 P (E1''&->&?)%subseteq_disjoint_union_L.
+  - intros E1 E2 (E1''&->&?)%subseteq_disjoint_union_L.
     rewrite uPred_fupd_eq /uPred_fupd_def ownE_op //.
-    by iIntros "$ ($ & $ & HE) !> !> [$ $] !> !>" .
+    by iIntros "($ & $ & HE) !> !> [$ $] !> !>" .
   - rewrite uPred_fupd_eq. iIntros (E1 E2 P) ">H [Hw HE]". iApply "H"; by iFrame.
   - rewrite uPred_fupd_eq. iIntros (E1 E2 P Q HPQ) "HP HwE". rewrite -HPQ. by iApply "HP".
   - rewrite uPred_fupd_eq. iIntros (E1 E2 E3 P) "HP HwE".
@@ -65,7 +65,7 @@ Lemma fupd_plain_soundness `{!invPreG Σ} E1 E2 (P: iProp Σ) `{!Plain P} :
 Proof.
   iIntros (Hfupd). apply later_soundness. iMod wsat_alloc as (Hinv) "[Hw HE]".
   iAssert (|={⊤,E2}=> P)%I as "H".
-  { iApply (fupd_mask_weaken E1); first done. iIntros "_". iApply Hfupd. }
+  { iMod (fupd_mask_subseteq E1) as "_"; first done. iApply Hfupd. }
   rewrite uPred_fupd_eq /uPred_fupd_def.
   iMod ("H" with "[$]") as "[Hw [HE >H']]"; iFrame.
 Qed.

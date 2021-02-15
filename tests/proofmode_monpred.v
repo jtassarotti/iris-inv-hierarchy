@@ -106,9 +106,9 @@ Section tests.
   Lemma test_apply_fupd_intro_mask_subseteq E1 E2 P :
     E2 ⊆ E1 → P -∗ |={E1,E2}=> |={E2,E1}=> P.
   Proof. iIntros. by iApply @fupd_mask_intro_subseteq. Qed.
-  Lemma test_apply_fupd_intro_mask_subseteq_emp E1 E2 P :
+  Lemma test_apply_fupd_mask_subseteq E1 E2 P :
     E2 ⊆ E1 → P -∗ |={E1,E2}=> |={E2,E1}=> P.
-  Proof. iIntros. iFrame. by iApply @fupd_mask_intro_subseteq_emp. Qed.
+  Proof. iIntros. iFrame. by iApply @fupd_mask_subseteq. Qed.
 
   Lemma test_iFrame_embed_persistent (P : PROP) (Q: monPred) :
     Q ∗ □ ⎡P⎤ ⊢ Q ∗ ⎡P ∗ P⎤.

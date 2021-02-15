@@ -116,7 +116,7 @@ Proof.
   rewrite !twp_unfold /twp_pre. destruct (to_val e) as [v|] eqn:?.
   { iApply ("HΦ" with "[> -]"). by iApply (fupd_mask_mono E1 _). }
   iIntros (σ1 κs n) "Hσ".
-  iApply (fupd_mask_weaken E1); first done. iIntros "Hclose".
+  iMod (fupd_mask_subseteq E1) as "Hclose"; first done.
   iMod ("IH" with "[$]") as "[% IH]".
   iModIntro; iSplit; [by destruct s1, s2|]. iIntros (κ e2 σ2 efs Hstep).
   iMod ("IH" with "[//]") as (?) "(Hσ & IH & IHefs)"; auto.

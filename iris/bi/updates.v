@@ -70,8 +70,8 @@ Record BiBUpdMixin (PROP : bi) `(BUpd PROP) := {
 Record BiFUpdMixin (PROP : bi) `(FUpd PROP) := {
   bi_fupd_mixin_fupd_ne E1 E2 :
     NonExpansive (fupd (PROP:=PROP) E1 E2);
-  bi_fupd_mixin_fupd_mask_intro_subseteq E1 E2 (P : PROP) :
-    E2 ⊆ E1 → P ⊢ |={E1,E2}=> |={E2,E1}=> P;
+  bi_fupd_mixin_fupd_mask_subseteq E1 E2 :
+    E2 ⊆ E1 → ⊢@{PROP} |={E1,E2}=> |={E2,E1}=> emp;
   bi_fupd_mixin_except_0_fupd E1 E2 (P : PROP) :
     ◇ (|={E1,E2}=> P) ={E1,E2}=∗ P;
   bi_fupd_mixin_fupd_mono E1 E2 (P Q : PROP) :
@@ -153,8 +153,12 @@ Section fupd_laws.
 
   Global Instance fupd_ne E1 E2 : NonExpansive (@fupd PROP _ E1 E2).
   Proof. eapply bi_fupd_mixin_fupd_ne, bi_fupd_mixin. Qed.
-  Lemma fupd_mask_intro_subseteq E1 E2 (P : PROP) : E2 ⊆ E1 → P ⊢ |={E1,E2}=> |={E2,E1}=> P.
-  Proof. eapply bi_fupd_mixin_fupd_mask_intro_subseteq, bi_fupd_mixin. Qed.
+  (** [iMod] with this lemma is useful to change the current mask to a subset,
+  and obtain a fupd for changing it back. For the case where you want to get rid
+  of a mask-changing fupd in the goal, [iApply fupd_mask_intro] avoids having to
+  specify the mask. *)
+  Lemma fupd_mask_subseteq {E1} E2 : E2 ⊆ E1 → ⊢@{PROP} |={E1,E2}=> |={E2,E1}=> emp.
+  Proof. eapply bi_fupd_mixin_fupd_mask_subseteq, bi_fupd_mixin. Qed.
   Lemma except_0_fupd E1 E2 (P : PROP) : ◇ (|={E1,E2}=> P) ={E1,E2}=∗ P.
   Proof. eapply bi_fupd_mixin_except_0_fupd, bi_fupd_mixin. Qed.
   Lemma fupd_mono E1 E2 (P Q : PROP) : (P ⊢ Q) → (|={E1,E2}=> P) ⊢ |={E1,E2}=> Q.
@@ -251,10 +255,17 @@ Section fupd_derived.
     Proper (flip (⊢) ==> flip (⊢)) (fupd (PROP:=PROP) E1 E2).
   Proof. intros P Q; apply fupd_mono. Qed.
 
+  Lemma fupd_mask_intro_subseteq E1 E2 P :
+    E2 ⊆ E1 → P ⊢ |={E1,E2}=> |={E2,E1}=> P.
+  Proof.
+    intros HE.
+    (* Get an [emp] so we can apply [fupd_mask_subseteq]. *)
+    rewrite -{1}[P](left_id emp%I bi_sep).
+    rewrite fupd_mask_subseteq; last exact: HE.
+    rewrite !fupd_frame_r. rewrite left_id. done.
+  Qed.
   Lemma fupd_intro E P : P ={E}=∗ P.
   Proof. by rewrite {1}(fupd_mask_intro_subseteq E E P) // fupd_trans. Qed.
-  Lemma fupd_mask_intro_subseteq_emp E1 E2 : E2 ⊆ E1 → ⊢@{PROP} |={E1,E2}=> |={E2,E1}=> emp.
-  Proof. exact: fupd_mask_intro_subseteq. Qed.
   Lemma fupd_except_0 E1 E2 P : (|={E1,E2}=> ◇ P) ={E1,E2}=∗ P.
   Proof. by rewrite {1}(fupd_intro E2 P) except_0_fupd fupd_trans. Qed.
   Lemma fupd_idemp E P : (|={E}=> |={E}=> P) ⊣⊢ |={E}=> P.
@@ -265,7 +276,9 @@ Section fupd_derived.
   Qed.
 
   (** Weaken the first mask of the goal from [E1] to [E2].
-      This lemma is intended to be [iApply]ed. *)
+      This lemma is intended to be [iApply]ed.
+      However, usually you can [iMod (fupd_mask_subseteq E2)] instead and that
+      will be slightly more convenient. *)
   Lemma fupd_mask_weaken {E1} E2 {E3 P} :
     E2 ⊆ E1 →
     ((|={E2,E1}=> emp) ={E2,E3}=∗ P) -∗ |={E1,E3}=> P.
@@ -273,7 +286,7 @@ Section fupd_derived.
     intros HE.
     (* Get an [emp] so we can apply [fupd_intro_mask']. *)
     rewrite -[X in (X -∗ _)](left_id emp%I bi_sep).
-    rewrite {1}(fupd_mask_intro_subseteq_emp E1 E2) //.
+    rewrite {1}(fupd_mask_subseteq E2) //.
     rewrite fupd_frame_r. by rewrite wand_elim_r fupd_trans.
   Qed.
 

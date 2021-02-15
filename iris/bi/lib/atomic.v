@@ -56,7 +56,7 @@ Section definition.
     atomic_acc Eo1 Ei α P β Φ -∗ atomic_acc Eo2 Ei α P β Φ.
   Proof.
     iIntros (HE) "Hstep".
-    iApply (fupd_mask_weaken Eo1); first done. iIntros "Hclose1".
+    iMod (fupd_mask_subseteq Eo1) as "Hclose1"; first done.
     iMod "Hstep" as (x) "[Hα Hclose2]". iIntros "!>". iExists x.
     iFrame. iSplitWith "Hclose2".
     - iIntros "Hα". iMod ("Hclose2" with "Hα") as "$". done.
