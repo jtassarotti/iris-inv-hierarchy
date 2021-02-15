@@ -103,6 +103,9 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   `big_sepM_wand`, `big_sepM2_wand`, `big_sepS_wand`, `big_sepMS_wand`.
 * Rename `equiv_entails` → `equiv_entails_1_1`,
   `equiv_entails_sym` → `equiv_entails_1_2`, and `equiv_spec` → `equiv_entails`.
+* Remove the laws `pure_forall_2 : (∀ a, ⌜ φ a ⌝) ⊢ ⌜ ∀ a, φ a ⌝` from the BI
+  interface and factor it into a type class `BiPureForall`.
+* Add notation `¬ P` for `P → False` to `bi_scope`.
 
 **Changes in `proofmode`:**
 
@@ -126,14 +129,11 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
 * Allow framing below an `<affine>` modality if the hypothesis that is framed is
   affine. (Previously, framing below `<affine>` was only possible if the
   hypothesis that is framed resides in the intuitionistic context.)
-* Remove the laws `pure_forall_2 : (∀ a, ⌜ φ a ⌝) ⊢ ⌜ ∀ a, φ a ⌝` from the BI
-  interface and factor it into a type class `BiPureForall`.
-* Add notation `¬ P` for `P → False` to `bi_scope`.
 * Add Coq side-condition `φ` to class `ElimAcc` (similar to what we already had
   for `ElimInv` and `ElimModal`).
 * Add a tactic `iSelect pat tac` (similar to `select` in std++) which runs the
   tactic `tac H` with the name `H` of the last hypothesis of the intuitionistic
-  or spatial context matching `pat`. `iSelect` is used to implement:
+  or spatial context matching `pat`. The tactic `iSelect` is used to implement:
   + `iRename select (pat)%I into name` which renames the matching hypothesis,
   + `iDestruct select (pat)%I as ...` which destructs the matching hypothesis,
   + `iClear select (pat)%I` which clears the matching hypothesis,
