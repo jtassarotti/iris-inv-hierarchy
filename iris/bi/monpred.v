@@ -893,7 +893,7 @@ Lemma monPred_fupd_mixin `{BiFUpd PROP} : BiFUpdMixin monPredI monPred_fupd.
 Proof.
   split; rewrite monPred_fupd_eq.
   - split=>/= i. solve_proper.
-  - intros E1 E2 P HE12. split=>/= i. by apply fupd_intro_mask.
+  - intros E1 E2 HE12. split=>/= i. by apply fupd_mask_intro_subseteq.
   - intros E1 E2 P. split=>/= i. by rewrite monPred_at_except_0 except_0_fupd.
   - intros E1 E2 P Q HPQ. split=>/= i. by rewrite HPQ.
   - intros E1 E2 E3 P. split=>/= i. apply fupd_trans.

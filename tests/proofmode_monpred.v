@@ -103,12 +103,12 @@ Section tests.
 
   Context (FU : BiFUpd PROP).
 
-  Lemma test_apply_fupd_intro_mask E1 E2 P :
+  Lemma test_apply_fupd_intro_mask_subseteq E1 E2 P :
     E2 ⊆ E1 → P -∗ |={E1,E2}=> |={E2,E1}=> P.
-  Proof. iIntros. by iApply @fupd_intro_mask. Qed.
-  Lemma test_apply_fupd_intro_mask_2 E1 E2 P :
+  Proof. iIntros. by iApply @fupd_mask_intro_subseteq. Qed.
+  Lemma test_apply_fupd_mask_subseteq E1 E2 P :
     E2 ⊆ E1 → P -∗ |={E1,E2}=> |={E2,E1}=> P.
-  Proof. iIntros. iFrame. by iApply @fupd_intro_mask'. Qed.
+  Proof. iIntros. iFrame. by iApply @fupd_mask_subseteq. Qed.
 
   Lemma test_iFrame_embed_persistent (P : PROP) (Q: monPred) :
     Q ∗ □ ⎡P⎤ ⊢ Q ∗ ⎡P ∗ P⎤.

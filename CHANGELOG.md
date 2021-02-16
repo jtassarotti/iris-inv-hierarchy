@@ -107,6 +107,20 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   interface and factor it into a type class `BiPureForall`.
 * Add notation `¬ P` for `P → False` to `bi_scope`.
 
+* Add `fupd_mask_intro` which can be conveniently `iApply`ed to goals of the
+  form `|={E1,E2}=>` to get rid of the `fupd` in the goal if `E2 ⊆ E1`. The
+  lemma `fupd_mask_weaken Enew` can be `iApply`ed to shrink the first mask to
+  `Enew` without getting rid of the modality; the same effect can also be
+  obtained slightly more conveniently by using `iMod` with `fupd_mask_subseteq
+  Enew`. To make the new names work, rename some existing lemmas:
+  `fupd_intro_mask` → `fupd_mask_intro_subseteq`,
+  `fupd_intro_mask'` → `fupd_mask_subseteq` (implicit arguments also changed
+  here), `fupd_mask_weaken` → `fupd_mask_intro_discard`. Remove `fupd_mask_same`
+  since it was unused and obscure.  In the `BiFUpd` axiomatization, rename
+  `bi_fupd_mixin_fupd_intro_mask` to `bi_fupd_mixin_fupd_mask_subseteq` and
+  weaken the lemma to be specifically about `emp` (the stronger version can be
+  derived).
+
 **Changes in `proofmode`:**
 
 * The proofmode now preserves user-supplied names for existentials when using

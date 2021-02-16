@@ -101,7 +101,8 @@ Proof.
   rewrite !wp_unfold /wp_pre.
   destruct (to_val e) as [v|] eqn:?.
   { iApply ("HΦ" with "[> -]"). by iApply (fupd_mask_mono E1 _). }
-  iIntros (σ1 κ κs n) "Hσ". iMod (fupd_intro_mask' E2 E1) as "Hclose"; first done.
+  iIntros (σ1 κ κs n) "Hσ".
+  iMod (fupd_mask_subseteq E1) as "Hclose"; first done.
   iMod ("H" with "[$]") as "[% H]".
   iModIntro. iSplit; [by destruct s1, s2|]. iIntros (e2 σ2 efs Hstep).
   iMod ("H" with "[//]") as "H". iIntros "!> !>".

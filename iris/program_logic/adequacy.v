@@ -131,8 +131,7 @@ Theorem wp_strong_adequacy Σ Λ `{!invPreG Σ} es σ1 n κs t2 σ2 φ :
          ([∗ list] v ∈ omap to_val t2', fork_post v) -∗
          (* Under all these assumptions, and while opening all invariants, we
          can conclude [φ] in the logic. After opening all required invariants,
-         one can use [fupd_intro_mask'] or [fupd_mask_weaken] to introduce the
-         fancy update. *)
+         one can use [fupd_mask_subseteq] to introduce the fancy update. *)
          |={⊤,∅}=> ⌜ φ ⌝)) →
   nsteps n (es, σ1) κs (t2, σ2) →
   (* Then we can conclude [φ] at the meta-level. *)
@@ -209,7 +208,7 @@ Proof.
   iMod Hwp as (stateI fork_post) "[Hσ Hwp]".
   iExists s, (λ σ κs _, stateI σ κs), [(λ v, ⌜φ v⌝%I)], fork_post => /=.
   iIntros "{$Hσ $Hwp} !>" (e2 t2' -> ? ?) "_ H _".
-  iApply fupd_mask_weaken; [done|]. iSplit; [|done].
+  iApply fupd_mask_intro_discard; [done|]. iSplit; [|done].
   iDestruct (big_sepL2_cons_inv_r with "H") as (e' ? ->) "[Hwp H]".
   iDestruct (big_sepL2_nil_inv_r with "H") as %->.
   iIntros (v2 t2'' [= -> <-]). by rewrite to_of_val.
@@ -234,5 +233,5 @@ Proof.
   iDestruct (big_sepL2_cons_inv_r with "H") as (? ? ->) "[_ H]".
   iDestruct (big_sepL2_nil_inv_r with "H") as %->.
   iDestruct ("Hφ" with "Hσ") as (E) ">Hφ".
-  by iApply fupd_mask_weaken; first set_solver.
+  by iApply fupd_mask_intro_discard; first set_solver.
 Qed.
