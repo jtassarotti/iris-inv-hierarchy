@@ -14,6 +14,7 @@ The highlights and most notable changes of this release are as follows:
   "discarding" some part of the fraction in exchange for a persistent witness
   that discarding has happened. This can be used to easily generalize fractional
   permissions with support for persistently owning "any part" of the resource.
+  (by Simon Friis Vindum)
 * The new `gmap_view` RA provides convenient lemma for ghost ownership
   of heap-like structures with an "authoritative" view. Thanks to `dfrac`, it
   supports both exclusive (mutable) and persistent (immutable) ownership of
@@ -24,11 +25,12 @@ The highlights and most notable changes of this release are as follows:
   - `ghost_var` provides a logic-level abstraction of ghost variables: a mutable
     "variable" with fractional ownership.
   - `mono_nat` provides a "monotone counter" with persistent witnesses
-    representing a lower bound of the current counter value.
+    representing a lower bound of the current counter value. (by Tej Chajed)
   - `gset_bij` provides a monotonically growing partial bijection; this is
     useful in particular when building binary logical relations for languages
     with a heap.
 * HeapLang provides a persistent read-only points-to assertion `l ↦□ v`.
+  (by Simon Friis Vindum)
 * We split Iris into multiple opam packages: `coq-iris` no longer contains
   HeapLang, which is now in a separate package `coq-iris-heap-lang`. The two
   packages `coq-iris-deprecated` (for old modules that we eventually plan to
@@ -37,14 +39,14 @@ The highlights and most notable changes of this release are as follows:
   of this release.
 * The proofmode now does a better job at picking reasonable names when moving
   variables into the Coq context without a name being explicitly given by the
-  user. However, the exact variable names remain unspecified.
+  user. However, the exact variable names remain unspecified. (by Tej Chajed)
 
 Further details are given in the changelog below.
 
-This release of Iris received contributions by Arthur Azevedo de Amorim, Dan
-Frumin, Enrico Tassi, Hai Dang, Michael Sammler, Paolo G. Giarrusso, Ralf Jung,
-Robbert Krebbers, Rodolphe Lepigre, Simon Friis Vindum, Tej Chajed, and Yusuke
-Matsushita.  Thanks a lot to everyone involved!
+This release of Iris was managed by Ralf Jung and Robbert Krebbers, with
+contributions by Arthur Azevedo de Amorim, Dan Frumin, Enrico Tassi, Hai Dang,
+Michael Sammler, Paolo G. Giarrusso, Rodolphe Lepigre, Simon Friis Vindum, Tej
+Chajed, and Yusuke Matsushita.  Thanks a lot to everyone involved!
 
 **Changes in `algebra`:**
 
@@ -128,19 +130,6 @@ Matsushita.  Thanks a lot to everyone involved!
 * Add lemmas for big-ops of magic wands: `big_sepL_wand`, `big_sepL2_wand`,
   `big_sepM_wand`, `big_sepM2_wand`, `big_sepS_wand`, `big_sepMS_wand`.
 * Add notation `¬ P` for `P → False` to `bi_scope`.
-* Remove `bi.tactics` with tactics that predate the proofmode (and that have not
-  been working properly for quite some time).
-* Strengthen `persistent_sep_dup` to support propositions that are persistent
-  and either affine or absorbing.
-* Fix the statement of the lemma `fupd_plainly_laterN`; the old lemma was a
-  duplicate of `fupd_plain_laterN`.
-* Strengthen `big_sepL2_app_inv` by weakening a premise (it is sufficient for
-  one of the two pairs of lists to have equal length).
-* Rename `equiv_entails` → `equiv_entails_1_1`,
-  `equiv_entails_sym` → `equiv_entails_1_2`, and `equiv_spec` → `equiv_entails`.
-* Remove the laws `pure_forall_2 : (∀ a, ⌜ φ a ⌝) ⊢ ⌜ ∀ a, φ a ⌝` from the BI
-  interface and factor it into a type class `BiPureForall`.
-
 * Add `fupd_mask_intro` which can be conveniently `iApply`ed to goals of the
   form `|={E1,E2}=>` to get rid of the `fupd` in the goal if `E2 ⊆ E1`. The
   lemma `fupd_mask_weaken Enew` can be `iApply`ed to shrink the first mask to
@@ -154,6 +143,18 @@ Matsushita.  Thanks a lot to everyone involved!
   `bi_fupd_mixin_fupd_intro_mask` to `bi_fupd_mixin_fupd_mask_subseteq` and
   weaken the lemma to be specifically about `emp` (the stronger version can be
   derived).
+* Remove `bi.tactics` with tactics that predate the proofmode (and that have not
+  been working properly for quite some time).
+* Strengthen `persistent_sep_dup` to support propositions that are persistent
+  and either affine or absorbing.
+* Fix the statement of the lemma `fupd_plainly_laterN`; the old lemma was a
+  duplicate of `fupd_plain_laterN`.
+* Strengthen `big_sepL2_app_inv` by weakening a premise (it is sufficient for
+  one of the two pairs of lists to have equal length).
+* Rename `equiv_entails` → `equiv_entails_1_1`,
+  `equiv_entails_sym` → `equiv_entails_1_2`, and `equiv_spec` → `equiv_entails`.
+* Remove the laws `pure_forall_2 : (∀ a, ⌜ φ a ⌝) ⊢ ⌜ ∀ a, φ a ⌝` from the BI
+  interface and factor it into a type class `BiPureForall`.
 
 **Changes in `proofmode`:**
 
