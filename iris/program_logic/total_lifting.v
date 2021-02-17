@@ -41,7 +41,7 @@ Proof.
   iIntros (Hsafe Hstep) ">H". iApply twp_lift_step.
   { eapply reducible_not_val, reducible_no_obs_reducible, (Hsafe inhabitant). }
   iIntros (σ1 κs n) "Hσ".
-  iMod fupd_intro_mask' as "Hclose"; last iModIntro; first by set_solver. iSplit.
+  iApply fupd_mask_intro; first by set_solver. iIntros "Hclose". iSplit.
   { iPureIntro. destruct s; auto. }
   iIntros (κ e2 σ2 efs ?). destruct (Hstep σ1 κ e2 σ2 efs) as (->&<-&->); auto.
   iMod "Hclose" as "_". iModIntro.
@@ -64,8 +64,8 @@ Proof.
   iIntros (?) "H".
   iApply (twp_lift_step _ E _ e1)=>//; iIntros (σ1 κs n) "Hσ1".
   iMod ("H" $! σ1 with "Hσ1") as "[$ H]".
-  iMod (fupd_intro_mask' E ∅) as "Hclose"; first set_solver.
-  iIntros "!>" (κ e2 σ2 efs) "%". iMod "Hclose" as "_".
+  iApply fupd_mask_intro; first set_solver.
+  iIntros "Hclose" (κ e2 σ2 efs) "%". iMod "Hclose" as "_".
   iMod ("H" $! κ e2 σ2 efs with "[#]") as "($ & $ & HΦ & $)"; first by eauto.
   destruct (to_val e2) eqn:?; last by iExFalso.
   iApply twp_value; last done. by apply of_to_val.

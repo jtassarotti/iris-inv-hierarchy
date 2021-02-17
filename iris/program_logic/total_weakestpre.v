@@ -115,7 +115,7 @@ Proof.
   iIntros "!>" (e E1 Φ) "IH"; iIntros (E2 Ψ HE) "HΦ".
   rewrite !twp_unfold /twp_pre. destruct (to_val e) as [v|] eqn:?.
   { iApply ("HΦ" with "[> -]"). by iApply (ncfupd_mask_mono E1 _). }
-  iIntros (σ1 κs n) "Hσ". iMod (ncfupd_intro_mask' E2 E1) as "Hclose"; first done.
+  iIntros (σ1 κs n) "Hσ". iMod (ncfupd_mask_subseteq E1) as "Hclose"; first done.
   iMod ("IH" with "[$]") as "[% IH]".
   iModIntro; iSplit; [by destruct s1, s2|]. iIntros (κ e2 σ2 efs Hstep).
   iMod ("IH" with "[//]") as (?) "(Hσ & IH & IHefs)"; auto.

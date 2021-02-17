@@ -38,7 +38,7 @@ Lemma ncfupd_intro_mask E1 E2 P : E2 ⊆ E1 → P ⊢ |NC={E1,E2}=> |NC={E2,E1}=
 Proof.
   rewrite ncfupd_eq /ncfupd_def.
   iIntros (?) "HP". iIntros (q) "HNC".
-  iMod fupd_intro_mask' as "Hclo"; try eassumption. iModIntro.
+  iMod fupd_mask_subseteq as "Hclo"; try eassumption. iModIntro.
   iFrame "HNC". iIntros.
   iMod "Hclo". by iFrame.
 Qed.
@@ -101,7 +101,7 @@ Qed.
 
 Lemma ncfupd_intro E P : P ⊢ |NC={E}=> P.
 Proof. by rewrite {1}(ncfupd_intro_mask E E P) // ncfupd_trans. Qed.
-Lemma ncfupd_intro_mask' E1 E2 : E2 ⊆ E1 → ⊢@{iPropI Σ} |NC={E1,E2}=> |NC={E2,E1}=> emp.
+Lemma ncfupd_mask_subseteq {E1} E2 : E2 ⊆ E1 → ⊢@{iPropI Σ} |NC={E1,E2}=> |NC={E2,E1}=> emp.
 Proof. exact: ncfupd_intro_mask. Qed.
 Lemma ncfupd_except_0 E1 E2 P : (|NC={E1,E2}=> ◇ P) ⊢ |NC={E1,E2}=> P.
 Proof. by rewrite {1}(ncfupd_intro E2 P) except_0_ncfupd ncfupd_trans. Qed.
@@ -309,7 +309,7 @@ Proof. rewrite /Frame=><-. by rewrite ncfupd_frame_l. Qed.
 Lemma ncfupd_mask_mono' E1 E2 E1' E2' P : E1 ⊆ E2 → E2' ⊆ E1' → (|NC={E1, E1'}=> P) ⊢ |NC={E2,E2'}=> P.
 Proof.
   iIntros (??) "H".
-  iMod (ncfupd_intro_mask' _ E1) as "Hclo"; auto.
+  iMod (ncfupd_mask_subseteq E1) as "Hclo"; auto.
   iMod "H".
   iApply (ncfupd_mask_weaken); auto.
 Qed.
@@ -435,7 +435,7 @@ Proof.
   iIntros (Hfupd). apply later_soundness. iMod wsat_alloc' as (Hinv) "[Hw HE]".
   iMod NC_alloc as (Hc) "HNC".
   iAssert (|NC={⊤,E2}=> P)%I as "H".
-  { iMod ncfupd_intro_mask'; last iApply Hfupd. done. }
+  { iMod ncfupd_mask_subseteq; last iApply Hfupd. done. }
   rewrite ncfupd_eq /ncfupd_def.
   rewrite uPred_fupd_eq /uPred_fupd_def.
   iMod ("H" with "[$HNC] [$Hw HE]") as "[Hw [HE >(H'&_)]]"; iFrame.

@@ -111,11 +111,11 @@ Proof.
   destruct (to_val e) as [v|] eqn:?.
   { iIntros (q) "HNC". rewrite ncfupd_eq /ncfupd_def.
     iSpecialize ("H" with "[$]").
-    iMod (fupd_intro_mask' E2 E1) as "Hclose"; first done.
+    iMod (fupd_mask_subseteq E1) as "Hclose"; first done.
     iMod "H" as "(H&?)". iMod "Hclose".
     by iMod ("HΦ" with "H [$]").
   }
-  iIntros (q σ1 κ κs n) "Hσ HNC". iMod (fupd_intro_mask' E2 E1) as "Hclose"; first done.
+  iIntros (q σ1 κ κs n) "Hσ HNC". iMod (fupd_mask_subseteq E1) as "Hclose"; first done.
   iMod ("H" with "[$] [$]") as "[% H]".
   iModIntro. iSplit; [by destruct s1, s2|]. iIntros (e2 σ2 efs Hstep).
   iMod ("H" with "[//]") as "H". iIntros "!> !>".

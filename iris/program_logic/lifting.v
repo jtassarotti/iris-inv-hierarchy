@@ -66,7 +66,7 @@ Proof.
   iIntros (Hsafe Hstep) "H". iApply wp_lift_step.
   { specialize (Hsafe inhabitant). destruct s; eauto using reducible_not_val. }
   iIntros (σ1 κ κs n) "Hσ". iMod "H".
-  iMod fupd_intro_mask' as "Hclose"; last iModIntro; first by set_solver. iSplit.
+  iApply fupd_mask_intro; first set_solver. iIntros "Hclose". iSplit.
   { iPureIntro. destruct s; done. }
   iNext. iIntros (e2 σ2 efs ?).
   destruct (Hstep κ σ1 e2 σ2 efs) as (-> & <- & ->); auto.
@@ -81,7 +81,7 @@ Proof.
   iIntros (Hstuck) "_". iApply wp_lift_stuck.
   - destruct(to_val e) as [v|] eqn:He; last done.
     rewrite -He. by case: (Hstuck inhabitant).
-  - iIntros (σ κs n) "_". by iMod (fupd_intro_mask' E ∅) as "_"; first set_solver.
+  - iIntros (σ κs n) "_". iApply fupd_mask_intro; auto with set_solver.
 Qed.
 
 (* Atomic steps don't need any mask-changing business here, one can
@@ -99,10 +99,10 @@ Proof.
   iIntros (?) "H".
   iApply (wp_lift_step_fupd s E1 _ e1)=>//; iIntros (σ1 κ κs n) "Hσ1".
   iMod ("H" $! σ1 with "Hσ1") as "[$ H]".
-  iMod (fupd_intro_mask' E1 ∅) as "Hclose"; first set_solver.
-  iIntros "!>" (e2 σ2 efs ?). iMod "Hclose" as "_".
+  iApply fupd_mask_intro; first set_solver.
+  iIntros "Hclose" (e2 σ2 efs ?). iMod "Hclose" as "_".
   iMod ("H" $! e2 σ2 efs with "[#]") as "H"; [done|].
-  iMod (fupd_intro_mask' E2 ∅) as "Hclose"; [set_solver|]. iIntros "!> !>".
+  iApply fupd_mask_intro; first set_solver. iIntros "Hclose !>".
   iMod "Hclose" as "_". iMod "H" as "($ & HQ & $)".
   destruct (to_val e2) eqn:?; last by iExFalso.
   iApply wp_value; last done. by apply of_to_val.

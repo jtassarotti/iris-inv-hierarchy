@@ -354,7 +354,7 @@ Proof.
   by iIntros "$ ($ & $ & $ & HE) !> !> [$ [$ $]] !> !>" .
 Qed.
 
-Lemma fupd_level_intro_mask E1 E2 k P : E2 ⊆ E1 → P ⊢ |k={E1,E2}=> |k={E2,E1}=> P.
+Lemma fupd_level_mask_intro_subseteq E1 E2 k P : E2 ⊆ E1 → P ⊢ |k={E1,E2}=> |k={E2,E1}=> P.
 Proof. rewrite uPred_fupd_level_eq; apply fupd_split_level_intro_mask. Qed.
 
 Lemma except_0_fupd_split_level E1 E2 k mj P : ◇ (|k,mj={E1,E2}=> P) ⊢ |k,mj={E1,E2}=> P.
@@ -494,9 +494,9 @@ Lemma bupd_fupd_level E k P:
 Proof. rewrite uPred_fupd_level_eq. apply bupd_fupd_split_level. Qed.
 
 Lemma fupd_level_intro E k P : P ⊢ |k={E}=> P.
-Proof. by rewrite {1}(fupd_level_intro_mask E E k P) // fupd_level_trans. Qed.
-Lemma fupd_level_intro_mask' E1 E2 k : E2 ⊆ E1 → ⊢@{iPropI Σ} |k={E1,E2}=> |k={E2,E1}=> emp.
-Proof. exact: fupd_level_intro_mask. Qed.
+Proof. by rewrite {1}(fupd_level_mask_intro_subseteq E E k P) // fupd_level_trans. Qed.
+Lemma fupd_level_mask_subseteq {E1} E2 k : E2 ⊆ E1 → ⊢@{iPropI Σ} |k={E1,E2}=> |k={E2,E1}=> emp.
+Proof. exact: fupd_level_mask_intro_subseteq. Qed.
 Lemma fupd_level_except_0 E1 E2 k P : (|k={E1,E2}=> ◇ P) ⊢ |k={E1,E2}=> P.
 Proof. by rewrite {1}(fupd_level_intro E2 k P) except_0_fupd_level fupd_level_trans. Qed.
 
@@ -515,10 +515,10 @@ Proof. by rewrite fupd_level_frame_l wand_elim_l. Qed.
 Lemma fupd_level_wand_r E1 E2 k P Q : (|k={E1,E2}=> P) ∗ (P -∗ Q) ⊢ |k={E1,E2}=> Q.
 Proof. by rewrite fupd_level_frame_r wand_elim_r. Qed.
 
-Lemma fupd_level_mask_weaken E1 E2 k P : E2 ⊆ E1 → P ⊢ |k={E1,E2}=> P.
+Lemma fupd_level_mask_intro_discard E1 E2 k P : E2 ⊆ E1 → P ⊢ |k={E1,E2}=> P.
 Proof.
   intros ?. rewrite -{1}(right_id emp%I bi_sep P%I).
-  rewrite (fupd_level_intro_mask E1 E2 k emp%I) //.
+  rewrite (fupd_level_mask_intro_subseteq E1 E2 k emp%I) //.
   by rewrite fupd_level_frame_l sep_elim_l.
 Qed.
 
@@ -641,9 +641,9 @@ Proof. rewrite /Frame=><-. by rewrite fupd_level_frame_l. Qed.
 Lemma fupd_level_mask_mono' E1 E2 E1' E2' k P : E1 ⊆ E2 → E2' ⊆ E1' → (|k={E1, E1'}=> P) ⊢ |k={E2,E2'}=> P.
 Proof.
   iIntros (??) "H".
-  iMod (fupd_level_intro_mask' _ E1) as "Hclo"; auto.
+  iMod (fupd_level_mask_subseteq E1) as "Hclo"; auto.
   iMod "H".
-  iApply (fupd_level_mask_weaken); auto.
+  iApply (fupd_level_mask_intro_discard); auto.
 Qed.
 
 Lemma step_fupd_level_mask_mono Eo1 Eo2 Ei1 Ei2 k P :
@@ -651,10 +651,10 @@ Lemma step_fupd_level_mask_mono Eo1 Eo2 Ei1 Ei2 k P :
   (|k={Eo1,Ei1}=> ▷ |k={Ei1, Eo1}=> P) ⊢ (|k={Eo2,Ei2}=> ▷ |k={Ei2, Eo2}=> P).
 Proof.
   intros ??. rewrite -(emp_sep (|k={Eo1,Ei1}=> ▷ _))%I.
-  rewrite (fupd_level_intro_mask Eo2 Eo1 _ emp%I) //.
+  rewrite (fupd_level_mask_intro_subseteq Eo2 Eo1 _ emp%I) //.
   rewrite fupd_level_frame_r -(fupd_level_trans Eo2 Eo1 Ei2). f_equiv.
   rewrite fupd_level_frame_l -(fupd_level_trans Eo1 Ei1 Ei2). f_equiv.
-  rewrite (fupd_level_intro_mask Ei1 Ei2 _ (|k={_,_}=> emp)%I) //.
+  rewrite (fupd_level_mask_intro_subseteq Ei1 Ei2 _ (|k={_,_}=> emp)%I) //.
   rewrite fupd_level_frame_r. f_equiv.
   rewrite [X in (X ∗ _)%I]later_intro -later_sep. f_equiv.
   rewrite fupd_level_frame_r -(fupd_level_trans Ei2 Ei1 Eo2). f_equiv.

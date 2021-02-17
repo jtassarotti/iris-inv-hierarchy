@@ -3,34 +3,83 @@ way the logic is used on paper.  We also document changes in the Coq
 development; every API-breaking change should be listed, but not every new
 lemma.
 
-## Iris master
+## Iris 3.4.0
 
-With this release, we dropped support for Coq 8.9 and Coq 8.10.
+The highlights and most notable changes of this release are as follows:
+* Coq 8.13 is now supported; the old Coq 8.9 and Coq 8.10 are not supported any
+  more.
+* The new `view` RA construction generalizes `auth` to user-defined abstraction
+  relations. (thanks to Gregory Malecha for the inspiration)
+* The new `dfrac` RA extends `frac` (fractions `0 < q ≤ 1`) with support for
+  "discarding" some part of the fraction in exchange for a persistent witness
+  that discarding has happened. This can be used to easily generalize fractional
+  permissions with support for persistently owning "any part" of the resource.
+  (by Simon Friis Vindum)
+* The new `gmap_view` RA provides convenient lemmas for ghost ownership
+  of heap-like structures with an "authoritative" view. Thanks to `dfrac`, it
+  supports both exclusive (mutable) and persistent (immutable) ownership of
+  individual map elements.
+* With this release we are beginning to provide logic-level abstractions for
+  ghost state, which have the advantage that the user does not have to directly
+  interact with RAs to use them.
+  - `ghost_var` provides a logic-level abstraction of ghost variables: a mutable
+    "variable" with fractional ownership.
+  - `mono_nat` provides a "monotone counter" with a persistent witnesses
+    representing a lower bound of the current counter value. (by Tej Chajed)
+  - `gset_bij` provides a monotonically growing partial bijection; this is
+    useful in particular when building binary logical relations for languages
+    with a heap.
+* HeapLang provides a persistent read-only points-to assertion `l ↦□ v`.
+  (by Simon Friis Vindum)
+* We split Iris into multiple opam packages: `coq-iris` no longer contains
+  HeapLang, which is now in a separate package `coq-iris-heap-lang`. The two
+  packages `coq-iris-deprecated` (for old modules that we eventually plan to
+  remove entirely) and `coq-iris-staging` (for new modules that are not yet
+  ready for prime time) exist only as development versions, so they are not part
+  of this release.
+* The proofmode now does a better job at picking reasonable names when moving
+  variables into the Coq context without a name being explicitly given by the
+  user. However, the exact variable names remain unspecified. (by Tej Chajed)
 
-We also split Iris into multiple opam packages: `coq-iris` no longer contains
-HeapLang, which is now in a separate package `coq-iris-heap-lang`.
+Further details are given in the changelog below.
+
+This release of Iris was managed by Ralf Jung and Robbert Krebbers, with
+contributions by Arthur Azevedo de Amorim, Dan Frumin, Enrico Tassi, Hai Dang,
+Michael Sammler, Paolo G. Giarrusso, Rodolphe Lepigre, Simon Friis Vindum, Tej
+Chajed, and Yusuke Matsushita.  Thanks a lot to everyone involved!
 
 **Changes in `algebra`:**
 
-* Rename `agree_op_inv'` to `to_agree_op_inv`,
-  `agree_op_invL'` to `to_agree_op_inv_L`, and add
-  `to_agree_op_invN`.
-* Rename `auth_auth_frac_op_invL` to `auth_auth_frac_op_inv_L`,
-  `excl_auth_agreeL` to `excl_auth_agree_L`,
-  `frac_auth_agreeL` to `frac_auth_agree_L`, and
-  `ufrac_auth_agreeL` to `ufrac_auth_agree_L`.
 * Add constructions to define a camera through restriction of the validity predicate
   (`iso_cmra_mixin_restrict`) and through an isomorphism (`iso_cmra_mixin`).
 * Add a `frac_agree` library which encapsulates `frac * agree A` for some OFE
   `A`, and provides some useful lemmas.
+* Add the view camera `view`, which generalizes the authoritative camera
+  `auth` by being parameterized by a relation that relates the authoritative
+  element with the fragments.
+* Add the camera of discardable fractions `dfrac`. This is a generalization of
+  the normal fractional camera.
+  See [algebra.dfrac](iris/algebra/dfrac.v) for further information.
+* Add `gmap_view`, a camera providing a "view of a `gmap`". The authoritative
+  element is any `gmap`; the fragment provides fractional ownership of a single
+  key, including support for persistent read-only ownership through `dfrac`.
+  See [algebra.lib.gmap_view](iris/algebra/lib/gmap_view.v) for further information.
+* Add `mono_nat`, a wrapper for `auth max_nat`. The result is an authoritative
+  `nat` where a fragment is a lower bound whose ownership is persistent.
+  See [algebra.lib.mono_nat](iris/algebra/lib/mono_nat.v) for further information.
+* Add the `gset_bij` resource algebra for monotone partial bijections.
+  See [algebra.lib.gset_bij](iris/algebra/lib/gset_bij.v) for further information.
+* Rename `agree_op_inv'` → `to_agree_op_inv`,
+  `agree_op_invL'` → `to_agree_op_inv_L`, and add `to_agree_op_invN`.
+* Rename `auth_auth_frac_op_invL` → `auth_auth_frac_op_inv_L`,
+  `excl_auth_agreeL` → `excl_auth_agree_L`,
+  `frac_auth_agreeL` → `frac_auth_agree_L`, and
+  `ufrac_auth_agreeL` → `ufrac_auth_agree_L`.
 * Fix direction of `auth_auth_validN` to make it consistent with similar lemmas,
   e.g., `auth_auth_valid`. The direction is now `✓{n} (● a) ↔ ✓{n} a`.
 * Rename `auth_both_valid` to `auth_both_valid_discrete` and
   `auth_both_frac_valid` to `auth_both_frac_valid_discrete`. The old name is
   used for new, stronger lemmas that do not assume discreteness.
-* Add the view camera `view`, which generalizes the authoritative camera
-  `auth` by being parameterized by a relation that relates the authoritative
-  element with the fragments.
 * Redefine the authoritative camera in terms of the view camera. As part of this
   change, we have removed lemmas that leaked implementation details. Hence, the
   only way to construct elements of `auth` is via the elements `●{q} a` and
@@ -40,26 +89,13 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   `auth_included`, `auth_valid_discrete`, and `auth_both_op`.  For validity, use
   `auth_auth_valid*`, `auth_frag_valid*`, or `auth_both_valid*` instead.
 * Rename `auth_update_core_id` into `auth_update_frac_alloc`.
-* Add the camera of discardable fractions `dfrac`. This is a generalization of
-  the normal fractional camera.
-  See [algebra.dfrac](iris/algebra/dfrac.v) for further information.
 * Rename `cmra_monotone_valid` into `cmra_morphism_valid` (this rename was
   forgotten in !56).
-* Add `gmap_view`, a camera providing a "view of a `gmap`". The authoritative
-  element is any `gmap`; the fragment provides fractional ownership of a single
-  key, including support for persistent read-only ownership through `dfrac`.
-  See [algebra.lib.gmap_view](iris/algebra/lib/gmap_view.v) for further information.
-  NOTE: The API surface for `gmap_view` is experimental and subject to change.
 * Move the `*_validI` and `*_equivI` lemmas to a new module, `base_logic.algebra`.
   That module is exported by `base_logic.base_logic` so it should usually be
   available everywhere without further changes.
 * The authoritative fragment `✓ (◯ b : auth A)` is no longer definitionally
   equal to `✓ b`.
-* Add `mono_nat`, a wrapper for `auth max_nat`. The result is an authoritative
-  `nat` where a fragment is a lower bound whose ownership is persistent.
-  See [algebra.lib.mono_nat](iris/algebra/lib/mono_nat.v) for further information.
-* Add the `gset_bij` resource algebra for monotone partial bijections.
-  See [algebra.lib.gset_bij](iris/algebra/lib/gset_bij.v) for further information.
 * Change `*_valid` lemma statements involving fractions to use `Qp` addition and
   inequality instead of RA composition and validity (also in `base_logic` and
   the higher layers).
@@ -84,14 +120,6 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
 
 * Add big op lemmas `big_op{L,L2,M,M2,S}_intuitionistically_forall` and
   `big_sepL2_forall`, `big_sepMS_forall`, `big_sepMS_impl`, and `big_sepMS_dup`.
-* Remove `bi.tactics` with tactics that predate the proofmode (and that have not
-  been working properly for quite some time).
-* Strengthen `persistent_sep_dup` to support propositions that are persistent
-  and either affine or absorbing.
-* Fix the statement of the lemma `fupd_plainly_laterN`; the old lemma was a
-  duplicate of `fupd_plain_laterN`.
-* Strengthen `big_sepL2_app_inv` by weakening a premise (it is sufficient for
-  one of the two pairs of lists to have equal length).
 * Add lemmas to big-ops that provide ownership of a single element and permit
   changing the quantified-over predicate when re-assembling the big-op:
   `big_sepL_lookup_acc_impl`, `big_sepL2_lookup_acc_impl`,
@@ -101,8 +129,32 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   `big_sepS` lemmas.
 * Add lemmas for big-ops of magic wands: `big_sepL_wand`, `big_sepL2_wand`,
   `big_sepM_wand`, `big_sepM2_wand`, `big_sepS_wand`, `big_sepMS_wand`.
+* Add notation `¬ P` for `P → False` to `bi_scope`.
+* Add `fupd_mask_intro` which can be conveniently `iApply`ed to goals of the
+  form `|={E1,E2}=>` to get rid of the `fupd` in the goal if `E2 ⊆ E1`. The
+  lemma `fupd_mask_weaken Enew` can be `iApply`ed to shrink the first mask to
+  `Enew` without getting rid of the modality; the same effect can also be
+  obtained slightly more conveniently by using `iMod` with `fupd_mask_subseteq
+  Enew`. To make the new names work, rename some existing lemmas:
+  `fupd_intro_mask` → `fupd_mask_intro_subseteq`,
+  `fupd_intro_mask'` → `fupd_mask_subseteq` (implicit arguments also changed
+  here), `fupd_mask_weaken` → `fupd_mask_intro_discard`. Remove `fupd_mask_same`
+  since it was unused and obscure.  In the `BiFUpd` axiomatization, rename
+  `bi_fupd_mixin_fupd_intro_mask` to `bi_fupd_mixin_fupd_mask_subseteq` and
+  weaken the lemma to be specifically about `emp` (the stronger version can be
+  derived).
+* Remove `bi.tactics` with tactics that predate the proofmode (and that have not
+  been working properly for quite some time).
+* Strengthen `persistent_sep_dup` to support propositions that are persistent
+  and either affine or absorbing.
+* Fix the statement of the lemma `fupd_plainly_laterN`; the old lemma was a
+  duplicate of `fupd_plain_laterN`.
+* Strengthen `big_sepL2_app_inv` by weakening a premise (it is sufficient for
+  one of the two pairs of lists to have equal length).
 * Rename `equiv_entails` → `equiv_entails_1_1`,
   `equiv_entails_sym` → `equiv_entails_1_2`, and `equiv_spec` → `equiv_entails`.
+* Remove the laws `pure_forall_2 : (∀ a, ⌜ φ a ⌝) ⊢ ⌜ ∀ a, φ a ⌝` from the BI
+  interface and factor it into a type class `BiPureForall`.
 
 **Changes in `proofmode`:**
 
@@ -126,14 +178,11 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
 * Allow framing below an `<affine>` modality if the hypothesis that is framed is
   affine. (Previously, framing below `<affine>` was only possible if the
   hypothesis that is framed resides in the intuitionistic context.)
-* Remove the laws `pure_forall_2 : (∀ a, ⌜ φ a ⌝) ⊢ ⌜ ∀ a, φ a ⌝` from the BI
-  interface and factor it into a type class `BiPureForall`.
-* Add notation `¬ P` for `P → False` to `bi_scope`.
 * Add Coq side-condition `φ` to class `ElimAcc` (similar to what we already had
   for `ElimInv` and `ElimModal`).
 * Add a tactic `iSelect pat tac` (similar to `select` in std++) which runs the
   tactic `tac H` with the name `H` of the last hypothesis of the intuitionistic
-  or spatial context matching `pat`. `iSelect` is used to implement:
+  or spatial context matching `pat`. The tactic `iSelect` is used to implement:
   + `iRename select (pat)%I into name` which renames the matching hypothesis,
   + `iDestruct select (pat)%I as ...` which destructs the matching hypothesis,
   + `iClear select (pat)%I` which clears the matching hypothesis,
@@ -144,6 +193,30 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
 
 * Add a `ghost_var` library that provides (fractional) ownership of a ghost
   variable of arbitrary `Type`.
+* Define a ghost state library on top of the `mono_nat` resource algebra.
+  See [base_logic.lib.mono_nat](iris/base_logic/lib/mono_nat.v) for further
+  information.
+* Define a ghost state library on top of the `gset_bij` resource algebra.
+  See [base_logic.lib.gset_bij](iris/base_logic/lib/gset_bij.v) for further
+  information.
+* Extend the `gen_heap` library with read-only points-to assertions using
+  [discardable fractions](iris/algebra/dfrac.v).
+  + The `mapsto` connective now takes a `dfrac` rather than a `frac` (i.e.,
+    positive rational number `Qp`).
+  + The notation `l ↦{ dq } v` is generalized to discardable fractions
+    `dq : dfrac`.
+  + The new notation `l ↦{# q} v` is used for a concrete fraction `q : frac`
+    (e.g., to enable writing `l ↦{# 1/2} v`).
+  + The new notation `l ↦□ v` is used for the discarded fraction. This
+    persistent proposition provides read-only access to `l`.
+  + The lemma `mapsto_persist : l ↦{dq} v ==∗ l ↦□ v` is used for making the
+    location `l` read-only.
+  + See the [changes to HeapLang](https://gitlab.mpi-sws.org/iris/iris/-/merge_requests/554)
+    for an indication on how to adapt your language.
+  + See the [changes to iris-examples](https://gitlab.mpi-sws.org/iris/examples/-/commit/a8425b708ec51d918d5cf6eb3ab6fde88f4e2c2a)
+    for an indication on how to adapt your development. In particular, instead
+    of `∃ q, l ↦{q} v` you likely want to use `l ↦□ v`, which has the advantage
+    of being persistent (rather than just duplicable).
 * Change type of some ghost state lemmas (mostly about allocation) to use `∗`
   instead of `∧` (consistent with our usual style).  This affects the following
   lemmas: `own_alloc_strong_dep`, `own_alloc_cofinite_dep`, `own_alloc_strong`,
@@ -167,12 +240,6 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   `uPred.discrete_fun_validI` to the new `base_logic.algebra` module. That
   module is exported by `base_logic.base_logic` so these names are now usually
   available everywhere, and no longer inside the `uPred` module.
-* Define a ghost state library on top of the `mono_nat` resource algebra.
-  See [base_logic.lib.mono_nat](iris/base_logic/lib/mono_nat.v) for further
-  information.
-* Define a ghost state library on top of the `gset_bij` resource algebra.
-  See [base_logic.lib.gset_bij](iris/base_logic/lib/gset_bij.v) for further
-  information.
 * Remove the `gen_heap` notations `l ↦ -` and `l ↦{q} -`. They were barely used
   and looked very confusing in context: `l ↦ - ∗ P` looks like a magic wand.
 * Change `gen_inv_heap` notation `l ↦□ I` to `l ↦_I □`, so that `↦□` can be used
@@ -183,24 +250,13 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   initial heap.
 * Rename `mapsto_mapsto_ne` to `mapsto_frac_ne`, and add a simpler
   `mapsto_ne` that does not require reasoning about fractions.
-* Extend the `gen_heap` library with read-only points-to assertions using
-  [discardable fractions](iris/algebra/dfrac.v).
-  + The `mapsto` connective now takes a `dfrac` rather than a `frac` (i.e.,
-    positive rational number `Qp`).
-  + The notation `l ↦{ dq } v` is generalized to discardable fractions
-    `dq : dfrac`.
-  + The new notation `l ↦{# q} v` is used for a concrete fraction `q : frac`
-    (e.g., to enable writing `l ↦{# 1/2} v`).
-  + The new notation `l ↦□ v` is used for the discarded fraction. This
-    persistent proposition provides read-only access to `l`.
-  + The lemma `mapsto_persist : l ↦{dq} v ==∗ l ↦□ v` is used for making the
-    location `l` read-only.
-  + See the [changes to HeapLang](https://gitlab.mpi-sws.org/iris/iris/-/merge_requests/554)
-    for an indication on how to adapt your language.
-  + See the [changes to iris-examples](https://gitlab.mpi-sws.org/iris/examples/-/commit/a8425b708ec51d918d5cf6eb3ab6fde88f4e2c2a)
-    for an indication on how to adapt your development. In particular, instead
-    of `∃ q, l ↦{q} v` you likely want to use `l ↦□ v`, which has the advantage
-    of being persistent (rather than just duplicable).
+* Deprecate the `auth` and `sts` modules. These were logic-level wrappers around
+  the underlying RAs; as far as we know, they are unused since they were not
+  flexible enough for practical use.
+* Deprecate the `viewshift` module, which defined a binary view-shift connective
+  with an implicit persistence modality. It was unused and too easily confused
+  with `={_}=∗`, the binary view-shift (fancy update) *without* a persistence
+  modality.
 
 **Changes in `program_logic`:**
 
@@ -210,7 +266,7 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
 * `pure_exec_fill` is no longer registered as an instance for `PureExec`, to
   avoid TC search attempting to apply this instance all the time.
 * Merge `wp_value_inv`/`wp_value_inv'` into `wp_value_fupd`/`wp_value_fupd'` by
-  making the lemma bidirectional.
+  making the lemmas bidirectional.
 * Generalize HeapLang's `mapsto` (`↦`), `array` (`↦∗`), and atomic heap
   connectives to discardable fractions. See the CHANGELOG entry in the category
   `base_logic` for more information.
@@ -220,6 +276,8 @@ HeapLang, which is now in a separate package `coq-iris-heap-lang`.
   modality (|={E1,E2}=> ...) in (WP ...)".
 * In `Ectx_step` and `step_atomic`, mark the parameters that are determined by
   the goal as implicit.
+* Deprecate the `hoare` module to prevent accidental usage; the recommended way
+  to write Hoare-style specifications is to use Texan triples.
 
 **Changes in `heap_lang`:**
 

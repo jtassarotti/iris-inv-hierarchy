@@ -159,8 +159,7 @@ Theorem wp_strong_adequacy Σ Λ `{!invPreG Σ, !crashPreG Σ} es σ1 n κs t2 �
          ([∗ list] v ∈ omap to_val t2', fork_post v) -∗
          (* Under all these assumptions, and while opening all invariants, we
          can conclude [φ] in the logic. After opening all required invariants,
-         one can use [fupd_intro_mask'] or [fupd_mask_weaken] to introduce the
-         fancy update. *)
+         one can use [fupd_mask_subseteq] to introduce the fancy update. *)
          |NC={⊤,∅}=> ⌜ φ ⌝)) →
   nsteps n (es, σ1) κs (t2, σ2) →
   (* Then we can conclude [φ] at the meta-level. *)
