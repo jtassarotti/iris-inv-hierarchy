@@ -9,13 +9,13 @@ The highlights and most notable changes of this release are as follows:
 * Coq 8.13 is now supported; the old Coq 8.9 and Coq 8.10 are not supported any
   more.
 * The new `view` RA construction generalizes `auth` to user-defined abstraction
-  relations.
+  relations. (thanks to Gregory Malecha for the inspiration)
 * The new `dfrac` RA extends `frac` (fractions `0 < q ≤ 1`) with support for
   "discarding" some part of the fraction in exchange for a persistent witness
   that discarding has happened. This can be used to easily generalize fractional
   permissions with support for persistently owning "any part" of the resource.
   (by Simon Friis Vindum)
-* The new `gmap_view` RA provides convenient lemma for ghost ownership
+* The new `gmap_view` RA provides convenient lemmas for ghost ownership
   of heap-like structures with an "authoritative" view. Thanks to `dfrac`, it
   supports both exclusive (mutable) and persistent (immutable) ownership of
   individual map elements.
@@ -24,7 +24,7 @@ The highlights and most notable changes of this release are as follows:
   interact with RAs to use them.
   - `ghost_var` provides a logic-level abstraction of ghost variables: a mutable
     "variable" with fractional ownership.
-  - `mono_nat` provides a "monotone counter" with persistent witnesses
+  - `mono_nat` provides a "monotone counter" with a persistent witnesses
     representing a lower bound of the current counter value. (by Tej Chajed)
   - `gset_bij` provides a monotonically growing partial bijection; this is
     useful in particular when building binary logical relations for languages
@@ -35,7 +35,7 @@ The highlights and most notable changes of this release are as follows:
   HeapLang, which is now in a separate package `coq-iris-heap-lang`. The two
   packages `coq-iris-deprecated` (for old modules that we eventually plan to
   remove entirely) and `coq-iris-staging` (for new modules that are not yet
-  ready for prime time) exist only as development version, so they are not part
+  ready for prime time) exist only as development versions, so they are not part
   of this release.
 * The proofmode now does a better job at picking reasonable names when moving
   variables into the Coq context without a name being explicitly given by the
