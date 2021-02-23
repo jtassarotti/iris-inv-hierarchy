@@ -3,6 +3,29 @@ way the logic is used on paper.  We also document changes in the Coq
 development; every API-breaking change should be listed, but not every new
 lemma.
 
+## Iris master
+
+**Changes in `algebra`:**
+
+* Authorative elements of the `view`, `auth` and `gset_bij` cameras are
+  parameterized by a [discardable fraction](iris/algebra/dfrac.v) instead of a
+  fraction. Normal fractions are now denoted `●{#q} a` and `●V{#q} a`. Lemmas
+  affected by this have been renamed such that the "frac" in their name has been
+  changed into "dfrac".
+
+The following `sed` script helps adjust your code to the renaming (on macOS,
+replace `sed` by `gsed`, installed via e.g. `brew install gnu-sed`).
+Note that the script is not idempotent, do not run it twice.
+```
+sed -i -E -f- $(find theories -name "*.v") <<EOF
+# auth and view renames from frac to dfrac
+/\b(auth|view)_auth_frac_op\b/! s/\b(auth|view)_(auth|both)_frac_(\w*)\b/\1_\2_dfrac_\3/g
+/\bgset_bij_auth_frac/gset_bij_auth_dfrac/g
+/\bgset_bij_auth_empty_frac_valid\b/gset_bij_auth_empty_dfrac_valid/g
+/\bgbij_both_frac_valid\b/bij_both_dfrac_valid/g
+EOF
+```
+
 ## Iris 3.4.0
 
 The highlights and most notable changes of this release are as follows:
