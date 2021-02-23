@@ -114,6 +114,7 @@ Section gset_bij.
   Context `{Countable A, Countable B}.
   Implicit Types (a:A) (b:B).
   Implicit Types (L : gset (A*B)).
+  Implicit Types dq : dfrac.
 
   Global Instance gset_bij_elem_core_id a b : CoreId (gset_bij_elem a b).
   Proof. apply _. Qed.

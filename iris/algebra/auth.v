@@ -1,4 +1,4 @@
-From iris.algebra Require Export view.
+From iris.algebra Require Export view frac.
 From iris.algebra Require Import proofmode_classes big_op.
 From iris.prelude Require Import options.
 
@@ -86,6 +86,8 @@ Section auth.
   Context {A : ucmra}.
   Implicit Types a b : A.
   Implicit Types x y : auth A.
+  Implicit Types q : frac.
+  Implicit Types dq : dfrac.
 
   Global Instance auth_auth_ne dq : NonExpansive (@auth_auth A dq).
   Proof. rewrite /auth_auth. apply _. Qed.

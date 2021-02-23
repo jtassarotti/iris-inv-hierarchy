@@ -1,4 +1,4 @@
-From iris.algebra Require Export updates local_updates dfrac agree.
+From iris.algebra Require Export updates local_updates frac dfrac agree.
 From iris.algebra Require Import proofmode_classes big_op.
 From iris.prelude Require Import options.
 
@@ -151,6 +151,8 @@ Section cmra.
   Implicit Types ag : option (dfrac * agree A).
   Implicit Types b : B.
   Implicit Types x y : view rel.
+  Implicit Types q : frac.
+  Implicit Types dq : dfrac.
 
   Global Instance view_auth_ne dq : NonExpansive (@view_auth A B rel dq).
   Proof. solve_proper. Qed.
@@ -390,9 +392,9 @@ Section cmra.
     ●V{dq1} a1 ≼{n} ●V{dq2} a2 ⋅ ◯V b ↔ (dq1 ≼ dq2 ∨ dq1 = dq2) ∧ a1 ≡{n}≡ a2.
   Proof.
     split.
-    - intros [[[[qf agf]|] bf]
+    - intros [[[[dqf agf]|] bf]
         [[?%(discrete_iff _ _) ?]%(inj Some) _]]; simplify_eq/=.
-      + split; [left; apply cmra_included_l|]. apply to_agree_includedN. by exists agf.
+      + split; [left; apply (cmra_included_l dq1)|]. apply to_agree_includedN. by exists agf.
       + split; [right; done|]. by apply (inj to_agree).
     - intros [[[? ->]| ->] ->].
       + rewrite view_auth_dfrac_op -assoc. apply cmra_includedN_l.
