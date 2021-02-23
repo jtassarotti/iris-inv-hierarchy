@@ -7,11 +7,11 @@ lemma.
 
 **Changes in `algebra`:**
 
-* Authorative elements of the `view`, `auth` and `gset_bij` cameras are
-  parameterized by a [discardable fraction](iris/algebra/dfrac.v) instead of a
-  fraction. Normal fractions are now denoted `●{#q} a` and `●V{#q} a`. Lemmas
-  affected by this have been renamed such that the "frac" in their name has been
-  changed into "dfrac".
+* Generalize the authorative elements of the `view`, `auth` and `gset_bij`
+  cameras to be parameterized by a [discardable fraction](iris/algebra/dfrac.v)
+  (`dfrac`) instead of a fraction (`frac`). Normal fractions are now denoted
+  `●{#q} a` and `●V{#q} a`. Lemmas affected by this have been renamed such that
+  the "frac" in their name has been changed into "dfrac".
 
 The following `sed` script helps adjust your code to the renaming (on macOS,
 replace `sed` by `gsed`, installed via e.g. `brew install gnu-sed`).
@@ -19,10 +19,10 @@ Note that the script is not idempotent, do not run it twice.
 ```
 sed -i -E -f- $(find theories -name "*.v") <<EOF
 # auth and view renames from frac to dfrac
-/\b(auth|view)_auth_frac_op\b/! s/\b(auth|view)_(auth|both)_frac_(\w*)\b/\1_\2_dfrac_\3/g
-/\bgset_bij_auth_frac/gset_bij_auth_dfrac/g
-/\bgset_bij_auth_empty_frac_valid\b/gset_bij_auth_empty_dfrac_valid/g
-/\bgbij_both_frac_valid\b/bij_both_dfrac_valid/g
+s/\b(auth|view)_(auth|both)_frac_(is_op|op_invN|op_inv|inv_L|validN|op_validN|valid|op_valid|valid_2|valid_discrete|includedN|included|alloc|validI|validI_2|validI_1|validI|)\b/\1_\2_dfrac_\3/g
+s/\bgset_bij_auth_frac_(\w*)\b/gset_bij_auth_dfrac_\1/g
+s/\bgset_bij_auth_empty_frac_valid\b/gset_bij_auth_empty_dfrac_valid/g
+s/\bbij_both_frac_valid\b/bij_both_dfrac_valid/g
 EOF
 ```
 

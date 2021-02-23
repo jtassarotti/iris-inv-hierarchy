@@ -23,7 +23,7 @@ Section mono_nat.
   Global Instance mono_nat_lb_core_id n : CoreId (mono_nat_lb n).
   Proof. apply _. Qed.
 
-  Lemma mono_nat_auth_dfrac_op q1 q2 n :
+  Lemma mono_nat_auth_frac_op q1 q2 n :
     mono_nat_auth q1 n ⋅ mono_nat_auth q2 n ≡ mono_nat_auth (q1 + q2) n.
   Proof.
     rewrite /mono_nat_auth -dfrac_op_own auth_auth_dfrac_op.
@@ -57,7 +57,7 @@ Section mono_nat.
   Lemma mono_nat_auth_valid n : ✓ mono_nat_auth 1 n.
   Proof. by apply auth_both_valid. Qed.
 
-  Lemma mono_nat_auth_dfrac_op_valid q1 q2 n1 n2 :
+  Lemma mono_nat_auth_frac_op_valid q1 q2 n1 n2 :
     ✓ (mono_nat_auth q1 n1 ⋅ mono_nat_auth q2 n2) ↔ (q1 + q2 ≤ 1)%Qp ∧ n1 = n2.
   Proof.
     rewrite /mono_nat_auth (comm _ (●{#q2} _)) -!assoc (assoc _ (◯ _)).
@@ -68,7 +68,7 @@ Section mono_nat.
   Qed.
   Lemma mono_nat_auth_op_valid n1 n2 :
     ✓ (mono_nat_auth 1 n1 ⋅ mono_nat_auth 1 n2) ↔ False.
-  Proof. rewrite mono_nat_auth_dfrac_op_valid. naive_solver. Qed.
+  Proof. rewrite mono_nat_auth_frac_op_valid. naive_solver. Qed.
 
   Lemma mono_nat_both_frac_valid q n m :
     ✓ (mono_nat_auth q n ⋅ mono_nat_lb m) ↔ (q ≤ 1)%Qp ∧ m ≤ n.

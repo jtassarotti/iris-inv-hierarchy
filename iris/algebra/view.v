@@ -394,7 +394,7 @@ Section cmra.
     split.
     - intros [[[[dqf agf]|] bf]
         [[?%(discrete_iff _ _) ?]%(inj Some) _]]; simplify_eq/=.
-      + split; [left; apply (cmra_included_l dq1)|]. apply to_agree_includedN. by exists agf.
+      + split; [left; apply: cmra_included_l|]. apply to_agree_includedN. by exists agf.
       + split; [right; done|]. by apply (inj to_agree).
     - intros [[[? ->]| ->] ->].
       + rewrite view_auth_dfrac_op -assoc. apply cmra_includedN_l.
