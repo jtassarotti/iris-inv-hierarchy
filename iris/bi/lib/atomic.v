@@ -453,7 +453,7 @@ Section proof_mode.
   Qed.
 End proof_mode.
 
-(** Now the coq-level tactics *)
+(** * Now the coq-level tactics *)
 
 Tactic Notation "iAuIntro" :=
   iStartProof; eapply tac_aupd_intro; [
@@ -461,6 +461,10 @@ Tactic Notation "iAuIntro" :=
   | iSolveTC || fail "iAuIntro: not all spatial assumptions are laterable"
   | (* P = ...: make the P pretty *) pm_reflexivity
   | (* the new proof mode goal *) ].
+
+(** Tactic to apply [aacc_intro]. This only really works well when you have
+[α ?] already and pass it as [iAaccIntro with "Hα"]. Doing
+[rewrite /atomic_acc /=] is an entirely legitimate alternative. *)
 Tactic Notation "iAaccIntro" "with" constr(sel) :=
   iStartProof; lazymatch goal with
   | |- environments.envs_entails _ (@atomic_acc ?PROP ?H ?TA ?TB ?Eo ?Ei ?α ?P ?β ?Φ) =>
