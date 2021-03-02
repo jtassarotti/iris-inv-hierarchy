@@ -243,7 +243,7 @@ Proof.
   intros n l1 l2 Hd.
   rewrite /invariant_unfold.
   specialize (vec_to_list_same_length l1 l2) => Hlen.
-  rewrite dist_later_vec_to_list in Hd *.
+  revert Hd; rewrite dist_later_vec_to_list.
   remember (vec_to_list l1) as l1' eqn:Heq1.
   remember (vec_to_list l2) as l2' eqn:Heq2.
   rewrite -Heq1 -Heq2.
