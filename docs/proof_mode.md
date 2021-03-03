@@ -55,7 +55,7 @@ Applying hypotheses and lemmas
   conclusion of `pm_trm` and generates goals for the premises of `pm_trm`. See
   [proof mode terms][pm-trm] below.
   If the applied term has more premises than given specialization patterns, the
-  pattern is extended with `[] ... []`.  As a consequence, all unused spatial
+  pattern is extended with `[] ... []`. As a consequence, all unused spatial
   hypotheses move to the last premise.
 
 Context management
@@ -126,7 +126,7 @@ Introduction of logical connectives
 - `iSplit` : split a conjunction `P ∧ Q` into two goals. Also works for
   separating conjunction `P ∗ Q` provided one of the operands is persistent (and both
   proofs may use the entire spatial context).
-- `iExist t1, .., tn` : provide a witness for an existential quantifier `∃ x, ...`. `t1
+- `iExists t1, .., tn` : provide a witness for an existential quantifier `∃ x, ...`. `t1
   ... tn` can also be underscores, which are turned into evars. (In fact they
   can be arbitrary terms with holes, or `open_constr`s, and all of the
   holes will be turned into evars.)
@@ -149,7 +149,7 @@ Elimination of logical connectives
     intuitionistic context, it will not be thrown away.
   + `iDestruct pm_trm as (x1 ... xn) "ipat"` : combine the above, first
     specializing `pm_trm`, then eliminating existential quantifiers (and pure
-    conjuncts) with `x1 ...  xn`, and finally destructing the resulting term
+    conjuncts) with `x1 ... xn`, and finally destructing the resulting term
     using the [introduction pattern][ipat] `ipat`.
   + `iDestruct pm_trm as %cpat` : destruct the pure conclusion of a term
     `pr_trm` using the Coq introduction pattern `cpat`. When using this tactic,
@@ -185,10 +185,10 @@ Separation logic-specific tactics
   of spatial context that matches pattern `pat`.
 - `iCombine "H1 H2" as "ipat"` : combine `H1 : P1` and `H2 : P2` into `H: P1 ∗
   P2` or something simplified but equivalent, then destruct the combined
-  hypthesis using `ipat`. Some examples of simplifications `iCombine` knows
+  hypothesis using `ipat`. Some examples of simplifications `iCombine` knows
   about are to combine `own γ x` and `own γ y` into `own γ (x ⋅ y)`, and to
   combine `l ↦{1/2} v` and `l ↦{1/2} v` into `l ↦ v`.
-- `iAccu` : solves a goal that is an evar by instantiating it with all
+- `iAccu` : solve a goal that is an evar by instantiating it with all
   hypotheses from the spatial context joined together with a separating
   conjunction (or `emp` in case the spatial context is empty). Not commonly
   used, but can be extremely useful when combined with automation.
@@ -248,7 +248,7 @@ Rewriting / simplification
   equality in the proof mode goal / hypothesis `H`.
 - `iRewrite -pm_trm` / `iRewrite -pm_trm in "H"` : rewrite in reverse direction
   using an internal equality in the proof mode goal / hypothesis `H`.
-- `iEval (tac)` / `iEval (tac) in "selpat"` : performs a tactic `tac`
+- `iEval (tac)` / `iEval (tac) in "selpat"` : perform a tactic `tac`
   on the proof mode goal / hypotheses given by the selection pattern
   `selpat`. Using `%` as part of the selection pattern is unsupported.
   The tactic `tac` should be a reduction or rewriting tactic like
@@ -258,7 +258,7 @@ Rewriting / simplification
   running `tac`, `?evar` is unified with the resulting `P`, which in
   turn becomes the new proof mode goal / a hypothesis given by
   `selpat`. Note that parentheses around `tac` are needed.
-- `iSimpl` / `iSimpl in "selpat"` : performs `simpl` on the proof mode
+- `iSimpl` / `iSimpl in "selpat"` : perform `simpl` on the proof mode
   goal / hypotheses given by the selection pattern `selpat`. This is a
   shorthand for `iEval (simpl)`.
 
@@ -315,7 +315,7 @@ Introduction patterns (`ipat`)
 ==============================
 
 Introduction patterns are used to perform introductions and eliminations of
-multiple connectives on the fly.  The proof mode supports the following
+multiple connectives on the fly. The proof mode supports the following
 _introduction patterns_:
 
 - `H` : create a hypothesis named `H`.
@@ -356,7 +356,7 @@ _introduction patterns_:
   is a no-op. If the hypothesis is not affine, an `<affine>` modality is added
   to the hypothesis.
 - `> ipat` : eliminate a modality (if the goal permits); commonly used to strip
-  a later from the hypotheses when it is timeless and the goal is either a `WP`
+  a later from the hypothesis when it is timeless and the goal is either a `WP`
   or an update modality `|={E}=>`.
 
 Apart from this, there are the following introduction patterns that can only
@@ -435,7 +435,7 @@ _specialization patterns_ to express splitting of hypotheses:
   which causes `done` to be called to close the goal.
 - `[$]` : solve the premise by framing. It will first repeatedly frame and
   consume the spatial hypotheses, and then repeatedly frame the intuitionistic
-  hypotheses.  Spatial hypothesis that are not framed are carried over to the
+  hypotheses. Spatial hypotheses that are not framed are carried over to the
   subsequent goal.
 - `[> $]` : like the above pattern, but this pattern can only be used if the
   goal is a modality `M`, in which case the goal for the premise will be wrapped

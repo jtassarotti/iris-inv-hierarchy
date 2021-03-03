@@ -364,7 +364,7 @@ Here is a `coqide.bindings` file for a variety of symbols used in Iris:
 ### VSCoq setup
 
 The recommended extension as of December 2019 is [Maxime Dénès's
-VScoq](https://marketplace.visualstudio.com/items?itemName=maximedenes.vscoq).
+VSCoq](https://marketplace.visualstudio.com/items?itemName=maximedenes.vscoq).
 Press `Ctrl Shift P` or `Cmd Shift P` and then type "coq" to see the list of Coq
 commands and keyboard shortcuts.
 
@@ -382,7 +382,7 @@ Install the [Generic input method
 extension](https://marketplace.visualstudio.com/items?itemName=mr-konn.generic-input-method).
 To insert a symbol, type the code for a symbol such as `\to` and then press
 `Space` or `Tab`. To enable Iris unicode input support, open your user settings,
-press `Cmd ,` or `Ctrl ,`, and type "generic-input-methods.input-methods", then
+press `Cmd ,` or `Ctrl ,`, type "generic-input-methods.input-methods", and then
 click on "Edit in settings.json" and add the following:
 
 ```
