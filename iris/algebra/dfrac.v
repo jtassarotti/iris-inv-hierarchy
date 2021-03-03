@@ -153,7 +153,7 @@ Section dfrac.
     - by destruct (Qp_add_id_free q q2).
     - by destruct (Qp_add_id_free q q1).
   Qed.
-  Global Instance frac_id_free q : IdFree (DfracOwn q).
+  Global Instance dfrac_own_id_free q : IdFree (DfracOwn q).
   Proof. intros [q'| |q'] _ [=]. by apply (Qp_add_id_free q q'). Qed.
   Global Instance dfrac_discarded_core_id : CoreId DfracDiscarded.
   Proof. by constructor. Qed.

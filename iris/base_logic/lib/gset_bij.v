@@ -38,8 +38,8 @@ Global Instance subG_gset_bijΣ `{Countable A, Countable B} Σ :
 Proof. solve_inG. Qed.
 
 Definition gset_bij_own_auth_def `{gset_bijG Σ A B} (γ : gname)
-    (q : Qp) (L : gset (A * B)) : iProp Σ :=
-  own γ (gset_bij_auth q L).
+    (dq : dfrac) (L : gset (A * B)) : iProp Σ :=
+  own γ (gset_bij_auth dq L).
 Definition gset_bij_own_auth_aux : seal (@gset_bij_own_auth_def). Proof. by eexists. Qed.
 Definition gset_bij_own_auth := unseal gset_bij_own_auth_aux.
 Definition gset_bij_own_auth_eq :
@@ -69,23 +69,23 @@ Section gset_bij.
   Proof. rewrite gset_bij_own_elem_eq. apply _. Qed.
 
   Global Instance gset_bij_own_auth_fractional γ L :
-    Fractional (λ q, gset_bij_own_auth γ q L).
+    Fractional (λ q, gset_bij_own_auth γ (DfracOwn q) L).
   Proof.
-    intros p q. rewrite gset_bij_own_auth_eq -own_op gset_bij_auth_frac_op //.
+    intros p q. rewrite gset_bij_own_auth_eq -own_op gset_bij_auth_dfrac_op //.
   Qed.
   Global Instance gset_bij_own_auth_as_fractional γ q L :
-    AsFractional (gset_bij_own_auth γ q L) (λ q, gset_bij_own_auth γ q L) q.
+    AsFractional (gset_bij_own_auth γ (DfracOwn q) L) (λ q, gset_bij_own_auth γ (DfracOwn q) L) q.
   Proof. split; [auto|apply _]. Qed.
 
-  Lemma gset_bij_own_auth_agree γ q1 q2 L1 L2 :
-    gset_bij_own_auth γ q1 L1 -∗ gset_bij_own_auth γ q2 L2 -∗
-    ⌜✓ (q1 + q2)%Qp ∧ L1 = L2 ∧ gset_bijective L1⌝.
+  Lemma gset_bij_own_auth_agree γ dq1 dq2 L1 L2 :
+    gset_bij_own_auth γ dq1 L1 -∗ gset_bij_own_auth γ dq2 L2 -∗
+    ⌜✓ (dq1 ⋅ dq2) ∧ L1 = L2 ∧ gset_bijective L1⌝.
   Proof.
     rewrite gset_bij_own_auth_eq. iIntros "H1 H2".
-    by iDestruct (own_valid_2 with "H1 H2") as %?%gset_bij_auth_frac_op_valid.
+    by iDestruct (own_valid_2 with "H1 H2") as %?%gset_bij_auth_dfrac_op_valid.
   Qed.
   Lemma gset_bij_own_auth_exclusive γ L1 L2 :
-    gset_bij_own_auth γ 1 L1 -∗ gset_bij_own_auth γ 1 L2 -∗ False.
+    gset_bij_own_auth γ (DfracOwn 1) L1 -∗ gset_bij_own_auth γ (DfracOwn 1) L2 -∗ False.
   Proof.
     iIntros "H1 H2".
     by iDestruct (gset_bij_own_auth_agree with "H1 H2") as %[[] _].
@@ -95,7 +95,7 @@ Section gset_bij.
     gset_bij_own_auth γ q L -∗ ⌜✓ q ∧ gset_bijective L⌝.
   Proof.
     rewrite gset_bij_own_auth_eq. iIntros "Hauth".
-    by iDestruct (own_valid with "Hauth") as %?%gset_bij_auth_frac_valid.
+    by iDestruct (own_valid with "Hauth") as %?%gset_bij_auth_dfrac_valid.
   Qed.
 
   Lemma gset_bij_own_elem_agree γ L a a' b b' :
@@ -122,24 +122,24 @@ Section gset_bij.
 
   Lemma gset_bij_own_alloc L :
     gset_bijective L →
-    ⊢ |==> ∃ γ, gset_bij_own_auth γ 1 L ∗ [∗ set] ab ∈ L, gset_bij_own_elem γ ab.1 ab.2.
+    ⊢ |==> ∃ γ, gset_bij_own_auth γ (DfracOwn 1) L ∗ [∗ set] ab ∈ L, gset_bij_own_elem γ ab.1 ab.2.
   Proof.
-    intro. iAssert (∃ γ, gset_bij_own_auth γ 1 L)%I with "[>]" as (γ) "Hauth".
+    intro. iAssert (∃ γ, gset_bij_own_auth γ (DfracOwn 1) L)%I with "[>]" as (γ) "Hauth".
     { rewrite gset_bij_own_auth_eq. iApply own_alloc. by apply gset_bij_auth_valid. }
     iExists γ. iModIntro. iSplit; [done|].
     by iApply gset_bij_own_elem_get_big.
   Qed.
   Lemma gset_bij_own_alloc_empty :
-    ⊢ |==> ∃ γ, gset_bij_own_auth γ 1 (∅ : gset (A * B)).
+    ⊢ |==> ∃ γ, gset_bij_own_auth γ (DfracOwn 1) (∅ : gset (A * B)).
   Proof. iMod (gset_bij_own_alloc ∅) as (γ) "[Hauth _]"; by auto. Qed.
 
   Lemma gset_bij_own_extend {γ L} a b :
     (∀ b', (a, b') ∉ L) → (∀ a', (a', b) ∉ L) →
-    gset_bij_own_auth γ 1 L ==∗
-    gset_bij_own_auth γ 1 ({[(a, b)]} ∪ L) ∗ gset_bij_own_elem γ a b.
+    gset_bij_own_auth γ (DfracOwn 1) L ==∗
+    gset_bij_own_auth γ (DfracOwn 1) ({[(a, b)]} ∪ L) ∗ gset_bij_own_elem γ a b.
   Proof.
     iIntros (??) "Hauth".
-    iAssert (gset_bij_own_auth γ 1 ({[a, b]} ∪ L)) with "[> Hauth]" as "Hauth".
+    iAssert (gset_bij_own_auth γ (DfracOwn 1) ({[a, b]} ∪ L)) with "[> Hauth]" as "Hauth".
     { rewrite gset_bij_own_auth_eq. iApply (own_update with "Hauth").
       by apply gset_bij_auth_extend. }
     iModIntro. iSplit; [done|].
@@ -149,8 +149,8 @@ Section gset_bij.
   Lemma gset_bij_own_extend_internal {γ L} a b :
     (∀ b', gset_bij_own_elem γ a b' -∗ False) -∗
     (∀ a', gset_bij_own_elem γ a' b -∗ False) -∗
-    gset_bij_own_auth γ 1 L ==∗
-    gset_bij_own_auth γ 1 ({[(a, b)]} ∪ L) ∗ gset_bij_own_elem γ a b.
+    gset_bij_own_auth γ (DfracOwn 1) L ==∗
+    gset_bij_own_auth γ (DfracOwn 1) ({[(a, b)]} ∪ L) ∗ gset_bij_own_elem γ a b.
   Proof.
     iIntros "Ha Hb HL".
     iAssert ⌜∀ b', (a, b') ∉ L⌝%I as %?.

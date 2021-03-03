@@ -145,37 +145,37 @@ Section view.
   Implicit Types b : B.
   Implicit Types x y : view rel.
 
-  Lemma view_both_frac_validI_1 (relI : uPred M) q a b :
+  Lemma view_both_dfrac_validI_1 (relI : uPred M) dq a b :
     (∀ n (x : M), rel n a b → relI n x) →
-    ✓ (●V{q} a ⋅ ◯V b : view rel) ⊢ ⌜q ≤ 1⌝%Qp ∧ relI.
+    ✓ (●V{dq} a ⋅ ◯V b : view rel) ⊢ ⌜✓dq⌝ ∧ relI.
   Proof.
     intros Hrel. uPred.unseal. split=> n x _ /=.
-    rewrite /uPred_holds /= view_both_frac_validN. by move=> [? /Hrel].
+    rewrite /uPred_holds /= view_both_dfrac_validN. by move=> [? /Hrel].
   Qed.
-  Lemma view_both_frac_validI_2 (relI : uPred M) q a b :
+  Lemma view_both_dfrac_validI_2 (relI : uPred M) dq a b :
     (∀ n (x : M), relI n x → rel n a b) →
-    ⌜q ≤ 1⌝%Qp ∧ relI ⊢ ✓ (●V{q} a ⋅ ◯V b : view rel).
+    ⌜✓dq⌝%Qp ∧ relI ⊢ ✓ (●V{dq} a ⋅ ◯V b : view rel).
   Proof.
     intros Hrel. uPred.unseal. split=> n x _ /=.
-    rewrite /uPred_holds /= view_both_frac_validN. by move=> [? /Hrel].
+    rewrite /uPred_holds /= view_both_dfrac_validN. by move=> [? /Hrel].
   Qed.
-  Lemma view_both_frac_validI (relI : uPred M) q a b :
+  Lemma view_both_dfrac_validI (relI : uPred M) dq a b :
     (∀ n (x : M), rel n a b ↔ relI n x) →
-    ✓ (●V{q} a ⋅ ◯V b : view rel) ⊣⊢ ⌜q ≤ 1⌝%Qp ∧ relI.
+    ✓ (●V{dq} a ⋅ ◯V b : view rel) ⊣⊢ ⌜✓dq⌝ ∧ relI.
   Proof.
     intros. apply (anti_symm _);
-      [apply view_both_frac_validI_1|apply view_both_frac_validI_2]; naive_solver.
+      [apply view_both_dfrac_validI_1|apply view_both_dfrac_validI_2]; naive_solver.
   Qed.
 
   Lemma view_both_validI_1 (relI : uPred M) a b :
     (∀ n (x : M), rel n a b → relI n x) →
     ✓ (●V a ⋅ ◯V b : view rel) ⊢ relI.
-  Proof. intros. by rewrite view_both_frac_validI_1 // bi.and_elim_r. Qed.
+  Proof. intros. by rewrite view_both_dfrac_validI_1 // bi.and_elim_r. Qed.
   Lemma view_both_validI_2 (relI : uPred M) a b :
     (∀ n (x : M), relI n x → rel n a b) →
     relI ⊢ ✓ (●V a ⋅ ◯V b : view rel).
   Proof.
-    intros. rewrite -view_both_frac_validI_2 //.
+    intros. rewrite -view_both_dfrac_validI_2 //.
     apply bi.and_intro; [|done]. by apply bi.pure_intro.
   Qed.
   Lemma view_both_validI (relI : uPred M) a b :
@@ -186,11 +186,11 @@ Section view.
       [apply view_both_validI_1|apply view_both_validI_2]; naive_solver.
   Qed.
 
-  Lemma view_auth_frac_validI (relI : uPred M) q a :
+  Lemma view_auth_dfrac_validI (relI : uPred M) dq a :
     (∀ n (x : M), relI n x ↔ rel n a ε) →
-    ✓ (●V{q} a : view rel) ⊣⊢ ⌜q ≤ 1⌝%Qp ∧ relI.
+    ✓ (●V{dq} a : view rel) ⊣⊢ ⌜✓dq⌝ ∧ relI.
   Proof.
-    intros. rewrite -(right_id ε op (●V{q} a)). by apply view_both_frac_validI.
+    intros. rewrite -(right_id ε op (●V{dq} a)). by apply view_both_dfrac_validI.
   Qed.
   Lemma view_auth_validI (relI : uPred M) a :
     (∀ n (x : M), relI n x ↔ rel n a ε) →
@@ -208,14 +208,14 @@ Section auth.
   Implicit Types a b : A.
   Implicit Types x y : auth A.
 
-  Lemma auth_auth_frac_validI q a : ✓ (●{q} a) ⊣⊢ ⌜q ≤ 1⌝%Qp ∧ ✓ a.
+  Lemma auth_auth_dfrac_validI dq a : ✓ (●{dq} a) ⊣⊢ ⌜✓dq⌝ ∧ ✓ a.
   Proof.
-    apply view_auth_frac_validI=> n. uPred.unseal; split; [|by intros [??]].
+    apply view_auth_dfrac_validI=> n. uPred.unseal; split; [|by intros [??]].
     split; [|done]. apply ucmra_unit_leastN.
   Qed.
   Lemma auth_auth_validI a : ✓ (● a) ⊣⊢ ✓ a.
   Proof.
-    by rewrite auth_auth_frac_validI bi.pure_True // left_id.
+    by rewrite auth_auth_dfrac_validI bi.pure_True // left_id.
   Qed.
 
   Lemma auth_frag_validI a : ✓ (◯ a) ⊣⊢ ✓ a.
@@ -224,13 +224,13 @@ Section auth.
     rewrite auth_view_rel_exists. by uPred.unseal.
   Qed.
 
-  Lemma auth_both_frac_validI q a b :
-    ✓ (●{q} a ⋅ ◯ b) ⊣⊢ ⌜q ≤ 1⌝%Qp ∧ (∃ c, a ≡ b ⋅ c) ∧ ✓ a.
-  Proof. apply view_both_frac_validI=> n. by uPred.unseal. Qed.
+  Lemma auth_both_dfrac_validI dq a b :
+    ✓ (●{dq} a ⋅ ◯ b) ⊣⊢ ⌜✓dq⌝ ∧ (∃ c, a ≡ b ⋅ c) ∧ ✓ a.
+  Proof. apply view_both_dfrac_validI=> n. by uPred.unseal. Qed.
   Lemma auth_both_validI a b :
     ✓ (● a ⋅ ◯ b) ⊣⊢ (∃ c, a ≡ b ⋅ c) ∧ ✓ a.
   Proof.
-    by rewrite auth_both_frac_validI bi.pure_True // left_id.
+    by rewrite auth_both_dfrac_validI bi.pure_True // left_id.
   Qed.
 
 End auth.
