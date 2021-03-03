@@ -223,7 +223,7 @@ Lemma fmlist_lb_agree γ l1 l2 :
   fmlist_lb γ l1 -∗ fmlist_lb γ l2 -∗ ⌜ l1 `prefix_of` l2 ∨ l2 `prefix_of` l1⌝.
 Proof.
   iIntros "Hγ1 Hγ2". iDestruct (own_valid_2 with "Hγ1 Hγ2") as %Hval.
-  rewrite -auth_frag_op auth_frag_valid in Hval * => Hval.
+  revert Hval; rewrite -auth_frag_op auth_frag_valid => Hval.
   iPureIntro. by apply mlist_valid_op in Hval.
 Qed.
 
