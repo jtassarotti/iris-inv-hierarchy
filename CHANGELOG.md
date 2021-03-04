@@ -28,18 +28,18 @@ EOF
 
 **Changes in `base_logic`:**
 
-* The soundness lemma of the base logic `step_fupdN_soundness`, has been
-generalized. It now states the soundness of the logic even if invariants stay
-open accross an arbitrary number of laters.
+* Generalize the soundness lemma of the base logic `step_fupdN_soundness`.
+  It applies even if invariants stay open accross an arbitrary number of laters.
 
 **Changes in `program_logic`:**
 
-* The definition of weakest precondition has been changed in order to use
-a variable number of laters (i.e., logical steps) for each physical step of
-the operational semantics, depending on the number of physical steps executed
-since the begining of the execution of the program. See merge request !595.
-This implies several API-breaking changes, which can be easily fixed in client
-formalizations in a backward compatible manner as follows:
+* Change definition of weakest precondition to use a variable number of laters
+  (i.e., logical steps) for each physical step of the operational semantics,
+  depending on the number of physical steps executed since the begining of the
+  execution of the program. See merge request [!595](https://gitlab.mpi-sws.org/iris/iris/-/merge_requests/595).
+
+  This implies several API-breaking changes, which can be easily fixed in client
+  formalizations in a backward compatible manner as follows:
    - Ignore the new parameter `ns` in the state interpretation, which
      corresponds to a step counter.
    - Use the constant function "0" for the new field `num_laters_per_step` of

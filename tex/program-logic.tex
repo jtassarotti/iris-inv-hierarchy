@@ -139,17 +139,18 @@ Finally, we can define the core piece of the program logic, the proposition that
 
 \paragraph{Defining weakest precondition.}
 We assume that everything making up the definition of the language, \ie values, expressions, states, the conversion functions, reduction relation and all their properties, are suitably reflected into the logic (\ie they are part of the signature $\Sig$).
-We further assume (as a parameter) a predicate $\stateinterp : \State \times \List(\Obs) \times \mathbb N \to \iProp$ that interprets the machine state as an Iris proposition, and a predicate $\pred_F: \Val \to \iProp$ that serves as postcondition for forked-off threads.
-The state interpretation can depend on the current physical state, the list of \emph{future} observations as well as the total number of \emph{forked} threads (that is one less that the total number of threads).
+We further assume (as a parameter) a predicate $\stateinterp : \State \times \mathbb N \times \List(\Obs) \times \mathbb N \to \iProp$ that interprets the machine state as an Iris proposition, a predicate $\pred_F: \Val \to \iProp$ that serves as postcondition for forked-off threads, and a function $n_\rhd: \mathbb N \to \mathbb N$ specifying the number of additional laters used for each physical step.
+The state interpretation can depend on the current physical state, the number of steps since the begining of the execution, the list of \emph{future} observations as well as the total number of \emph{forked} threads (that is one less that the total number of threads).
+It should be monotone with respect to the step counter: $\stateinterp(\state, n_s, \vec\obs, n_t) \vs[\emptyset] \stateinterp(\state, n_s, \vec\obs, n_t + 1)$.
 This can be instantiated, for example, with ownership of an authoritative RA to tie the physical state to fragments that are used for user-level proofs.
 Finally, weakest precondition takes a parameter $\stuckness \in \set{\NotStuck, \MaybeStuck}$ indicating whether program execution is allowed to get stuck.
 
 \begin{align*}
   \textdom{wp}(\stateinterp, \pred_F, \stuckness) \eqdef{}& \MU \textdom{wp\any rec}. \Lam \mask, \expr, \pred. \\
         & (\Exists\val. \toval(\expr) = \val \land \pvs[\mask] \pred(\val)) \lor {}\\
-        & \Bigl(\toval(\expr) = \bot \land \All \state, \vec\obs, \vec\obs', n. \stateinterp(\state, \vec\obs \dplus \vec\obs', n) \vsW[\mask][\emptyset] {}\\
-        &\qquad (s = \NotStuck \Ra \red(\expr, \state)) * \All \expr', \state', \vec\expr. (\expr, \state \step[\vec\obs] \expr', \state', \vec\expr) \vsW[\emptyset][\emptyset]\later\pvs[\emptyset][\mask] {}\\
-        &\qquad\qquad \stateinterp(\state', \vec\obs', n + |\vec\expr|) * \textdom{wp\any rec}(\mask, \expr', \pred) * \Sep_{\expr'' \in \vec\expr} \textdom{wp\any rec}(\top, \expr'', \pred_F)\Bigr) \\
+        & \Bigl(\toval(\expr) = \bot \land \All \state, n_s, \vec\obs, \vec\obs', n_t. \stateinterp(\state, n_s, \vec\obs \dplus \vec\obs', n_t) \vsW[\mask][\emptyset] {}\\
+        &\qquad (s = \NotStuck \Ra \red(\expr, \state)) * \All \expr', \state', \vec\expr. (\expr, \state \step[\vec\obs] \expr', \state', \vec\expr) \wand (\pvs[\emptyset]\later\pvs[\emptyset])^{n_\rhd(n_s)+1} {}\\
+        &\qquad\qquad \pvs[\emptyset][\mask]\stateinterp(\state', \vec\obs', n + |\vec\expr|) * \textdom{wp\any rec}(\mask, \expr', \pred) * \Sep_{\expr'' \in \vec\expr} \textdom{wp\any rec}(\top, \expr'', \pred_F)\Bigr) \\
   \wpre[\stateinterp;\pred_F]\expr[\stuckness;\mask]{\Ret\val. \prop} \eqdef{}& \textdom{wp}(\stateinterp,\pred_F,\stuckness)(\mask, \expr, \Lam\val.\prop)
 \end{align*}
 The $\stateinterp$ and $\pred_F$ will always be set by the context; typically, when instantiating Iris with a language, we also pick the corresponding state interpretation $\stateinterp$ and fork-postcondition $\pred_F$.
@@ -186,6 +187,14 @@ The following rules can all be derived:
 {\toval(\expr) = \bot \and \mask_2 \subseteq \mask_1}
 {\wpre\expr[\stuckness;\mask_2]{\Ret\var.\prop} * \pvs[\mask_1][\mask_2]\later\pvs[\mask_2][\mask_1]\propB \proves \wpre\expr[\stuckness;\mask_1]{\Ret\var.\propB*\prop}}
 
+\infer[wp-frame-n-steps]
+{\toval(\expr) = \bot \and \mask_2 \subseteq \mask_1}
+{{ {\begin{inbox}
+~~(\All \state, n_s, \vec\obs, n_t. \stateinterp(\state, n_s, \vec\obs, n_t) \vsW[\mask_1, \emptyset] n \leq n_\rhd(n_s) + 1) \land {}\\
+~~\wpre\expr[\stuckness;\mask_2]{\Ret\var.\prop} * \pvs[\mask_1][\mask_2](\later\pvs[\emptyset])^n\pvs[\mask_2][\mask_1]\propB {}\\
+\proves \wpre\expr[\stuckness;\mask_1]{\Ret\var.\propB*\prop}
+\end{inbox}} }}
+
 \infer[wp-bind]
 {\text{$\lctx$ is a context}}
 {\wpre\expr[\stuckness;\mask]{\Ret\var. \wpre{\lctx(\ofval(\var))}[\stuckness;\mask]{\Ret\varB.\prop}} \proves \wpre{\lctx(\expr)}[\stuckness;\mask]{\Ret\varB.\prop}}
@@ -198,9 +207,9 @@ This basically just copies the second branch (the non-value case) of the definit
   \infer[wp-lift-step]
   {\toval(\expr_1) = \bot}
   { {\begin{inbox} % for some crazy reason, LaTeX is actually sensitive to the space between the "{ {" here and the "} }" below...
-        ~~\All \state_1,\vec\obs,\vec\obs',n. \stateinterp(\state_1,\vec\obs \dplus \vec\obs', n) \vsW[\mask][\emptyset] (\stuckness = \NotStuck \Ra \red(\expr_1,\state_1)) * {}\\
-        \qquad~ \All \expr_2, \state_2, \vec\expr.  (\expr_1, \state_1 \step[\vec\obs] \expr_2, \state_2, \vec\expr)  \vsW[\emptyset][\emptyset]\later\pvs[\emptyset][\mask] {}\\
-        \qquad\qquad\left(\stateinterp(\state_2,\vec\obs',n+|\vec\expr|) * \wpre[\stateinterp;\pred_F]{\expr_2}[\stuckness;\mask]{\Ret\var.\prop} * \Sep_{\expr_\f \in \vec\expr} \wpre[\stateinterp\pred_F]{\expr_\f}[\stuckness;\top]{\pred_F}\right)  {}\\
+        ~~\All \state_1,\vec\obs,\vec\obs',n. \stateinterp(\state_1,n_s,\vec\obs \dplus \vec\obs', n_t) \vsW[\mask][\emptyset] (\stuckness = \NotStuck \Ra \red(\expr_1,\state_1)) * {}\\
+        \qquad~ \All \expr_2, \state_2, \vec\expr.  (\expr_1, \state_1 \step[\vec\obs] \expr_2, \state_2, \vec\expr) \wand (\pvs[\emptyset]\later\pvs[\emptyset])^{n_\rhd(n_s)}\pvs[\emptyset][\mask] {}\\
+        \qquad\qquad\left(\stateinterp(\state_2,n_s+1,\vec\obs',n_t+|\vec\expr|) * \wpre[\stateinterp;\pred_F]{\expr_2}[\stuckness;\mask]{\Ret\var.\prop} * \Sep_{\expr_\f \in \vec\expr} \wpre[\stateinterp\pred_F]{\expr_\f}[\stuckness;\top]{\pred_F}\right)  {}\\
         \proves \wpre[\stateinterp\pred_F]{\expr_1}[\stuckness;\mask]{\Ret\var.\prop}
       \end{inbox}} }
 \end{mathpar}
@@ -217,7 +226,7 @@ The most general form of the adequacy statement is about proving properties of a
   Assume we are given some $\vec\expr_1$, $\state_1$, $\vec\obs$, $\tpool_2$, $\state_2$ such that $(\vec\expr_1, \state_1) \tpsteps[\vec\obs] (\tpool_2, \state_2)$, and we are also given a \emph{meta-level} property $\metaprop$ that we want to show.
   To verify that $\metaprop$ holds, it is sufficient to show the following Iris entailment:
 \begin{align*}
- &\TRUE \proves \pvs[\top] \Exists \stuckness, \stateinterp, \vec\pred, \pred_F. \stateinterp(\state_1,\vec\obs,0) * \left(\Sep_{\expr,\pred \in \vec\expr_1,\vec\pred} \wpre[\stateinterp;\pred_F]{\expr}[\stuckness;\top]{x.\; \pred(x)}\right) * \left(\consstate^{\stateinterp;\vec\pred;\pred_F}_{\stuckness}(\tpool_2, \state_2) \vs[\top][\emptyset] \hat{\metaprop}\right)
+ &\TRUE \proves \pvs[\top] \Exists \stuckness, \stateinterp, \vec\pred, \pred_F. \stateinterp(\state_1,0,\vec\obs,0) * \left(\Sep_{\expr,\pred \in \vec\expr_1,\vec\pred} \wpre[\stateinterp;\pred_F]{\expr}[\stuckness;\top]{x.\; \pred(x)}\right) * \left(\consstate^{\stateinterp;\vec\pred;\pred_F}_{\stuckness}(\tpool_2, \state_2) \vs[\top][\emptyset] \hat{\metaprop}\right)
 \end{align*}
 where $\consstate$ describes states that are consistent with the state interpretation and postconditions:
 \begin{align*}
@@ -263,7 +272,7 @@ As an example for how to use this adequacy theorem, let us say we wanted to prov
 \begin{cor}[Stuck-freedom]
   Assume we are given some $\expr_1$ such that the following holds:
 \[
-\TRUE \proves \All\state_1, \vec\obs. \pvs[\top] \Exists \stateinterp, \pred, \pred_F. \stateinterp(\state_1,\vec\obs,0) * \wpre[\stateinterp;\pred_F]{\expr_1}[\NotStuck;\top]{x.\; \pred(x)}
+\TRUE \proves \All\state_1, \vec\obs. \pvs[\top] \Exists \stateinterp, \pred, \pred_F. \stateinterp(\state_1,0,\vec\obs,0) * \wpre[\stateinterp;\pred_F]{\expr_1}[\NotStuck;\top]{x.\; \pred(x)}
 \]
   Then it is the case that:
 \[
@@ -281,7 +290,7 @@ Similarly we could show that the postcondition makes adequate statements about t
 \begin{cor}[Adequate postcondition]
   Assume we are given some $\expr_1$ and a set $V \subseteq \Val$ such that the following holds (assuming we can talk about sets like $V$ inside the logic):
 \[
-\TRUE \proves \All\state_1, \vec\obs. \pvs[\top] \Exists \stuckness, \stateinterp, \pred_F. \stateinterp(\state_1,\vec\obs,0) * \wpre[\stateinterp;\pred_F]{\expr_1}[\stuckness;\top]{x.\; x \in V}
+\TRUE \proves \All\state_1, \vec\obs. \pvs[\top] \Exists \stuckness, \stateinterp, \pred_F. \stateinterp(\state_1,0,\vec\obs,0) * \wpre[\stateinterp;\pred_F]{\expr_1}[\stuckness;\top]{x.\; x \in V}
 \]
   Then it is the case that:
 \[
@@ -298,7 +307,7 @@ As a final example, we could use adequacy to show that the state $\state$ of the
 \begin{cor}[Adequate state interpretation]
   Assume we are given some $\expr_1$ and a set $\Sigma \subseteq \State$ such that the following holds (assuming we can talk about sets like $\Sigma$ inside the logic):
 \[
-\TRUE \proves \All\state_1, \vec\obs. \pvs[\top] \Exists \stuckness, \stateinterp, \pred, \pred_F. \stateinterp(\state_1,\vec\obs,0) * \wpre[\stateinterp;\pred_F]{\expr_1}[\stuckness;\top]{\pred} * (\All \state_2, m. \stateinterp(\state_2,(),m) \!\vs[\top][\emptyset] \state_2 \in \Sigma)
+\TRUE \proves \All\state_1, \vec\obs. \pvs[\top] \Exists \stuckness, \stateinterp, \pred, \pred_F. \stateinterp(\state_1,0,\vec\obs,0) * \wpre[\stateinterp;\pred_F]{\expr_1}[\stuckness;\top]{\pred} * (\All \state_2, n_s, n_t. \stateinterp(\state_2,n_s(),n_t) \!\vs[\top][\emptyset] \state_2 \in \Sigma)
 \]
   Then it is the case that:
 \[
@@ -308,7 +317,7 @@ As a final example, we could use adequacy to show that the state $\state$ of the
 To show this, we assume some $\state_1, \vec\obs, \tpool_2, \state_2$ such that $([\expr_1], \state_1) \tpsteps[\vec\obs] (\tpool_2, \state_2)$, and we instantiate adequacy with this execution and $\metaprop \eqdef \state_2 \in \Sigma$.
 Then we have to show:
 \[
-(\All \state_2, m. \stateinterp(\state_2,(),m) \!\vs[\top][\emptyset] \state_2 \in \Sigma) \proves \consstate^{\stateinterp;[\pred];\pred_F}_{\stuckness}(\tpool_2, \state_2) \vs[\top][\emptyset] \state_2 \in \Sigma
+(\All \state_2, n_s, n_t. \stateinterp(\state_2,n_s,(),n_t) \!\vs[\top][\emptyset] \state_2 \in \Sigma) \proves \consstate^{\stateinterp;[\pred];\pred_F}_{\stuckness}(\tpool_2, \state_2) \vs[\top][\emptyset] \state_2 \in \Sigma
 \]
 
 \paragraph{Hoare triples.}
