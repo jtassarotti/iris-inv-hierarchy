@@ -3,9 +3,10 @@ ownership of the entire heap, and a "points-to-like" proposition for (mutable,
 fractional, or persistent read-only) ownership of individual elements. *)
 From iris.bi.lib Require Import fractional.
 From iris.proofmode Require Import tactics.
-From iris.algebra Require Import dfrac gmap_view.
+From iris.algebra Require Import gmap_view.
+From iris.algebra Require Export dfrac.
 From iris.base_logic.lib Require Export own.
-From iris Require Import options.
+From iris.prelude Require Import options.
 
 (** The CMRA we need.
 FIXME: This is intentionally discrete-only, but
@@ -13,9 +14,10 @@ should we support setoids via [Equiv]? *)
 Class ghost_mapG Σ (K V : Type) `{Countable K} := GhostMapG {
   ghost_map_inG :> inG Σ (gmap_viewR K (leibnizO V));
 }.
-Definition ghost_mapΣ (K V : Type) `{Countable K} : gFunctors := #[ GFunctor (gmap_viewR K (leibnizO V)) ].
+Definition ghost_mapΣ (K V : Type) `{Countable K} : gFunctors :=
+  #[ GFunctor (gmap_viewR K (leibnizO V)) ].
 
-Instance subG_ghost_mapΣ Σ (K V : Type) `{Countable K} :
+Global Instance subG_ghost_mapΣ Σ (K V : Type) `{Countable K} :
   subG (ghost_mapΣ K V) Σ → ghost_mapG Σ K V.
 Proof. solve_inG. Qed.
 
@@ -63,7 +65,7 @@ Section lemmas.
     AsFractional (k ↪[γ]{#q} v) (λ q, k ↪[γ]{#q} v)%I q.
   Proof. split; first done. apply _. Qed.
 
-  Lemma ghost_map_elem_valid k γ dq v : k ↪[γ]{dq} v -∗ ✓ dq.
+  Lemma ghost_map_elem_valid k γ dq v : k ↪[γ]{dq} v -∗ ⌜✓ dq⌝.
   Proof.
     unseal. iIntros "Helem".
     iDestruct (own_valid with "Helem") as %?%gmap_view_frag_valid.
@@ -115,7 +117,8 @@ Section lemmas.
     ⊢ |==> ∃ γ, ⌜P γ⌝ ∗ ghost_map_auth γ 1 m ∗ [∗ map] k ↦ v ∈ m, k ↪[γ] v.
   Proof.
     unseal. intros.
-    iMod (own_alloc_strong (gmap_view_auth (V:=leibnizO V) 1 ∅) P) as (γ) "[% Hauth]"; first done.
+    iMod (own_alloc_strong (gmap_view_auth (V:=leibnizO V) 1 ∅) P)
+      as (γ) "[% Hauth]"; first done.
     { apply gmap_view_auth_valid. }
     iExists γ. iSplitR; first done.
     rewrite -big_opM_own_1 -own_op. iApply (own_update with "Hauth").
@@ -124,12 +127,23 @@ Section lemmas.
     - done.
     - rewrite right_id. done.
   Qed.
+  Lemma ghost_map_alloc_strong_empty P :
+    pred_infinite P →
+    ⊢ |==> ∃ γ, ⌜P γ⌝ ∗ ghost_map_auth γ 1 ∅.
+  Proof.
+    intros. iMod (ghost_map_alloc_strong P ∅) as (γ) "(% & Hauth & _)"; eauto.
+  Qed.
   Lemma ghost_map_alloc m :
     ⊢ |==> ∃ γ, ghost_map_auth γ 1 m ∗ [∗ map] k ↦ v ∈ m, k ↪[γ] v.
   Proof.
     iMod (ghost_map_alloc_strong (λ _, True) m) as (γ) "[_ Hmap]".
     - by apply pred_infinite_True.
     - eauto.
+  Qed.
+  Lemma ghost_map_alloc_empty :
+    ⊢ |==> ∃ γ, ghost_map_auth γ 1 ∅.
+  Proof.
+    intros. iMod (ghost_map_alloc ∅) as (γ) "(Hauth & _)"; eauto.
   Qed.
 
   Global Instance ghost_map_auth_timeless γ q m : Timeless (ghost_map_auth γ q m).
@@ -147,14 +161,14 @@ Section lemmas.
     done.
   Qed.
   Lemma ghost_map_auth_valid_2 γ q1 q2 m1 m2 :
-    ghost_map_auth γ q1 m1 -∗ ghost_map_auth γ q2 m2  -∗ ⌜(q1 + q2 ≤ 1)%Qp ∧ m1 = m2⌝.
+    ghost_map_auth γ q1 m1 -∗ ghost_map_auth γ q2 m2 -∗ ⌜(q1 + q2 ≤ 1)%Qp ∧ m1 = m2⌝.
   Proof.
     unseal. iIntros "H1 H2".
     iDestruct (own_valid_2 with "H1 H2") as %[??]%gmap_view_auth_frac_op_valid_L.
     done.
   Qed.
   Lemma ghost_map_auth_agree γ q1 q2 m1 m2 :
-    ghost_map_auth γ q1 m1 -∗ ghost_map_auth γ q2 m2  -∗ ⌜m1 = m2⌝.
+    ghost_map_auth γ q1 m1 -∗ ghost_map_auth γ q2 m2 -∗ ⌜m1 = m2⌝.
   Proof.
     iIntros "H1 H2".
     iDestruct (ghost_map_auth_valid_2 with "H1 H2") as %[_ ?].
