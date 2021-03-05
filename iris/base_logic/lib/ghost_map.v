@@ -43,8 +43,10 @@ Notation "k ↪[ γ ]{ dq } v" := (ghost_map_elem γ k dq v)
   (at level 20, γ at level 50, dq at level 50, format "k  ↪[ γ ]{ dq }  v") : bi_scope.
 Notation "k ↪[ γ ]{# q } v" := (k ↪[γ]{DfracOwn q} v)%I
   (at level 20, γ at level 50, q at level 50, format "k  ↪[ γ ]{# q }  v") : bi_scope.
-Notation "k ↪[ γ ] v" := (k ↪[γ]{#1} v)%I (at level 20, γ at level 50) : bi_scope.
-Notation "k ↪[ γ ]□ v" := (k ↪[γ]{DfracDiscarded} v)%I (at level 20, γ at level 50) : bi_scope.
+Notation "k ↪[ γ ] v" := (k ↪[γ]{#1} v)%I
+  (at level 20, γ at level 50, format "k  ↪[ γ ]  v") : bi_scope.
+Notation "k ↪[ γ ]□ v" := (k ↪[γ]{DfracDiscarded} v)%I
+  (at level 20, γ at level 50) : bi_scope.
 
 Local Ltac unseal := rewrite
   ?ghost_map_auth_eq /ghost_map_auth_def
@@ -184,7 +186,7 @@ Section lemmas.
     eauto.
   Qed.
 
-  Lemma ghost_map_insert k v γ m :
+  Lemma ghost_map_insert {γ m} k v :
     m !! k = None →
     ghost_map_auth γ 1 m ==∗ ghost_map_auth γ 1 (<[k := v]> m) ∗ k ↪[γ] v.
   Proof.
@@ -192,11 +194,20 @@ Section lemmas.
     iApply own_update. apply: gmap_view_alloc; done.
   Qed.
 
-  Lemma ghost_map_delete k v γ m :
-    ghost_map_auth γ 1 m ∗ k ↪[γ] v ==∗ ghost_map_auth γ 1 (delete k m).
+  Lemma ghost_map_delete {γ m k v} :
+    ghost_map_auth γ 1 m -∗ k ↪[γ] v ==∗ ghost_map_auth γ 1 (delete k m).
   Proof.
-    unseal. rewrite -own_op.
+    unseal. apply bi.wand_intro_r. rewrite -own_op.
     iApply own_update. apply: gmap_view_delete.
+  Qed.
+
+  Lemma ghost_map_update {γ m k v} w :
+    ghost_map_auth γ 1 m -∗ k ↪[γ] v ==∗ ghost_map_auth γ 1 (<[k := w]> m) ∗ k ↪[γ] w.
+  Proof.
+    iIntros "Hauth Hel". iMod (ghost_map_delete with "Hauth Hel") as "Hauth".
+    iMod (ghost_map_insert k with "Hauth").
+    { rewrite lookup_delete. done. }
+    rewrite insert_delete. eauto.
   Qed.
 
 End lemmas.
