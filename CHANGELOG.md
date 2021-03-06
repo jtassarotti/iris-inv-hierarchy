@@ -13,6 +13,11 @@ lemma.
   `●{#q} a` and `●V{#q} a`. Lemmas affected by this have been renamed such that
   the "frac" in their name has been changed into "dfrac".
 
+**Changes in `base_logic`:**
+
+* Add `ghost_map`, a logic-level library for a `gmap K V` with an authoritative
+  view and per-element points-to facts written `k ↪[γ] w`.
+
 The following `sed` script helps adjust your code to the renaming (on macOS,
 replace `sed` by `gsed`, installed via e.g. `brew install gnu-sed`).
 Note that the script is not idempotent, do not run it twice.
