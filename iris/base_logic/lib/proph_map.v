@@ -96,8 +96,7 @@ Section proph_map.
     proph p vs1 -∗ proph p vs2 -∗ False.
   Proof.
     rewrite proph_eq /proph_def. iIntros "Hp1 Hp2".
-    iDestruct (ghost_map_elem_elem_ne with "Hp1 Hp2") as %?.
-    done.
+    by iDestruct (ghost_map_elem_ne with "Hp1 Hp2") as %?.
   Qed.
 
   Lemma proph_map_new_proph p ps pvs :
