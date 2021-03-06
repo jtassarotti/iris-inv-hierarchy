@@ -71,28 +71,26 @@ Proof.
 Qed.
 
 Lemma step_fupdN_soundness `{!invPreG Σ} φ n :
-  (∀ `{Hinv: !invG Σ}, ⊢@{iPropI Σ} |={⊤}[∅]▷=>^n |={⊤,∅}=> ⌜ φ ⌝) →
+  (∀ `{Hinv: !invG Σ}, ⊢@{iPropI Σ} |={⊤,∅}=> |={∅}▷=>^n ⌜ φ ⌝) →
   φ.
 Proof.
   intros Hiter.
   apply (soundness (M:=iResUR Σ) _  (S n)); simpl.
   apply (fupd_plain_soundness ⊤ ⊤ _)=> Hinv.
   iPoseProof (Hiter Hinv) as "H". clear Hiter.
-  destruct n as [|n].
-  - iApply fupd_plainly_mask_empty. iMod "H" as %?; auto.
-  - iDestruct (step_fupdN_wand _ _ _ _ (|={⊤}=> ⌜φ⌝)%I with "H []") as "H'".
-    { by iApply fupd_plain_mask_empty. }
-    rewrite -step_fupdN_S_fupd.
-    iMod (step_fupdN_plain with "H'") as "Hφ". iModIntro. iNext.
-    rewrite -later_laterN laterN_later.
-    iNext. by iMod "Hφ".
+  iApply fupd_plainly_mask_empty. iMod "H".
+  iMod (step_fupdN_plain with "H") as "H". iModIntro.
+  rewrite -later_plainly -laterN_plainly -later_laterN laterN_later.
+  iNext. iMod "H" as %Hφ. auto.
 Qed.
 
 Lemma step_fupdN_soundness' `{!invPreG Σ} φ n :
   (∀ `{Hinv: !invG Σ}, ⊢@{iPropI Σ} |={⊤}[∅]▷=>^n ⌜ φ ⌝) →
   φ.
 Proof.
-  iIntros (Hiter). eapply (step_fupdN_soundness _ n).
-  iIntros (Hinv). iPoseProof (Hiter Hinv) as "Hiter".
-  iApply (step_fupdN_wand with "Hiter"). by iApply fupd_mask_intro_discard.
+  iIntros (Hiter). eapply (step_fupdN_soundness _ n)=>Hinv. destruct n as [|n].
+  { by iApply fupd_mask_intro_discard; [|iApply (Hiter Hinv)]. }
+   simpl in Hiter |- *. iMod Hiter as "H". iIntros "!>!>!>".
+  iMod "H". clear. iInduction n as [|n] "IH"; [by iApply fupd_mask_intro_discard|].
+  simpl. iMod "H". iIntros "!>!>!>". iMod "H". by iApply "IH".
 Qed.

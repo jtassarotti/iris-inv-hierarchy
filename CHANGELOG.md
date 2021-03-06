@@ -31,6 +31,28 @@ s/\bbij_both_frac_valid\b/bij_both_dfrac_valid/g
 EOF
 ```
 
+**Changes in `base_logic`:**
+
+* Generalize the soundness lemma of the base logic `step_fupdN_soundness`.
+  It applies even if invariants stay open accross an arbitrary number of laters.
+
+**Changes in `program_logic`:**
+
+* Change definition of weakest precondition to use a variable number of laters
+  (i.e., logical steps) for each physical step of the operational semantics,
+  depending on the number of physical steps executed since the begining of the
+  execution of the program. See merge request [!595](https://gitlab.mpi-sws.org/iris/iris/-/merge_requests/595).
+
+  This implies several API-breaking changes, which can be easily fixed in client
+  formalizations in a backward compatible manner as follows:
+   - Ignore the new parameter `ns` in the state interpretation, which
+     corresponds to a step counter.
+   - Use the constant function "0" for the new field `num_laters_per_step` of
+     `irisG`.
+   - Use `fupd_intro _ _` for the new field `state_interp_mono` of `irisG`.
+   - Some proofs using lifting lemmas and adequacy theorems need to be adapted
+     to ignore the new step counter.
+
 ## Iris 3.4.0
 
 The highlights and most notable changes of this release are as follows:
