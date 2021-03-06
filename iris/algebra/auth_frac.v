@@ -50,12 +50,12 @@ Proof.
     by rewrite left_id -assoc.
 Qed.
 
-Lemma auth_frac_update_alloc {A: ucmra} (q: Qp) (a b': A):
-  (a, ε) ~l~> (a,b') → (●{q} a ~~> ●{q} a ⋅ ◯ b').
-Proof. intros. rewrite -{1}(right_id _ _ (●{q} a)). by eapply auth_frac_update in H. Qed.
+Lemma auth_frac_update_alloc {A: ucmra} (dq: dfrac) (a b': A):
+  (a, ε) ~l~> (a,b') → (●{dq} a ~~> ●{dq} a ⋅ ◯ b').
+Proof. intros. rewrite -{1}(right_id _ _ (●{dq} a)). by eapply auth_frac_update in H. Qed.
 
-Lemma auth_frac_update_core_id {A: ucmra} q (a b: A) `{!CoreId b} :
-  b ≼ a → ●{q} a ~~> ●{q} a ⋅ ◯ b.
+Lemma auth_frac_update_core_id {A: ucmra} dq (a b: A) `{!CoreId b} :
+  b ≼ a → ●{dq} a ~~> ●{dq} a ⋅ ◯ b.
 Proof.
   intros Hincl. apply: auth_frac_update_alloc.
   rewrite -(left_id ε _ b). apply: core_id_local_update. done.

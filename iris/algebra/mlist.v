@@ -197,7 +197,7 @@ Section fmlist_props.
 Context `{fmlistG A Σ}.
 Implicit Types l : list A.
 
-Definition fmlist γ q l:= own γ (●{q} (MList l)).
+Definition fmlist γ (q : Qp) l:= own γ (●{#q} (MList l)).
 Definition fmlist_lb γ l := own γ (◯ (MList l)).
 Definition fmlist_idx γ i a := (∃ l, ⌜ l !! i = Some a ⌝ ∗ fmlist_lb γ l)%I.
 
@@ -208,7 +208,7 @@ Lemma fmlist_agree_1 γ q1 q2 l1 l2:
   fmlist γ q1 l1 -∗ fmlist γ q2 l2 -∗ ⌜ l1 = l2 ⌝.
 Proof.
   iIntros "Hγ1 Hγ2". iDestruct (own_valid_2 with "Hγ1 Hγ2") as %Hval.
-  apply auth_auth_frac_op_inv in Hval.
+  apply auth_auth_dfrac_op_inv in Hval.
   iPureIntro. apply (inj MList); auto.
 Qed.
 
@@ -216,7 +216,7 @@ Lemma fmlist_agree_2 γ q1 l1 l2 :
   fmlist γ q1 l1 -∗ fmlist_lb γ l2 -∗ ⌜ l2 `prefix_of` l1 ⌝.
 Proof.
   iIntros "Hγ1 Hγ2". iDestruct (own_valid_2 with "Hγ1 Hγ2") as %Hval.
-  by apply @auth_both_frac_valid_discrete in Hval as (?&Hle%mlist_included&?); last apply _.
+  by apply @auth_both_dfrac_valid_discrete in Hval as (?&Hle%mlist_included&?); last apply _.
 Qed.
 
 Lemma fmlist_lb_agree γ l1 l2 :
@@ -270,7 +270,7 @@ Lemma fmlist_to_lb γ q l:
   fmlist γ q l ==∗ fmlist_lb γ l.
 Proof.
   iIntros "Hm".
-  iMod (own_update _ _ ((●{q} (MList l)) ⋅ ◯ (MList l)) with "Hm") as "(?&$)"; last done.
+  iMod (own_update _ _ ((●{#q} (MList l)) ⋅ ◯ (MList l)) with "Hm") as "(?&$)"; last done.
   { apply auth_frac_update_core_id; eauto. apply _. }
 Qed.
 
@@ -278,7 +278,7 @@ Lemma fmlist_get_lb γ q l:
   fmlist γ q l ==∗ fmlist γ q l ∗ fmlist_lb γ l.
 Proof.
   iIntros "Hm".
-  iMod (own_update _ _ ((●{q} (MList l)) ⋅ ◯ (MList l)) with "Hm") as "(?&$)"; last done.
+  iMod (own_update _ _ ((●{#q} (MList l)) ⋅ ◯ (MList l)) with "Hm") as "(?&$)"; last done.
   { apply auth_frac_update_core_id; eauto. apply _. }
 Qed.
 
@@ -300,7 +300,7 @@ Lemma fmlist_alloc l :
   ⊢ |==> ∃ γ, fmlist γ 1 l.
 Proof.
   iStartProof.
-  iMod (own_alloc (●{1} (MList l))) as (γ) "H".
+  iMod (own_alloc (● (MList l))) as (γ) "H".
   { apply auth_auth_valid.
     cbv; auto. }
   iModIntro.
