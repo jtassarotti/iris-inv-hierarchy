@@ -14,17 +14,17 @@ Local Hint Resolve head_prim_reducible_no_obs head_reducible_prim_step
 
 Lemma twp_lift_head_step {s E Φ} e1 :
   to_val e1 = None →
-  (∀ σ1 κs n, state_interp σ1 κs n ={E,∅}=∗
+  (∀ σ1 ns κs nt, state_interp σ1 ns κs nt ={E,∅}=∗
     ⌜head_reducible_no_obs e1 σ1⌝ ∗
     ∀ κ e2 σ2 efs, ⌜head_step e1 σ1 κ e2 σ2 efs⌝ ={∅,E}=∗
       ⌜κ = []⌝ ∗
-      state_interp σ2 κs (length efs + n) ∗
+      state_interp σ2 (S ns) κs (length efs + nt) ∗
       WP e2 @ s; E [{ Φ }] ∗
       [∗ list] i ↦ ef ∈ efs, WP ef @ s; ⊤ [{ fork_post }])
   ⊢ WP e1 @ s; E [{ Φ }].
 Proof.
   iIntros (?) "H".
-  iApply (twp_lift_step _ E)=>//. iIntros (σ1 κs n) "Hσ".
+  iApply (twp_lift_step _ E)=>//. iIntros (σ1 ns κs nt) "Hσ".
   iMod ("H" $! σ1 with "Hσ") as "[% H]"; iModIntro.
   iSplit; [destruct s; auto|]. iIntros (κ e2 σ2 efs Hstep).
   iApply "H". by eauto.
@@ -42,30 +42,31 @@ Qed.
 
 Lemma twp_lift_atomic_head_step {s E Φ} e1 :
   to_val e1 = None →
-  (∀ σ1 κs n, state_interp σ1 κs n ={E}=∗
+  (∀ σ1 ns κs nt, state_interp σ1 ns κs nt ={E}=∗
     ⌜head_reducible_no_obs e1 σ1⌝ ∗
     ∀ κ e2 σ2 efs, ⌜head_step e1 σ1 κ e2 σ2 efs⌝ ={E}=∗
       ⌜κ = []⌝ ∗
-      state_interp σ2 κs (length efs + n) ∗
+      state_interp σ2 (S ns) κs (length efs + nt) ∗
       from_option Φ False (to_val e2) ∗
       [∗ list] ef ∈ efs, WP ef @ s; ⊤ [{ fork_post }])
   ⊢ WP e1 @ s; E [{ Φ }].
 Proof.
   iIntros (?) "H". iApply twp_lift_atomic_step; eauto.
-  iIntros (σ1 κs n) "Hσ1". iMod ("H" $! σ1 with "Hσ1") as "[% H]"; iModIntro.
+  iIntros (σ1 ns κs nt) "Hσ1". iMod ("H" $! σ1 with "Hσ1") as "[% H]"; iModIntro.
   iSplit; first by destruct s; auto. iIntros (κ e2 σ2 efs Hstep). iApply "H"; eauto.
 Qed.
 
 Lemma twp_lift_atomic_head_step_no_fork {s E Φ} e1 :
   to_val e1 = None →
-  (∀ σ1 κs n, state_interp σ1 κs n ={E}=∗
+  (∀ σ1 ns κs nt, state_interp σ1 ns κs nt ={E}=∗
     ⌜head_reducible_no_obs e1 σ1⌝ ∗
     ∀ κ e2 σ2 efs, ⌜head_step e1 σ1 κ e2 σ2 efs⌝ ={E}=∗
-      ⌜κ = []⌝ ∗ ⌜efs = []⌝ ∗ state_interp σ2 κs n ∗ from_option Φ False (to_val e2))
+      ⌜κ = []⌝ ∗ ⌜efs = []⌝ ∗ state_interp σ2 (S ns) κs nt
+                            ∗ from_option Φ False (to_val e2))
   ⊢ WP e1 @ s; E [{ Φ }].
 Proof.
   iIntros (?) "H". iApply twp_lift_atomic_head_step; eauto.
-  iIntros (σ1 κs n) "Hσ1". iMod ("H" $! σ1 with "Hσ1") as "[$ H]"; iModIntro.
+  iIntros (σ1 ns κs nt) "Hσ1". iMod ("H" $! σ1 with "Hσ1") as "[$ H]"; iModIntro.
   iIntros (κ v2 σ2 efs Hstep).
   iMod ("H" with "[# //]") as "(-> & -> & ? & $) /=". by iFrame.
 Qed.

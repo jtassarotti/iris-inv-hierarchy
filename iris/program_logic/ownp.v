@@ -24,8 +24,10 @@ Class ownPG (Λ : language) (Σ : gFunctors) := OwnPG {
 Global Instance ownPG_irisG `{!ownPG Λ Σ} : irisG Λ Σ := {
   iris_invG := ownP_invG;
   iris_crashG := ownP_crashG;
-  state_interp σ κs _ := own ownP_name (●E σ)%I;
+  state_interp σ _ κs _ := own ownP_name (●E σ)%I;
   fork_post _ := True%I;
+  num_laters_per_step _ := 0;
+  state_interp_mono _ _ _ _ := fupd_intro _ _
 }.
 Global Opaque iris_invG.
 
@@ -90,7 +92,8 @@ Section lifting.
   Implicit Types e : expr Λ.
   Implicit Types Φ : val Λ → iProp Σ.
 
-  Lemma ownP_eq σ1 σ2 κs n : state_interp σ1 κs n -∗ ownP σ2 -∗ ⌜σ1 = σ2⌝.
+  Lemma ownP_eq σ1 ns σ2 κs nt :
+    state_interp σ1 ns κs nt -∗ ownP σ2 -∗ ⌜σ1 = σ2⌝.
   Proof.
     iIntros "Hσ● Hσ◯". rewrite /ownP.
     by iDestruct (own_valid_2 with "Hσ● Hσ◯")
@@ -116,7 +119,7 @@ Section lifting.
       iMod "H" as (σ1) "[Hred _]"; iDestruct "Hred" as %Hred.
       destruct s; last done. apply reducible_not_val in Hred.
       move: Hred; by rewrite to_of_val.
-    - iApply wp_lift_step; [done|]; iIntros (σ1 κ κs n) "Hσκs".
+    - iApply wp_lift_step; [done|]; iIntros (σ1 ns κ κs nt) "Hσκs".
       iMod "H" as (σ1' ?) "[>Hσf H]".
       iDestruct (ownP_eq with "Hσκs Hσf") as %<-.
       iModIntro; iSplit; [by destruct s|]; iNext; iIntros (e2 σ2 efs Hstep).
@@ -134,7 +137,7 @@ Section lifting.
     - apply of_to_val in EQe as <-. iApply fupd_wp.
       iMod "H" as (σ1) "[H _]". iDestruct "H" as %[Hnv _]. exfalso.
       by rewrite to_of_val in Hnv.
-    - iApply wp_lift_stuck; [done|]. iIntros (σ1 κs n) "Hσ".
+    - iApply wp_lift_stuck; [done|]. iIntros (σ1 ns κs nt) "Hσ".
       iMod "H" as (σ1') "(% & >Hσf)".
       by iDestruct (ownP_eq with "Hσ Hσf") as %->.
   Qed.
@@ -149,7 +152,7 @@ Section lifting.
     iIntros (Hsafe Hstep) "H"; iApply wp_lift_step.
     { specialize (Hsafe inhabitant). destruct s; last done.
       by eapply reducible_not_val. }
-    iIntros (σ1 κ κs n) "Hσ". iApply fupd_mask_intro; first set_solver.
+    iIntros (σ1 ns κ κs nt) "Hσ". iApply fupd_mask_intro; first set_solver.
     iIntros "Hclose". iSplit; [by destruct s|]; iNext; iIntros (e2 σ2 efs ?).
     destruct (Hstep σ1 κ e2 σ2 efs); auto; subst.
     by iMod "Hclose"; iModIntro; iFrame; iApply "H".

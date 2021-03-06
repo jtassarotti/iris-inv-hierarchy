@@ -156,7 +156,7 @@ iris_heap_lang/derived_laws.v
 iris_heap_lang/notation.v
 iris_heap_lang/proofmode.v
 iris_heap_lang/adequacy.v
-iris_heap_lang/total_adequacy.v
+#iris_heap_lang/total_adequacy.v
 iris_heap_lang/proph_erasure.v
 iris_heap_lang/lib/spawn.v
 iris_heap_lang/lib/par.v

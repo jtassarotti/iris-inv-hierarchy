@@ -370,6 +370,16 @@ Section fupd_derived.
     rewrite {4}(union_difference_L _ _ HE). done.
   Qed.
 
+  Lemma fupd_mask_subseteq_emptyset_difference E1 E2 :
+    E2 ⊆ E1 →
+    ⊢@{PROP} |={E1, E2}=> |={∅, E1∖E2}=> emp.
+  Proof.
+    intros ?. rewrite [in fupd E1](union_difference_L E2 E1); [|done].
+    rewrite (comm_L (∪))
+      -[X in fupd _ X](left_id_L ∅ (∪) E2) -fupd_mask_frame_r; [|set_solver+].
+    apply fupd_mask_intro_subseteq; set_solver.
+  Qed.
+
   Lemma fupd_sep E P Q : (|={E}=> P) ∗ (|={E}=> Q) ={E}=∗ P ∗ Q.
   Proof. by rewrite fupd_frame_r fupd_frame_l fupd_trans. Qed.
 
@@ -458,6 +468,12 @@ Section fupd_derived.
     { by rewrite wand_elim_l. }
     rewrite -IH -fupd_frame_l later_sep -fupd_frame_l.
     by apply sep_mono; first apply later_intro.
+  Qed.
+
+  Lemma step_fupdN_intro Ei Eo n P : Ei ⊆ Eo → ▷^n P -∗ |={Eo}[Ei]▷=>^n P.
+  Proof.
+    induction n as [|n IH]=> ?; [done|].
+    rewrite /= -step_fupd_intro; [|done]. by rewrite IH.
   Qed.
 
   Lemma step_fupdN_S_fupd n E P :

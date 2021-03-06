@@ -15,17 +15,17 @@ Local Hint Resolve reducible_no_obs_reducible : core.
 
 Lemma twp_lift_step s E Φ e1 :
   to_val e1 = None →
-  (∀ σ1 κs n, state_interp σ1 κs n ={E,∅}=∗
+  (∀ σ1 ns κs nt, state_interp σ1 ns κs nt ={E,∅}=∗
     ⌜if s is NotStuck then reducible_no_obs e1 σ1 else True⌝ ∗
     ∀ κ e2 σ2 efs, ⌜prim_step e1 σ1 κ e2 σ2 efs⌝ ={∅,E}=∗
       ⌜κ = []⌝ ∗
-      state_interp σ2 κs (length efs + n) ∗
+      state_interp σ2 (S ns) κs (length efs + nt) ∗
       WP e2 @ s; E [{ Φ }] ∗
       [∗ list] ef ∈ efs, WP ef @ s; ⊤ [{ fork_post }])
   ⊢ WP e1 @ s; E [{ Φ }].
 Proof.
   rewrite twp_unfold /twp_pre=>->.
-  iIntros "H". iIntros (???) "Hinterp".
+  iIntros "H". iIntros (????) "Hinterp".
   iMod ("H" with "[$]") as "($&H)".
   iModIntro. iIntros. iMod ("H" with "[//]") as "H".
   iModIntro. eauto.
@@ -40,11 +40,11 @@ Lemma twp_lift_pure_step_no_fork `{!Inhabited (state Λ)} s E Φ e1 :
 Proof.
   iIntros (Hsafe Hstep) ">H". iApply twp_lift_step.
   { eapply reducible_not_val, reducible_no_obs_reducible, (Hsafe inhabitant). }
-  iIntros (σ1 κs n) "Hσ".
+  iIntros (σ1 ns κs n) "Hσ".
   iApply fupd_mask_intro; first by set_solver. iIntros "Hclose". iSplit.
   { iPureIntro. destruct s; auto. }
   iIntros (κ e2 σ2 efs ?). destruct (Hstep σ1 κ e2 σ2 efs) as (->&<-&->); auto.
-  iMod "Hclose" as "_". iModIntro.
+  iMod (state_interp_mono with "Hσ"). iMod "Hclose" as "_".
   iDestruct ("H" with "[//]") as "H". simpl. by iFrame.
 Qed.
 
@@ -52,17 +52,17 @@ Qed.
    use the generic lemmas here. *)
 Lemma twp_lift_atomic_step {s E Φ} e1 :
   to_val e1 = None →
-  (∀ σ1 κs n, state_interp σ1 κs n ={E}=∗
+  (∀ σ1 ns κs nt, state_interp σ1 ns κs nt ={E}=∗
     ⌜if s is NotStuck then reducible_no_obs e1 σ1 else True⌝ ∗
     ∀ κ e2 σ2 efs, ⌜prim_step e1 σ1 κ e2 σ2 efs⌝ ={E}=∗
       ⌜κ = []⌝ ∗
-      state_interp σ2 κs (length efs + n) ∗
+      state_interp σ2 (S ns) κs (length efs + nt) ∗
       from_option Φ False (to_val e2) ∗
       [∗ list] ef ∈ efs, WP ef @ s; ⊤ [{ fork_post }])
   ⊢ WP e1 @ s; E [{ Φ }].
 Proof.
   iIntros (?) "H".
-  iApply (twp_lift_step _ E _ e1)=>//; iIntros (σ1 κs n) "Hσ1".
+  iApply (twp_lift_step _ E _ e1)=>//; iIntros (σ1 ns κs nt) "Hσ1".
   iMod ("H" $! σ1 with "Hσ1") as "[$ H]".
   iApply fupd_mask_intro; first set_solver.
   iIntros "Hclose" (κ e2 σ2 efs) "%". iMod "Hclose" as "_".

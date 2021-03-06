@@ -131,7 +131,7 @@ Section lemmas.
   Qed.
   Lemma ghost_map_alloc_strong_empty P :
     pred_infinite P →
-    ⊢ |==> ∃ γ, ⌜P γ⌝ ∗ ghost_map_auth γ 1 ∅.
+    ⊢ |==> ∃ γ, ⌜P γ⌝ ∗ ghost_map_auth γ 1 (∅ : gmap K V).
   Proof.
     intros. iMod (ghost_map_alloc_strong P ∅) as (γ) "(% & Hauth & _)"; eauto.
   Qed.
@@ -143,7 +143,7 @@ Section lemmas.
     - eauto.
   Qed.
   Lemma ghost_map_alloc_empty :
-    ⊢ |==> ∃ γ, ghost_map_auth γ 1 ∅.
+    ⊢ |==> ∃ γ, ghost_map_auth γ 1 (∅ : gmap K V).
   Proof.
     intros. iMod (ghost_map_alloc ∅) as (γ) "(Hauth & _)"; eauto.
   Qed.
