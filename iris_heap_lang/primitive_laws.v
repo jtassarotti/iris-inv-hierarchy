@@ -78,6 +78,16 @@ Proof.
   eauto.
 Qed.
 
+Lemma cred_interp_decr ns n :
+  cred_interp ns ∗ cred_frag (S n) ==∗
+  ∃ ns', ⌜ ns = S ns' ⌝ ∗ cred_interp ns' ∗ cred_frag n.
+Proof.
+  iIntros "((H&?)&Hfrag)".
+  iMod (cred_auth_frag_decr with "[$H $Hfrag]") as (ns' Heq) "(?&H)". subst.
+  iExists ns'. iModIntro. iSplit; eauto.
+  iFrame.
+Qed.
+
 End credit.
 
 Program Global Instance heapG_irisG `{!heapG Σ} : irisG heap_lang Σ := {
@@ -133,6 +143,91 @@ Implicit Types efs : list expr.
 Implicit Types σ : state.
 Implicit Types v : val.
 Implicit Types l : loc.
+
+Lemma state_interp_step_incr σ ns κs nt :
+  state_interp σ ns κs nt ==∗
+  state_interp σ (S ns) κs nt.
+Proof.
+  iIntros "(Hcred&Hσ&Hproph)".
+  iFrame. by iMod (cred_interp_incr with "Hcred") as "($&_)".
+Qed.
+
+Lemma state_interp_step_incr' σ ns κs nt :
+  state_interp σ ns κs nt ==∗
+  state_interp σ (S ns) κs nt ∗ cred_frag 1.
+Proof.
+  iIntros "(Hcred&Hσ&Hproph)".
+  iFrame. by iMod (cred_interp_incr with "Hcred") as "($&$)".
+Qed.
+
+Lemma state_interp_step_decr σ ns κs nt n:
+  state_interp σ ns κs nt ∗ cred_frag (S n) ==∗
+  ∃ ns', ⌜ ns = S ns' ⌝ ∗ state_interp σ ns' κs nt ∗ cred_frag n.
+Proof.
+  iIntros "((Hcred&Hσ&Hproph)&Hfrag)".
+  iFrame. iMod (cred_interp_decr with "[$]") as (ns' Heq) "(?&$)".
+  iExists _. iModIntro. iFrame. eauto.
+Qed.
+
+Lemma wp_pure_later_cred s E e1 e2 φ Φ :
+  PureExec φ 1 e1 e2 → φ → ▷ WP e2 @ s; E {{ v, cred_frag 1 -∗ Φ v }} -∗ WP e1 @ s; E {{ v, Φ v }}.
+Proof.
+  iIntros (HPure Hφ) "Hwp".
+  rewrite /PureExec in HPure. apply HPure in Hφ.
+  iApply wp_lift_step.
+  {
+    eapply (reducible_not_val _ inhabitant), reducible_no_obs_reducible.
+    inversion Hφ. eapply pure_step_safe; eauto.
+  }
+  iIntros (σ1 ns κ κs nt) "(Hcred&Hσ)".
+  iMod (cred_interp_incr with "[$]") as "($&Hcred)".
+  iApply (fupd_mask_intro); first by set_solver+.
+  iIntros "H".
+  iSplit.
+  {
+    destruct s; auto. iPureIntro. eapply reducible_no_obs_reducible.
+    inversion Hφ. eapply pure_step_safe; eauto.
+  }
+  iIntros "!>" (v2 σ2 efs Hstep); inv_head_step.
+  inversion Hφ; subst. eapply pure_step_det in Hstep; eauto.
+  destruct Hstep as (->&->&?&?). rewrite /=. iFrame.
+  subst. inversion H1; subst. rewrite big_sepL_nil.
+  iMod "H". iModIntro. iSplitL; last done.
+  iApply (wp_wand with "Hwp"). iIntros (?) "Hw".
+  iApply "Hw". iFrame.
+Qed.
+
+Lemma wp_later_cred_use s E e Φ :
+  language.to_val e = None →
+  (* Atomicity is not needed *)
+  Atomic (StronglyAtomic) e →
+  cred_frag 1 -∗
+  ▷ WP e @ s; E {{ v, cred_frag 1 -∗ Φ v }} -∗
+  WP e @ s; E {{ Φ }}.
+Proof.
+  iIntros (Hnval Hatomic) "Hcred Hwp".
+  rewrite ?wp_unfold /wp_pre.
+  rewrite Hnval.
+  iIntros (σ1 ns κ κs nt) "Hσ".
+  iMod (state_interp_step_decr with "[$]") as (ns' ->) "(Hσ&Hcred)".
+  iApply (fupd_mask_weaken ∅); first by set_solver+.
+  iIntros "H". iSplitL "".
+  { admit. (* if the reducibility came after the laters this would be provable. *) }
+  iModIntro.
+  iIntros (e2 σ2 efs Hred).
+  simpl. iModIntro. iNext. iModIntro.
+  iSpecialize ("Hwp" $! _ _ _ _ 0 with "[Hσ]").
+  { iFrame. }
+  iMod "H" as "_".
+  iMod "Hwp". iDestruct "Hwp" as "(?&Hwp)".
+  iSpecialize ("Hwp" with "[//]").
+  iApply (step_fupdN_wand with "Hwp").
+  iNext. iIntros "H". iMod "H" as "(Hσ&Hwp&$)".
+  iMod (state_interp_step_incr' _ _ _ 0 with "[$]") as "(Hσ&Hcred')".
+  iFrame. iModIntro.
+  iApply (wp_wand with "Hwp").
+  iIntros (?) "H". iApply "H". iFrame.
+Admitted.
 
 (** Recursive functions: we do not use this lemmas as it is easier to use Löb
 induction directly, but this demonstrates that we can state the expected
