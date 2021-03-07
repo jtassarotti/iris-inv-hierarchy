@@ -116,6 +116,27 @@ Proof.
 Qed.
 End adequacy.
 
+Theorem twp_total' Σ Λ `{!invPreG Σ} s e σ Φ (num_laters_per_step : nat → nat):
+  (∀ `{Hinv : !invG Σ},
+     ⊢ |={⊤}=> ∃
+         (stateI : state Λ → nat → list (observation Λ) → nat → iProp Σ)
+         (fork_post : val Λ → iProp Σ)
+         state_interp_mono,
+       let _ : irisG Λ Σ :=
+           IrisG _ _ Hinv stateI fork_post num_laters_per_step
+                 state_interp_mono
+       in
+       stateI σ 0 [] 0 ∗ WP e @ s; ⊤ [{ Φ }]) →
+  sn erased_step ([e], σ). (* i.e. ([e], σ) is strongly normalizing *)
+Proof.
+  intros Hwp. apply (soundness (M:=iResUR Σ) _  1); simpl.
+  apply (fupd_plain_soundness ⊤ ⊤ _)=> Hinv.
+  iMod (Hwp) as (stateI fork_post state_interp_mono) "[Hσ H]".
+  iApply (@twptp_total _ _ (IrisG _ _ Hinv stateI fork_post _ _)
+                       _ 0 with "Hσ").
+  by iApply (@twp_twptp _ _ (IrisG _ _ Hinv _ fork_post _ _)).
+Qed.
+
 Theorem twp_total Σ Λ `{!invPreG Σ} s e σ Φ :
   (∀ `{Hinv : !invG Σ},
      ⊢ |={⊤}=> ∃

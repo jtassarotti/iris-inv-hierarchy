@@ -214,6 +214,30 @@ Proof.
   right; exists (t2' ++ e3 :: t2'' ++ efs), σ3, κ; econstructor; eauto.
 Qed.
 
+Corollary wp_adequacy' Σ Λ `{!invPreG Σ} s e σ φ (num_laters_per_step : nat → nat) :
+  (∀ `{Hinv : !invG Σ} κs,
+     ⊢ |={⊤}=> ∃
+         (stateI : state Λ → nat → list (observation Λ) → nat → iProp Σ)
+         (fork_post : val Λ → iProp Σ)
+         state_interp_mono,
+       let _ : irisG Λ Σ :=
+           IrisG _ _ Hinv stateI fork_post num_laters_per_step
+                 state_interp_mono
+       in
+       stateI σ 0 κs 0 ∗ WP e @ s; ⊤ {{ v, ⌜φ v⌝ }}) →
+  adequate s e σ (λ v _, φ v).
+Proof.
+  intros Hwp. apply adequate_alt; intros t2 σ2 [n [κs ?]]%erased_steps_nsteps.
+  eapply (wp_strong_adequacy Σ _); [|done]=> ?.
+  iMod Hwp as (stateI fork_post mono) "[Hσ Hwp]".
+  iExists s, stateI, [(λ v, ⌜φ v⌝%I)], fork_post, _ => /=.
+  iIntros "{$Hσ $Hwp} !>" (e2 t2' -> ? ?) "_ H _".
+  iApply fupd_mask_intro_discard; [done|]. iSplit; [|done].
+  iDestruct (big_sepL2_cons_inv_r with "H") as (e' ? ->) "[Hwp H]".
+  iDestruct (big_sepL2_nil_inv_r with "H") as %->.
+  iIntros (v2 t2'' [= -> <-]). by rewrite to_of_val.
+Qed.
+
 Corollary wp_adequacy Σ Λ `{!invPreG Σ} s e σ φ :
   (∀ `{Hinv : !invG Σ} κs,
      ⊢ |={⊤}=> ∃
