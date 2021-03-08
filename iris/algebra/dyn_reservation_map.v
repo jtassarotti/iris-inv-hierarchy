@@ -66,11 +66,14 @@ Section ofe.
     dyn_reservation_map_data_proj x ≡{n}≡ dyn_reservation_map_data_proj y ∧
     dyn_reservation_map_token_proj x = dyn_reservation_map_token_proj y.
 
-  Global Instance DynReservationMap_ne : NonExpansive2 (@DynReservationMap A).
+  Global Instance DynReservationMap_ne :
+    NonExpansive2 (@DynReservationMap A).
   Proof. by split. Qed.
-  Global Instance DynReservationMap_proper : Proper ((≡) ==> (=) ==> (≡)) (@DynReservationMap A).
+  Global Instance DynReservationMap_proper :
+    Proper ((≡) ==> (=) ==> (≡)) (@DynReservationMap A).
   Proof. by split. Qed.
-  Global Instance dyn_reservation_map_data_proj_ne: NonExpansive (@dyn_reservation_map_data_proj A).
+  Global Instance dyn_reservation_map_data_proj_ne :
+    NonExpansive (@dyn_reservation_map_data_proj A).
   Proof. by destruct 1. Qed.
   Global Instance dyn_reservation_map_data_proj_proper :
     Proper ((≡) ==> (≡)) (@dyn_reservation_map_data_proj A).
@@ -151,198 +154,195 @@ Section cmra.
                     | CoPsetBot => False
                     end := eq_refl _.
 
-    Lemma dyn_reservation_map_included x y :
-      x ≼ y ↔
-        dyn_reservation_map_data_proj x ≼ dyn_reservation_map_data_proj y ∧
-        dyn_reservation_map_token_proj x ≼ dyn_reservation_map_token_proj y.
-    Proof.
-      split; [intros [[z1 z2] Hz]; split; [exists z1|exists z2]; apply Hz|].
-      intros [[z1 Hz1] [z2 Hz2]]; exists (DynReservationMap z1 z2); split; auto.
-    Qed.
+  Lemma dyn_reservation_map_included x y :
+    x ≼ y ↔
+      dyn_reservation_map_data_proj x ≼ dyn_reservation_map_data_proj y ∧
+      dyn_reservation_map_token_proj x ≼ dyn_reservation_map_token_proj y.
+  Proof.
+    split; [intros [[z1 z2] Hz]; split; [exists z1|exists z2]; apply Hz|].
+    intros [[z1 Hz1] [z2 Hz2]]; exists (DynReservationMap z1 z2); split; auto.
+  Qed.
 
-    Lemma dyn_reservation_map_data_proj_validN n x : ✓{n} x → ✓{n} dyn_reservation_map_data_proj x.
-    Proof. by destruct x as [? [?|]]=> // -[??]. Qed.
-    Lemma dyn_reservation_map_token_proj_validN n x : ✓{n} x → ✓{n} dyn_reservation_map_token_proj x.
-    Proof. by destruct x as [? [?|]]=> // -[??]. Qed.
+  Lemma dyn_reservation_map_data_proj_validN n x : ✓{n} x → ✓{n} dyn_reservation_map_data_proj x.
+  Proof. by destruct x as [? [?|]]=> // -[??]. Qed.
+  Lemma dyn_reservation_map_token_proj_validN n x : ✓{n} x → ✓{n} dyn_reservation_map_token_proj x.
+  Proof. by destruct x as [? [?|]]=> // -[??]. Qed.
 
-    Lemma dyn_reservation_map_cmra_mixin : CmraMixin (dyn_reservation_map A).
-    Proof.
-      apply (iso_cmra_mixin_restrict from_reservation_map to_reservation_map); try done.
-      - intros n [m [E|]];
-          rewrite dyn_reservation_map_validN_eq reservation_map_validN_eq /=;
-          naive_solver.
-      - intros n [m1 [E1|]] [m2 [E2|]] [Hm ?]=> // -[?[??]]; split; simplify_eq/=.
-        + by rewrite -Hm.
-        + split; first done. intros i. by rewrite -(dist_None n) -Hm dist_None.
-      - intros [m [E|]]; rewrite dyn_reservation_map_valid_eq dyn_reservation_map_validN_eq /=
-          ?cmra_valid_validN; naive_solver eauto using O.
-      - intros n [m [E|]]; rewrite dyn_reservation_map_validN_eq /=;
-          naive_solver eauto using cmra_validN_S.
-      - intros n [m1 [E1|]] [m2 [E2|]]=> //=; rewrite dyn_reservation_map_validN_eq /=.
-        rewrite {1}/op /cmra_op /=. case_decide; last done.
-        intros [Hm [Hinf Hdisj]]; split; first by eauto using cmra_validN_op_l.
-        split.
-        + rewrite ->difference_union_distr_r in Hinf.
-          eapply set_infinite_subseteq; last done.
-          set_solver.
-        + intros i. move: (Hdisj i). rewrite lookup_op.
-          case: (m1 !! i)=> [a|]; last auto.
-          move=> [].
-          { by case: (m2 !! i). }
-          set_solver.
-    Qed.
-
-    Canonical Structure dyn_reservation_mapR :=
-      Cmra (dyn_reservation_map A) dyn_reservation_map_cmra_mixin.
-
-    Global Instance dyn_reservation_map_cmra_discrete :
-      CmraDiscrete A → CmraDiscrete dyn_reservation_mapR.
-    Proof.
-      split; first apply _.
-      intros [m [E|]]; rewrite dyn_reservation_map_validN_eq dyn_reservation_map_valid_eq //=.
-        by intros [?%cmra_discrete_valid ?].
-    Qed.
-
-    Local Instance dyn_reservation_map_empty_instance : Unit (dyn_reservation_map A) :=
-      DynReservationMap ε ε.
-    Lemma dyn_reservation_map_ucmra_mixin : UcmraMixin (dyn_reservation_map A).
-    Proof.
-      split; simpl.
-      - rewrite dyn_reservation_map_valid_eq /=. split; [apply ucmra_unit_valid|]. split.
-        + rewrite difference_empty. apply top_infinite.
-        + set_solver.
-      - split; simpl; [by rewrite left_id|by rewrite left_id_L].
-      - do 2 constructor; [apply (core_id_core _)|done].
-    Qed.
-    Canonical Structure dyn_reservation_mapUR :=
-      Ucmra (dyn_reservation_map A) dyn_reservation_map_ucmra_mixin.
-
-    Global Instance dyn_reservation_map_data_core_id N a :
-      CoreId a → CoreId (dyn_reservation_map_data N a).
-    Proof. do 2 constructor; simpl; auto. apply core_id_core, _. Qed.
-
-    Lemma dyn_reservation_map_data_valid N a :
-      ✓ (dyn_reservation_map_data N a) ↔ ✓ a.
-    Proof.
-      rewrite dyn_reservation_map_valid_eq /= singleton_valid.
-      split; first naive_solver. intros Ha.
-      split; first done. split; last set_solver.
-      rewrite difference_empty. apply top_infinite.
-    Qed.
-    Lemma dyn_reservation_map_token_valid E :
-      ✓ (dyn_reservation_map_token E) ↔ set_infinite (⊤ ∖ E).
-    Proof.
-      rewrite dyn_reservation_map_valid_eq /=. split; first naive_solver.
-      intros Hinf. do 2 (split; first done). by left.
-    Qed.
-    Lemma dyn_reservation_map_data_op N a b :
-      dyn_reservation_map_data N (a ⋅ b) = dyn_reservation_map_data N a ⋅ dyn_reservation_map_data N b.
-    Proof.
-        by rewrite {2}/op /dyn_reservation_map_op_instance /dyn_reservation_map_data /= singleton_op left_id_L.
-    Qed.
-    Lemma dyn_reservation_map_data_mono N a b :
-      a ≼ b → dyn_reservation_map_data N a ≼ dyn_reservation_map_data N b.
-    Proof. intros [c ->]. rewrite dyn_reservation_map_data_op. apply cmra_included_l. Qed.
-    Global Instance dyn_reservation_map_data_is_op N a b1 b2 :
-      IsOp a b1 b2 →
-      IsOp' (dyn_reservation_map_data N a) (dyn_reservation_map_data N b1) (dyn_reservation_map_data N b2).
-    Proof. rewrite /IsOp' /IsOp=> ->. by rewrite dyn_reservation_map_data_op. Qed.
-
-    Lemma dyn_reservation_map_token_union E1 E2 :
-      E1 ## E2 →
-      dyn_reservation_map_token (E1 ∪ E2) = dyn_reservation_map_token E1 ⋅ dyn_reservation_map_token E2.
-    Proof.
-      intros. by rewrite /op /dyn_reservation_map_op_instance
-                         /dyn_reservation_map_token /= coPset_disj_union // left_id_L.
-    Qed.
-    Lemma dyn_reservation_map_token_difference E1 E2 :
-      E1 ⊆ E2 →
-      dyn_reservation_map_token E2 = dyn_reservation_map_token E1 ⋅ dyn_reservation_map_token (E2 ∖ E1).
-    Proof.
-      intros. rewrite -dyn_reservation_map_token_union; last set_solver.
-        by rewrite -union_difference_L.
-    Qed.
-    Lemma dyn_reservation_map_token_valid_op E1 E2 :
-      ✓ (dyn_reservation_map_token E1 ⋅ dyn_reservation_map_token E2) ↔
-        E1 ## E2 ∧ set_infinite (⊤ ∖ (E1 ∪ E2)).
-    Proof.
-      split.
-      - rewrite dyn_reservation_map_valid_eq /= {1}/op /cmra_op /=. case_decide; last done.
+  Lemma dyn_reservation_map_cmra_mixin : CmraMixin (dyn_reservation_map A).
+  Proof.
+    apply (iso_cmra_mixin_restrict from_reservation_map to_reservation_map); try done.
+    - intros n [m [E|]];
+        rewrite dyn_reservation_map_validN_eq reservation_map_validN_eq /=;
         naive_solver.
-      - intros [Hdisj Hinf]. rewrite -dyn_reservation_map_token_union //.
-        apply dyn_reservation_map_token_valid. done.
-    Qed.
+    - intros n [m1 [E1|]] [m2 [E2|]] [Hm ?]=> // -[?[??]]; split; simplify_eq/=.
+      + by rewrite -Hm.
+      + split; first done. intros i. by rewrite -(dist_None n) -Hm dist_None.
+    - intros [m [E|]]; rewrite dyn_reservation_map_valid_eq dyn_reservation_map_validN_eq /=
+        ?cmra_valid_validN; naive_solver eauto using O.
+    - intros n [m [E|]]; rewrite dyn_reservation_map_validN_eq /=;
+        naive_solver eauto using cmra_validN_S.
+    - intros n [m1 [E1|]] [m2 [E2|]]=> //=; rewrite dyn_reservation_map_validN_eq /=.
+      rewrite {1}/op /cmra_op /=. case_decide; last done.
+      intros [Hm [Hinf Hdisj]]; split; first by eauto using cmra_validN_op_l.
+      split.
+      + rewrite ->difference_union_distr_r_L in Hinf.
+        eapply set_infinite_subseteq, Hinf. set_solver.
+      + intros i. move: (Hdisj i). rewrite lookup_op.
+        case: (m1 !! i); case: (m2 !! i); set_solver.
+  Qed.
 
-    Lemma dyn_reservation_map_reserve (Q : dyn_reservation_map A → Prop) :
-      (∀ E, set_infinite E → Q (dyn_reservation_map_token E)) →
-      ε ~~>: Q.
-    Proof.
-      intros HQ. apply cmra_total_updateP=> n [mf [Ef|]];
-        rewrite left_id {1}dyn_reservation_map_validN_eq /=; last done.
-      intros [Hmap [Hinf Hdisj]].
-      (* Pick a fresh set disjoint from the existing tokens [Ef] and map [mf],
-         such that both that set [E1] and the remainder [E2] are infinite. *)
-      edestruct (coPset_split_infinite (⊤ ∖ (Ef ∪ dom coPset mf))) as
+  Canonical Structure dyn_reservation_mapR :=
+    Cmra (dyn_reservation_map A) dyn_reservation_map_cmra_mixin.
+
+  Global Instance dyn_reservation_map_cmra_discrete :
+    CmraDiscrete A → CmraDiscrete dyn_reservation_mapR.
+  Proof.
+    split; first apply _.
+    intros [m [E|]]; rewrite dyn_reservation_map_validN_eq dyn_reservation_map_valid_eq //=.
+      by intros [?%cmra_discrete_valid ?].
+  Qed.
+
+  Local Instance dyn_reservation_map_empty_instance : Unit (dyn_reservation_map A) :=
+    DynReservationMap ε ε.
+  Lemma dyn_reservation_map_ucmra_mixin : UcmraMixin (dyn_reservation_map A).
+  Proof.
+    split; simpl.
+    - rewrite dyn_reservation_map_valid_eq /=. split; [apply ucmra_unit_valid|]. split.
+      + rewrite difference_empty_L. apply top_infinite.
+      + set_solver.
+    - split; simpl; [by rewrite left_id|by rewrite left_id_L].
+    - do 2 constructor; [apply (core_id_core _)|done].
+  Qed.
+  Canonical Structure dyn_reservation_mapUR :=
+    Ucmra (dyn_reservation_map A) dyn_reservation_map_ucmra_mixin.
+
+  Global Instance dyn_reservation_map_data_core_id N a :
+    CoreId a → CoreId (dyn_reservation_map_data N a).
+  Proof. do 2 constructor; simpl; auto. apply core_id_core, _. Qed.
+
+  Lemma dyn_reservation_map_data_valid N a :
+    ✓ (dyn_reservation_map_data N a) ↔ ✓ a.
+  Proof.
+    rewrite dyn_reservation_map_valid_eq /= singleton_valid.
+    split; first naive_solver. intros Ha.
+    split; first done. split; last set_solver.
+    rewrite difference_empty_L. apply top_infinite.
+  Qed.
+  Lemma dyn_reservation_map_token_valid E :
+    ✓ (dyn_reservation_map_token E) ↔ set_infinite (⊤ ∖ E).
+  Proof.
+    rewrite dyn_reservation_map_valid_eq /=. split; first naive_solver.
+    intros Hinf. do 2 (split; first done). by left.
+  Qed.
+  Lemma dyn_reservation_map_data_op N a b :
+    dyn_reservation_map_data N (a ⋅ b) = dyn_reservation_map_data N a ⋅ dyn_reservation_map_data N b.
+  Proof.
+      by rewrite {2}/op /dyn_reservation_map_op_instance /dyn_reservation_map_data /= singleton_op left_id_L.
+  Qed.
+  Lemma dyn_reservation_map_data_mono N a b :
+    a ≼ b → dyn_reservation_map_data N a ≼ dyn_reservation_map_data N b.
+  Proof. intros [c ->]. rewrite dyn_reservation_map_data_op. apply cmra_included_l. Qed.
+  Global Instance dyn_reservation_map_data_is_op N a b1 b2 :
+    IsOp a b1 b2 →
+    IsOp' (dyn_reservation_map_data N a) (dyn_reservation_map_data N b1) (dyn_reservation_map_data N b2).
+  Proof. rewrite /IsOp' /IsOp=> ->. by rewrite dyn_reservation_map_data_op. Qed.
+
+  Lemma dyn_reservation_map_token_union E1 E2 :
+    E1 ## E2 →
+    dyn_reservation_map_token (E1 ∪ E2) = dyn_reservation_map_token E1 ⋅ dyn_reservation_map_token E2.
+  Proof.
+    intros. by rewrite /op /dyn_reservation_map_op_instance
+      /dyn_reservation_map_token /= coPset_disj_union // left_id_L.
+  Qed.
+  Lemma dyn_reservation_map_token_difference E1 E2 :
+    E1 ⊆ E2 →
+    dyn_reservation_map_token E2 = dyn_reservation_map_token E1 ⋅ dyn_reservation_map_token (E2 ∖ E1).
+  Proof.
+    intros. rewrite -dyn_reservation_map_token_union; last set_solver.
+    by rewrite -union_difference_L.
+  Qed.
+  Lemma dyn_reservation_map_token_valid_op E1 E2 :
+    ✓ (dyn_reservation_map_token E1 ⋅ dyn_reservation_map_token E2) ↔
+      E1 ## E2 ∧ set_infinite (⊤ ∖ (E1 ∪ E2)).
+  Proof.
+    split.
+    - rewrite dyn_reservation_map_valid_eq /= {1}/op /cmra_op /=. case_decide; last done.
+      naive_solver.
+    - intros [Hdisj Hinf]. rewrite -dyn_reservation_map_token_union //.
+      apply dyn_reservation_map_token_valid. done.
+  Qed.
+
+  Lemma dyn_reservation_map_reserve (Q : dyn_reservation_map A → Prop) :
+    (∀ E, set_infinite E → Q (dyn_reservation_map_token E)) →
+    ε ~~>: Q.
+  Proof.
+    intros HQ. apply cmra_total_updateP=> n [mf [Ef|]];
+      rewrite left_id {1}dyn_reservation_map_validN_eq /=; last done.
+    intros [Hmap [Hinf Hdisj]].
+    (* Pick a fresh set disjoint from the existing tokens [Ef] and map [mf],
+       such that both that set [E1] and the remainder [E2] are infinite. *)
+    edestruct (coPset_split_infinite (⊤ ∖ (Ef ∪ dom coPset mf))) as
         (E1 & E2 & HEunion & HEdisj & HE1inf & HE2inf).
-      { rewrite -difference_difference.
-        apply difference_infinite; first done.
-        apply gset_to_coPset_finite. }
-      exists (dyn_reservation_map_token E1).
-      split; first by apply HQ. clear HQ.
-      rewrite dyn_reservation_map_validN_eq /=.
-      rewrite coPset_disj_union; last set_solver.
-      split; first by rewrite left_id. split.
-      - eapply set_infinite_subseteq; last by apply HE2inf. set_solver.
-      - intros i. rewrite left_id_L. destruct (Hdisj i) as [?|Hi]; first by left.
-        destruct (mf !! i) as [p|] eqn:Hp; last by left.
-        apply elem_of_dom_2 in Hp. right. set_solver.
-    Qed.
-    Lemma dyn_reservation_map_reserve' :
-      ε ~~>: (λ x, ∃ E, set_infinite E ∧ x = dyn_reservation_map_token E).
-    Proof. eauto using dyn_reservation_map_reserve. Qed.
+    { rewrite -difference_difference_L.
+        by apply difference_infinite, dom_finite. }
+    exists (dyn_reservation_map_token E1).
+    split; first by apply HQ. clear HQ.
+    rewrite dyn_reservation_map_validN_eq /=.
+    rewrite coPset_disj_union; last set_solver.
+    split; first by rewrite left_id_L. split.
+    - eapply set_infinite_subseteq, HE2inf. set_solver.
+    - intros i. rewrite left_id_L. destruct (Hdisj i) as [?|Hi]; first by left.
+      destruct (mf !! i) as [p|] eqn:Hp; last by left.
+      apply elem_of_dom_2 in Hp. right. set_solver.
+  Qed.
+  Lemma dyn_reservation_map_reserve' :
+    ε ~~>: (λ x, ∃ E, set_infinite E ∧ x = dyn_reservation_map_token E).
+  Proof. eauto using dyn_reservation_map_reserve. Qed.
 
-    Lemma dyn_reservation_map_alloc E k a :
-      k ∈ E → ✓ a → dyn_reservation_map_token E ~~> dyn_reservation_map_data k a.
-    Proof.
-      intros ??. apply cmra_total_update=> n [mf [Ef|]] //.
-      rewrite dyn_reservation_map_validN_eq /= {1}/op /cmra_op /=. case_decide; last done.
-      rewrite left_id_L {1}left_id. intros [Hmf [Hinf Hdisj]]; split; last split.
-      - destruct (Hdisj (k)) as [Hmfi|]; last set_solver.
-        move: Hmfi. rewrite lookup_op lookup_empty left_id_L=> Hmfi.
-        intros j. rewrite lookup_op.
-        destruct (decide (k = j)) as [<-|].
-        + rewrite Hmfi lookup_singleton right_id_L. by apply cmra_valid_validN.
-        + by rewrite lookup_singleton_ne // left_id_L.
-      - eapply set_infinite_subseteq; last done. set_solver. 
-      - intros j. destruct (decide (k = j)); first set_solver.
-        rewrite lookup_op lookup_singleton_ne //.
-        destruct (Hdisj j) as [Hmfi|?]; last set_solver.
-        move: Hmfi. rewrite lookup_op lookup_empty; auto.
-    Qed.
-    Lemma dyn_reservation_map_updateP P (Q : dyn_reservation_map A → Prop) k a :
-      a ~~>: P →
-      (∀ a', P a' → Q (dyn_reservation_map_data k a')) → dyn_reservation_map_data k a ~~>: Q.
-    Proof.
-      intros Hup HP. apply cmra_total_updateP=> n [mf [Ef|]] //.
-      rewrite dyn_reservation_map_validN_eq /= left_id_L. intros [Hmf [Hinf Hdisj]].
-      destruct (Hup n (mf !! k)) as (a'&?&?).
-      { move: (Hmf (k)).
-          by rewrite lookup_op lookup_singleton Some_op_opM. }
-      exists (dyn_reservation_map_data k a'); split; first by eauto.
-      rewrite /= left_id_L. split; last split.
-      - intros j. destruct (decide (k = j)) as [<-|].
-        + by rewrite lookup_op lookup_singleton Some_op_opM.
-        + rewrite lookup_op lookup_singleton_ne // left_id_L.
-          move: (Hmf j). rewrite lookup_op. eauto using cmra_validN_op_r.
-      - done.
-      - intros j. move: (Hdisj j).
-        rewrite !lookup_op !op_None !lookup_singleton_None. naive_solver.
-    Qed.
-    Lemma dyn_reservation_map_update k a b :
-      a ~~> b → dyn_reservation_map_data k a ~~> dyn_reservation_map_data k b.
-    Proof.
-      rewrite !cmra_update_updateP. eauto using dyn_reservation_map_updateP with subst.
-    Qed.
+  Lemma dyn_reservation_map_alloc E k a :
+    k ∈ E → ✓ a → dyn_reservation_map_token E ~~> dyn_reservation_map_data k a.
+  Proof.
+    intros ??. apply cmra_total_update=> n [mf [Ef|]] //.
+    rewrite dyn_reservation_map_validN_eq /= {1}/op /cmra_op /=. case_decide; last done.
+    rewrite left_id_L {1}left_id. intros [Hmf [Hinf Hdisj]]; split; last split.
+    - destruct (Hdisj k) as [Hmfi|]; last set_solver.
+      move: Hmfi. rewrite lookup_op lookup_empty left_id_L=> Hmfi.
+      intros j. rewrite lookup_op.
+      destruct (decide (k = j)) as [<-|].
+      + rewrite Hmfi lookup_singleton right_id_L. by apply cmra_valid_validN.
+      + by rewrite lookup_singleton_ne // left_id_L.
+    - eapply set_infinite_subseteq, Hinf. set_solver.
+    - intros j. destruct (decide (k = j)); first set_solver.
+      rewrite lookup_op lookup_singleton_ne //.
+      destruct (Hdisj j) as [Hmfi|?]; last set_solver.
+      move: Hmfi. rewrite lookup_op lookup_empty; auto.
+  Qed.
+  Lemma dyn_reservation_map_updateP P (Q : dyn_reservation_map A → Prop) k a :
+    a ~~>: P →
+    (∀ a', P a' → Q (dyn_reservation_map_data k a')) →
+    dyn_reservation_map_data k a ~~>: Q.
+  Proof.
+    intros Hup HP. apply cmra_total_updateP=> n [mf [Ef|]] //.
+    rewrite dyn_reservation_map_validN_eq /= left_id_L. intros [Hmf [Hinf Hdisj]].
+    destruct (Hup n (mf !! k)) as (a'&?&?).
+    { move: (Hmf (k)).
+      by rewrite lookup_op lookup_singleton Some_op_opM. }
+    exists (dyn_reservation_map_data k a'); split; first by eauto.
+    rewrite /= left_id_L. split; last split.
+    - intros j. destruct (decide (k = j)) as [<-|].
+      + by rewrite lookup_op lookup_singleton Some_op_opM.
+      + rewrite lookup_op lookup_singleton_ne // left_id_L.
+        move: (Hmf j). rewrite lookup_op. eauto using cmra_validN_op_r.
+    - done.
+    - intros j. move: (Hdisj j).
+      rewrite !lookup_op !op_None !lookup_singleton_None. naive_solver.
+  Qed.
+  Lemma dyn_reservation_map_update k a b :
+    a ~~> b →
+    dyn_reservation_map_data k a ~~> dyn_reservation_map_data k b.
+  Proof.
+    rewrite !cmra_update_updateP. eauto using dyn_reservation_map_updateP with subst.
+  Qed.
 End cmra.
 
 Global Arguments dyn_reservation_mapR : clear implicits.
