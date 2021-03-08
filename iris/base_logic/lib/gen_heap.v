@@ -231,7 +231,7 @@ Section gen_heap.
     rewrite meta_token_eq meta_eq /meta_token_def /meta_def.
     iDestruct 1 as (γm) "[Hγm Hm]". iExists γm. iFrame "Hγm".
     iApply (own_update with "Hm").
-    apply reservation_map_alloc_update; last done.
+    apply reservation_map_alloc; last done.
     cut (positives_flatten N ∈@{coPset} ↑N); first by set_solver.
     rewrite nclose_eq. apply elem_coPset_suffixes.
     exists 1%positive. by rewrite left_id_L.

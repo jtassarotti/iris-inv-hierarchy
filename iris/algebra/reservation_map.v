@@ -14,7 +14,7 @@ properties of this camera are:
 - The lemma [reservation_map_token_union] enables one to split [reservation_map_token]
   w.r.t. disjoint union. That is, if we have [E1 ## E2], then we get
   [reservation_map_token (E1 ∪ E2) = reservation_map_token E1 ⋅ reservation_map_token E2].
-- The lemma [reservation_map_alloc_update] provides a frame preserving update to
+- The lemma [reservation_map_alloc] provides a frame preserving update to
   associate data to a key: [reservation_map_token E ~~> reservation_map_data k a]
   provided [k ∈ E] and [✓ a].
 
@@ -254,7 +254,7 @@ Proof.
   - intros i. rewrite lookup_op lookup_empty. auto.
 Qed.
 
-Lemma reservation_map_alloc_update E k a :
+Lemma reservation_map_alloc E k a :
   k ∈ E → ✓ a → reservation_map_token E ~~> reservation_map_data k a.
 Proof.
   intros ??. apply cmra_total_update=> n [mf [Ef|]] //.
