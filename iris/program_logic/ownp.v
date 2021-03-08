@@ -126,6 +126,7 @@ Section lifting.
       iFrame "Hσ". iApply ("H" with "[]"); eauto with iFrame.
   Qed.
 
+  (*
   Lemma ownP_lift_stuck E Φ e :
     (|={E,∅}=> ∃ σ, ⌜stuck e σ⌝ ∗ ▷ (ownP σ))
     ⊢ WP e @ E ?{{ Φ }}.
@@ -138,6 +139,7 @@ Section lifting.
       iMod "H" as (σ1') "(% & >Hσf)".
       by iDestruct (ownP_eq with "Hσ Hσf") as %->.
   Qed.
+   *)
 
   Lemma ownP_lift_pure_step `{!Inhabited (state Λ)} s E Φ e1 :
     (∀ σ1, if s is NotStuck then reducible e1 σ1 else to_val e1 = None) →
@@ -232,6 +234,7 @@ Section ectx_lifting.
     iApply ("Hwp" with "[] Hσ2"); eauto.
   Qed.
 
+  (*
   Lemma ownP_lift_head_stuck E Φ e :
     sub_redexes_are_values e →
     (|={E,∅}=> ∃ σ, ⌜head_stuck e σ⌝ ∗ ▷ (ownP σ))
@@ -240,6 +243,7 @@ Section ectx_lifting.
     iIntros (?) "H". iApply ownP_lift_stuck. iMod "H" as (σ) "[% >Hσ]".
     iExists σ. iModIntro. by auto with iFrame.
   Qed.
+   *)
 
   Lemma ownP_lift_pure_head_step s E Φ e1 :
     (∀ σ1, head_reducible e1 σ1) →

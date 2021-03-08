@@ -17,16 +17,17 @@ Local Hint Resolve head_stuck_stuck : core.
 
 Lemma wp_lift_head_step_fupd {s E Φ} e1 :
   to_val e1 = None →
-  (∀ σ1 ns κ κs nt, state_interp σ1 ns (κ ++ κs) nt ={E,∅}=∗
-    ⌜head_reducible e1 σ1⌝ ∗
-    ∀ e2 σ2 efs, ⌜head_step e1 σ1 κ e2 σ2 efs⌝ ={∅}=∗ ▷ |={∅,E}=>
+  (∀ σ1 ns κ κs nt, state_interp σ1 ns (κ ++ κs) nt ={E,∅}=∗ ▷
+    (⌜head_reducible e1 σ1⌝ ∗
+    ∀ e2 σ2 efs, ⌜head_step e1 σ1 κ e2 σ2 efs⌝ ={∅,E}=∗
       state_interp σ2 (S ns) κs (length efs + nt) ∗
       WP e2 @ s; E {{ Φ }} ∗
-      [∗ list] ef ∈ efs, WP ef @ s; ⊤ {{ fork_post }})
+      [∗ list] ef ∈ efs, WP ef @ s; ⊤ {{ fork_post }}))
   ⊢ WP e1 @ s; E {{ Φ }}.
 Proof.
   iIntros (?) "H". iApply wp_lift_step_fupd=>//. iIntros (σ1 ns κ κs nt) "Hσ".
-  iMod ("H" with "Hσ") as "[% H]"; iModIntro.
+  iMod ("H" with "Hσ") as "H". iModIntro.
+  iNext. iDestruct "H" as "[% H]".
   iSplit; first by destruct s; eauto. iIntros (e2 σ2 efs ?).
   iApply "H"; eauto.
 Qed.
@@ -42,9 +43,10 @@ Lemma wp_lift_head_step {s E Φ} e1 :
   ⊢ WP e1 @ s; E {{ Φ }}.
 Proof.
   iIntros (?) "H". iApply wp_lift_head_step_fupd; [done|]. iIntros (?????) "?".
-  iMod ("H" with "[$]") as "[$ H]". iIntros "!>" (e2 σ2 efs ?) "!> !>". by iApply "H".
+  iMod ("H" with "[$]") as "[$ H]". iIntros "!> !>" (e2 σ2 efs ?). by iApply "H".
 Qed.
 
+(*
 Lemma wp_lift_head_stuck E Φ e :
   to_val e = None →
   sub_redexes_are_values e →
@@ -64,7 +66,9 @@ Proof using Hinh.
   iIntros (?? Hstuck). iApply wp_lift_head_stuck; [done|done|].
   iIntros (σ ns κs nt) "_". iApply fupd_mask_intro; by auto with set_solver.
 Qed.
+*)
 
+(*
 Lemma wp_lift_atomic_head_step_fupd {s E1 E2 Φ} e1 :
   to_val e1 = None →
   (∀ σ1 ns κ κs nt, state_interp σ1 ns (κ ++ κs) nt ={E1}=∗
@@ -80,6 +84,7 @@ Proof.
   iSplit; first by destruct s; auto. iIntros (e2 σ2 efs Hstep).
   iApply "H"; eauto.
 Qed.
+*)
 
 Lemma wp_lift_atomic_head_step {s E Φ} e1 :
   to_val e1 = None →
@@ -97,6 +102,7 @@ Proof.
   iApply "H"; eauto.
 Qed.
 
+(*
 Lemma wp_lift_atomic_head_step_no_fork_fupd {s E1 E2 Φ} e1 :
   to_val e1 = None →
   (∀ σ1 ns κ κs nt, state_interp σ1 ns (κ ++ κs) nt ={E1}=∗
@@ -111,6 +117,7 @@ Proof.
   iMod ("H" $! v2 σ2 efs with "[# //]") as "H".
   iIntros "!> !>". iMod "H" as "(-> & ? & ?) /=". by iFrame.
 Qed.
+*)
 
 Lemma wp_lift_atomic_head_step_no_fork {s E Φ} e1 :
   to_val e1 = None →

@@ -199,35 +199,27 @@ Qed.
 
 Lemma wp_later_cred_use s E e Φ :
   language.to_val e = None →
-  (* Atomicity is not needed *)
-  Atomic (StronglyAtomic) e →
   cred_frag 1 -∗
   ▷ WP e @ s; E {{ v, cred_frag 1 -∗ Φ v }} -∗
   WP e @ s; E {{ Φ }}.
 Proof.
-  iIntros (Hnval Hatomic) "Hcred Hwp".
+  iIntros (Hnval) "Hcred Hwp".
   rewrite ?wp_unfold /wp_pre.
   rewrite Hnval.
   iIntros (σ1 ns κ κs nt) "Hσ".
   iMod (state_interp_step_decr with "[$]") as (ns' ->) "(Hσ&Hcred)".
   iApply (fupd_mask_weaken ∅); first by set_solver+.
-  iIntros "H". iSplitL "".
-  { admit. (* if the reducibility came after the laters this would be provable. *) }
-  iModIntro.
-  iIntros (e2 σ2 efs Hred).
-  simpl. iModIntro. iNext. iModIntro.
+  iIntros "H". iModIntro. simpl. iModIntro. iNext. iModIntro. iMod "H" as "_".
   iSpecialize ("Hwp" $! _ _ _ _ 0 with "[Hσ]").
   { iFrame. }
-  iMod "H" as "_".
-  iMod "Hwp". iDestruct "Hwp" as "(?&Hwp)".
-  iSpecialize ("Hwp" with "[//]").
-  iApply (step_fupdN_wand with "Hwp").
-  iNext. iIntros "H". iMod "H" as "(Hσ&Hwp&$)".
+  iMod "Hwp". iApply (step_fupdN_wand with "Hwp").
+  iNext. iIntros "($&H)".
+  iIntros. iMod ("H" with "[//]") as "(Hσ&Hwp&$)".
   iMod (state_interp_step_incr' _ _ _ 0 with "[$]") as "(Hσ&Hcred')".
   iFrame. iModIntro.
   iApply (wp_wand with "Hwp").
   iIntros (?) "H". iApply "H". iFrame.
-Admitted.
+Qed.
 
 (** Recursive functions: we do not use this lemmas as it is easier to use Löb
 induction directly, but this demonstrates that we can state the expected
@@ -613,20 +605,24 @@ Proof.
   iIntros (A He) "Hp WPe". rewrite !wp_unfold /wp_pre /= He. simpl in *.
   iIntros (σ1 ns κ κs nt) "[Hcred [Hσ Hκ]]".
   destruct κ as [|[p' [w' v']] κ' _] using rev_ind.
-  - iMod ("WPe" $! σ1 ns [] κs nt with "[$Hcred $Hσ $Hκ]") as "[Hs WPe]". iModIntro. iSplit.
+  - iMod ("WPe" $! σ1 ns [] κs nt with "[$Hcred $Hσ $Hκ]") as "HWpe".
+    iModIntro. iApply (step_fupdN_wand with "HWpe"). iNext.
+    iIntros "[Hs WPe]".
+    iSplit.
     { iDestruct "Hs" as "%". iPureIntro. destruct s; [ by apply resolve_reducible | done]. }
     iIntros (e2 σ2 efs step). exfalso. apply step_resolve in step; last done.
     inv_head_step. match goal with H: ?κs ++ [_] = [] |- _ => by destruct κs end.
   - rewrite -assoc.
-    iMod ("WPe" $! σ1 ns _ _ nt with "[$Hcred $Hσ $Hκ]") as "[Hs WPe]". iModIntro. iSplit.
+    iMod ("WPe" $! σ1 ns _ _ nt with "[$Hcred $Hσ $Hκ]") as "HWpe".
+    iModIntro. iApply (step_fupdN_wand with "HWpe"). iNext.
+    iIntros "[Hs WPe]".
+    iSplit.
     { iDestruct "Hs" as %?. iPureIntro. destruct s; [ by apply resolve_reducible | done]. }
     iIntros (e2 σ2 efs step). apply step_resolve in step; last done.
     inv_head_step; simplify_list_eq.
     iMod ("WPe" $! (Val w') σ2 efs with "[%]") as "WPe".
     { by eexists [] _ _. }
-    iModIntro. iNext. iMod "WPe". iModIntro.
-    iApply (step_fupdN_wand with "WPe").
-    iIntros ">[[$ [$ Hκ]] WPe]".
+    iDestruct "WPe" as "[[$ [$ Hκ]] WPe]".
     iMod (proph_map_resolve_proph p' (w',v') κs with "[$Hκ $Hp]") as (vs' ->) "[$ HPost]".
     iModIntro. rewrite !wp_unfold /wp_pre /=. iDestruct "WPe" as "[HΦ $]".
     iMod "HΦ". iModIntro. by iApply "HΦ".

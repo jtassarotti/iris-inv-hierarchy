@@ -202,12 +202,13 @@ Proof.
   iIntros "H". iLöb as "IH" forall (E e Φ).
   rewrite wp_unfold twp_unfold /wp_pre /twp_pre. destruct (to_val e) as [v|]=>//=.
   iIntros (σ1 ns κ κs nt) "Hσ". iMod ("H" with "Hσ") as "[% H]".
-  iIntros "!>". iSplitR.
+  iModIntro. iApply step_fupdN_intro; first set_solver+.
+  iModIntro. iNext. iModIntro. iNext.
+  iSplitR.
   { destruct s; eauto using reducible_no_obs_reducible. }
   iIntros (e2 σ2 efs) "Hstep". iMod ("H" with "Hstep") as (->) "(Hσ & H & Hfork)".
   iApply fupd_mask_intro; [set_solver+|]. iIntros "Hclose".
-  iIntros "!>!>". iApply step_fupdN_intro=>//. iModIntro. iMod "Hclose" as "_".
-  iModIntro. iFrame "Hσ". iSplitL "H".
+  iFrame "Hσ". iSplitL "H".
   { by iApply "IH". }
   iApply (@big_sepL_impl with "Hfork").
   iIntros "!>" (k ef _) "H". by iApply "IH".

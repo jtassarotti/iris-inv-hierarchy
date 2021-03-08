@@ -133,7 +133,7 @@ Section lemmas.
   Qed.
 
   (* Sequential triples with the empty mask for a physically atomic [e] are atomic. *)
-  Lemma atomic_seq_wp_atomic e Eo α β f `{!Atomic WeaklyAtomic e} :
+  Lemma atomic_seq_wp_atomic e Eo α β f `{!Atomic StronglyAtomic e} :
     (∀ Φ, ∀.. x, α x -∗ (∀.. y, β x y -∗ Φ (f x y)) -∗ WP e @ ∅ {{ Φ }}) -∗
     atomic_wp e Eo α β f.
   Proof.
