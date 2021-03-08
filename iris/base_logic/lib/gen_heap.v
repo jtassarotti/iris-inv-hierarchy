@@ -291,8 +291,8 @@ Lemma gen_heap_init_names `{Countable L, !gen_heapPreG L V Σ} σ :
     let hG := GenHeapG L V Σ γh γm in
     gen_heap_interp σ ∗ ([∗ map] l ↦ v ∈ σ, l ↦ v) ∗ ([∗ map] l ↦ _ ∈ σ, meta_token l ⊤).
 Proof.
-  iMod (ghost_map_alloc_empty (V:=V)) as (γh) "Hh".
-  iMod (ghost_map_alloc_empty (V:=gname)) as (γm) "Hm".
+  iMod (ghost_map_alloc_empty (K:=L) (V:=V)) as (γh) "Hh".
+  iMod (ghost_map_alloc_empty (K:=L) (V:=gname)) as (γm) "Hm".
   iExists γh, γm.
   iAssert (gen_heap_interp (hG:=GenHeapG _ _ _ γh γm) ∅) with "[Hh Hm]" as "Hinterp".
   { iExists ∅; simpl. iFrame "Hh Hm". by rewrite dom_empty_L. }
