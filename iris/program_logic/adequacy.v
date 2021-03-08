@@ -120,19 +120,6 @@ Lemma wptp_strong_adequacy Φs κs' s n es1 es2 κs σ1 ns σ2 nt:
 Proof.
   iIntros (Hstep) "Hσ He".
   iIntros (q) "HNC".
-(*
- rewrite Nat_iter_S_r.
-  iDestruct (wptp_steps with "Hσ He") as "Hwp"; first done.
-  iApply (step_ncfupdN_wand with "Hwp").
-  iDestruct 1 as (nt') "(Hσ & Ht)"; simplify_eq/=.
-  iIntros (q) "HNC".
-||||||| 1a13dbea
-  iIntros (Hstep) "Hσ He". rewrite Nat_iter_S_r.
-  iDestruct (wptp_steps with "Hσ He") as "Hwp"; first done.
-  iApply (step_fupdN_wand with "Hwp").
-  iDestruct 1 as (nt') "(Hσ & Ht)"; simplify_eq/=.
-=======
-*)
   iMod (wptp_steps with "Hσ He HNC") as "Hwp"; first done.
   iModIntro. iApply (step_fupdN_wand with "Hwp").
   iMod 1 as (nt') "(Hσ & Ht & HNC)"; simplify_eq/=.
