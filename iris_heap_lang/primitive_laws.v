@@ -4,7 +4,7 @@ the Iris lifting lemmas. *)
 From iris.algebra Require Import lib.frac_auth numbers auth.
 From iris.proofmode Require Import tactics.
 From iris.bi.lib Require Import fractional.
-From iris.base_logic.lib Require Export gen_heap proph_map gen_inv_heap.
+From iris.base_logic.lib Require Export gen_heap proph_map gen_inv_heap invariants.
 From iris.program_logic Require Export weakestpre total_weakestpre.
 From iris.program_logic Require Import ectx_lifting total_ectx_lifting.
 From iris.heap_lang Require Export class_instances.
@@ -219,6 +219,22 @@ Proof.
   iFrame. iModIntro.
   iApply (wp_wand with "Hwp").
   iIntros (?) "H". iApply "H". iFrame.
+Qed.
+
+Lemma wp_later_cred_inv N E e `{Atomic _ StronglyAtomic e} Φ P :
+  ↑N ⊆ E →
+  language.to_val e = None →
+  inv N (cred_frag 1 ∗ P) -∗
+  (P -∗ WP e @ E ∖ ↑N {{ v, P ∗ Φ v }}) -∗
+  WP e @ E {{ Φ }}.
+Proof.
+  iIntros (? Hnval) "Hcred Hwp".
+  iInv "Hcred" as "(>H&HP)".
+  iApply (wp_later_cred_use with "[$]"); auto.
+  iNext. iSpecialize ("Hwp" with "[$]").
+  iApply (wp_mono with "Hwp").
+  rewrite ?wp_unfold /wp_pre.
+  iIntros (?) "(HP&HΦ) Hcred". iFrame. eauto.
 Qed.
 
 (** Recursive functions: we do not use this lemmas as it is easier to use Löb
