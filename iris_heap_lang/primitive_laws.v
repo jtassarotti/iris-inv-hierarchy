@@ -1,9 +1,10 @@
 (** This file proves the basic laws of the HeapLang program logic by applying
 the Iris lifting lemmas. *)
 
+From iris.algebra Require Import lib.frac_auth numbers auth.
 From iris.proofmode Require Import tactics.
 From iris.bi.lib Require Import fractional.
-From iris.base_logic.lib Require Export gen_heap proph_map gen_inv_heap.
+From iris.base_logic.lib Require Export gen_heap proph_map gen_inv_heap invariants.
 From iris.program_logic Require Export weakestpre total_weakestpre.
 From iris.program_logic Require Import ectx_lifting total_ectx_lifting.
 From iris.heap_lang Require Export class_instances.
@@ -16,17 +17,92 @@ Class heapG Σ := HeapG {
   heapG_gen_heapG :> gen_heapG loc (option val) Σ;
   heapG_inv_heapG :> inv_heapG loc (option val) Σ;
   heapG_proph_mapG :> proph_mapG proph_id (val * val) Σ;
+  heapG_credit_inG :> inG Σ (frac_authR natR);
+  heapG_credit_name : gname;
 }.
 
-Global Instance heapG_irisG `{!heapG Σ} : irisG heap_lang Σ := {
+Section credit.
+Context `{heapG Σ}.
+
+Definition cred_frag (n : nat) : iProp Σ :=
+  (∃ q, own (heapG_credit_name) (◯F{q} n)).
+
+Definition cred_auth `{heapG Σ} (ns : nat) : iProp Σ :=
+  (own (heapG_credit_name) (●F ns)).
+
+Lemma cred_auth_frag_incr (ns n: nat) :
+  cred_auth ns ∗ cred_frag n ==∗
+  cred_auth (S ns) ∗ cred_frag (S n).
+Proof.
+  iIntros "(Hγ&Hγf)".
+  iDestruct "Hγf" as (q) "Hγf".
+  iMod (own_update_2 with "Hγ Hγf") as "[Hγ Hγf]".
+  { apply frac_auth_update, (nat_local_update _ _ (S ns) (S n)); lia. }
+  iFrame. iExists _. eauto.
+Qed.
+
+Lemma cred_auth_frag_decr (ns n: nat) :
+  cred_auth ns ∗ cred_frag (S n) ==∗
+  ∃ ns', ⌜ ns = S ns' ⌝ ∗ cred_auth ns' ∗ cred_frag n.
+Proof.
+  iIntros "(Hγ&Hγf)".
+  iDestruct "Hγf" as (q) "Hγf".
+  iDestruct (own_valid_2 with "Hγ Hγf") as % ?%frac_auth_included_total%nat_included.
+  destruct ns as [| ns']; first lia.
+  iMod (own_update_2 with "Hγ Hγf") as "[Hγ Hγf]".
+  { apply frac_auth_update, (nat_local_update _ _ ns' n); lia. }
+  iExists _. iFrame. iModIntro. iSplit; first eauto. iExists _. eauto.
+Qed.
+
+Definition cred_interp ns : iProp Σ :=
+  cred_auth ns ∗ cred_frag 0.
+
+Lemma cred_frag_split ns1 ns2 :
+  cred_frag (ns1 + ns2) -∗ cred_frag ns1 ∗ cred_frag ns2.
+Proof.
+  iIntros "H". iDestruct "H" as (q) "H".
+  replace q with (q/2 + q/2)%Qp by apply Qp_div_2.
+  rewrite frac_auth_frag_op.
+  iDestruct "H" as "(H1&H2)".
+  iSplitL "H1".
+  { iExists _. iFrame. }
+  { iExists _. iFrame. }
+Qed.
+
+Lemma cred_interp_incr ns :
+  cred_interp ns ==∗ cred_interp (S ns) ∗ cred_frag 1.
+Proof.
+  iIntros "H".
+  iMod (cred_auth_frag_incr with "H") as "(?&H)".
+  iEval (replace 1 with (1 + 0) by lia) in "H".
+  iDestruct (cred_frag_split with "H") as "($&$)".
+  eauto.
+Qed.
+
+Lemma cred_interp_decr ns n :
+  cred_interp ns ∗ cred_frag (S n) ==∗
+  ∃ ns', ⌜ ns = S ns' ⌝ ∗ cred_interp ns' ∗ cred_frag n.
+Proof.
+  iIntros "((H&?)&Hfrag)".
+  iMod (cred_auth_frag_decr with "[$H $Hfrag]") as (ns' Heq) "(?&H)". subst.
+  iExists ns'. iModIntro. iSplit; eauto.
+  iFrame.
+Qed.
+
+End credit.
+
+Program Global Instance heapG_irisG `{!heapG Σ} : irisG heap_lang Σ := {
   iris_invG := heapG_invG;
   iris_crashG := heapG_crashG;
-  state_interp σ _ κs _ :=
-    (gen_heap_interp σ.(heap) ∗ proph_map_interp κs σ.(used_proph_id))%I;
+  state_interp σ ns κs _ :=
+    (cred_interp ns ∗ gen_heap_interp σ.(heap) ∗ proph_map_interp κs σ.(used_proph_id))%I;
   fork_post _ := True%I;
-  num_laters_per_step _ := 0;
-  state_interp_mono _ _ _ _ := fupd_intro _ _
+  num_laters_per_step n := n;
 }.
+Next Obligation.
+  iIntros (?? σ ns κs nt) "(Hcred&Hσ&Hproph)".
+  iFrame. by iMod (cred_interp_incr with "Hcred") as "($&_)".
+Qed.
 
 (** Since we use an [option val] instance of [gen_heap], we need to overwrite
 the notations.  That also helps for scopes and coercions. *)
@@ -70,6 +146,99 @@ Implicit Types σ : state.
 Implicit Types v : val.
 Implicit Types l : loc.
 
+Lemma state_interp_step_incr σ ns κs nt :
+  state_interp σ ns κs nt ==∗
+  state_interp σ (S ns) κs nt.
+Proof.
+  iIntros "(Hcred&Hσ&Hproph)".
+  iFrame. by iMod (cred_interp_incr with "Hcred") as "($&_)".
+Qed.
+
+Lemma state_interp_step_incr' σ ns κs nt :
+  state_interp σ ns κs nt ==∗
+  state_interp σ (S ns) κs nt ∗ cred_frag 1.
+Proof.
+  iIntros "(Hcred&Hσ&Hproph)".
+  iFrame. by iMod (cred_interp_incr with "Hcred") as "($&$)".
+Qed.
+
+Lemma state_interp_step_decr σ ns κs nt n:
+  state_interp σ ns κs nt ∗ cred_frag (S n) ==∗
+  ∃ ns', ⌜ ns = S ns' ⌝ ∗ state_interp σ ns' κs nt ∗ cred_frag n.
+Proof.
+  iIntros "((Hcred&Hσ&Hproph)&Hfrag)".
+  iFrame. iMod (cred_interp_decr with "[$]") as (ns' Heq) "(?&$)".
+  iExists _. iModIntro. iFrame. eauto.
+Qed.
+
+Lemma wp_pure_later_cred s E e1 e2 φ Φ :
+  PureExec φ 1 e1 e2 → φ → ▷ WP e2 @ s; E {{ v, cred_frag 1 -∗ Φ v }} -∗ WP e1 @ s; E {{ v, Φ v }}.
+Proof.
+  iIntros (HPure Hφ) "Hwp".
+  rewrite /PureExec in HPure. apply HPure in Hφ.
+  iApply wp_lift_step.
+  {
+    eapply (reducible_not_val _ inhabitant), reducible_no_obs_reducible.
+    inversion Hφ. eapply pure_step_safe; eauto.
+  }
+  iIntros (σ1 ns κ κs nt) "(Hcred&Hσ)".
+  iMod (cred_interp_incr with "[$]") as "($&Hcred)".
+  iApply (fupd_mask_intro); first by set_solver+.
+  iIntros "H".
+  iSplit.
+  {
+    destruct s; auto. iPureIntro. eapply reducible_no_obs_reducible.
+    inversion Hφ. eapply pure_step_safe; eauto.
+  }
+  iIntros "!>" (v2 σ2 efs Hstep); inv_head_step.
+  inversion Hφ; subst. eapply pure_step_det in Hstep; eauto.
+  destruct Hstep as (->&->&?&?). rewrite /=. iFrame.
+  subst. inversion H1; subst. rewrite big_sepL_nil.
+  iMod "H". iModIntro. iSplitL; last done.
+  iApply (wp_wand with "Hwp"). iIntros (?) "Hw".
+  iApply "Hw". iFrame.
+Qed.
+
+Lemma wp_later_cred_use s E e Φ :
+  language.to_val e = None →
+  cred_frag 1 -∗
+  ▷ WP e @ s; E {{ v, cred_frag 1 -∗ Φ v }} -∗
+  WP e @ s; E {{ Φ }}.
+Proof.
+  iIntros (Hnval) "Hcred Hwp".
+  rewrite ?wp_unfold /wp_pre.
+  rewrite Hnval.
+  iIntros (q σ1 ns κ κs nt) "Hσ HNC".
+  iMod (state_interp_step_decr with "[$]") as (ns' ->) "(Hσ&Hcred)".
+  iApply (fupd_mask_weaken ∅); first by set_solver+.
+  iIntros "H". iModIntro. simpl. iModIntro. iNext. iModIntro. iMod "H" as "_".
+  iSpecialize ("Hwp" $! _ _ _ _ _ 0 with "[Hσ] [$]").
+  { iFrame. }
+  iMod "Hwp". iApply (step_fupdN_wand with "Hwp").
+  iNext. iIntros "($&H)".
+  iIntros. iMod ("H" with "[//]") as "(Hσ&Hwp&$)".
+  iMod (state_interp_step_incr' _ _ _ 0 with "[$]") as "(Hσ&Hcred')".
+  iFrame. iModIntro.
+  iApply (wp_wand with "Hwp").
+  iIntros (?) "H". iApply "H". iFrame.
+Qed.
+
+Lemma wp_later_cred_inv N E e `{Atomic _ StronglyAtomic e} Φ P :
+  ↑N ⊆ E →
+  language.to_val e = None →
+  inv N (cred_frag 1 ∗ P) -∗
+  (P -∗ WP e @ E ∖ ↑N {{ v, P ∗ Φ v }}) -∗
+  WP e @ E {{ Φ }}.
+Proof.
+  iIntros (? Hnval) "Hcred Hwp".
+  iInv "Hcred" as "(>H&HP)".
+  iApply (wp_later_cred_use with "[$]"); auto.
+  iNext. iSpecialize ("Hwp" with "[$]").
+  iApply (wp_mono with "Hwp").
+  rewrite ?wp_unfold /wp_pre.
+  iIntros (?) "(HP&HΦ) Hcred". iFrame. eauto.
+Qed.
+
 (** Recursive functions: we do not use this lemmas as it is easier to use Löb
 induction directly, but this demonstrates that we can state the expected
 reasoning principle for recursive functions, without any visible ▷. *)
@@ -89,16 +258,18 @@ Lemma wp_fork s E e Φ :
   ▷ WP e @ s; ⊤ {{ _, True }} -∗ ▷ Φ (LitV LitUnit) -∗ WP Fork e @ s; E {{ Φ }}.
 Proof.
   iIntros "He HΦ". iApply wp_lift_atomic_head_step; [done|].
-  iIntros (σ1 ns κ κs nt) "Hσ !>"; iSplit; first by eauto with head_step.
-  iIntros "!>" (v2 σ2 efs Hstep); inv_head_step. by iFrame.
+  iIntros (σ1 ns κ κs nt) "(Hcred&Hσ) !>"; iSplit; first by eauto with head_step.
+  iIntros "!>" (v2 σ2 efs Hstep); inv_head_step.
+  iMod (cred_interp_incr with "[$]") as "($&_)". by iFrame.
 Qed.
 
 Lemma twp_fork s E e Φ :
   WP e @ s; ⊤ [{ _, True }] -∗ Φ (LitV LitUnit) -∗ WP Fork e @ s; E [{ Φ }].
 Proof.
   iIntros "He HΦ". iApply twp_lift_atomic_head_step; [done|].
-  iIntros (σ1 ns κs nt) "Hσ !>"; iSplit; first by eauto with head_step.
-  iIntros (κ v2 σ2 efs Hstep); inv_head_step. by iFrame.
+  iIntros (σ1 ns κs nt) "(Hcred&Hσ) !>"; iSplit; first by eauto with head_step.
+  iIntros (κ v2 σ2 efs Hstep); inv_head_step.
+  iMod (cred_interp_incr with "[$]") as "($&_)". by iFrame.
 Qed.
 
 (** Heap *)
@@ -226,13 +397,15 @@ Lemma twp_allocN_seq s E v n :
       (l +ₗ (i : nat)) ↦ v ∗ meta_token (l +ₗ (i : nat)) ⊤ }]].
 Proof.
   iIntros (Hn Φ) "_ HΦ". iApply twp_lift_atomic_head_step_no_fork; first done.
-  iIntros (σ1 ns κs nt) "[Hσ Hκs] !>"; iSplit; first by destruct n; auto with lia head_step.
+  iIntros (σ1 ns κs nt) "[Hcred [Hσ Hκs]] !>"; iSplit; first by destruct n; auto with lia head_step.
   iIntros (κ v2 σ2 efs Hstep); inv_head_step.
   iMod (gen_heap_alloc_big _ (heap_array _ (replicate (Z.to_nat n) v)) with "Hσ")
     as "(Hσ & Hl & Hm)".
   { apply heap_array_map_disjoint.
     rewrite replicate_length Z2Nat.id; auto with lia. }
-  iModIntro; do 2 (iSplit; first done). iFrame "Hσ Hκs". iApply "HΦ".
+  iMod (cred_interp_incr with "[$]") as "($&_)".
+  iModIntro; do 2 (iSplit; first done). iFrame "Hσ Hκs".
+  iApply "HΦ".
   iApply big_sepL_sep. iSplitL "Hl".
   - by iApply heap_array_to_seq_mapsto.
   - iApply (heap_array_to_seq_meta with "Hm"). by rewrite replicate_length.
@@ -265,10 +438,11 @@ Lemma twp_free s E l v :
   [[{ RET LitV LitUnit; True }]].
 Proof.
   iIntros (Φ) "Hl HΦ". iApply twp_lift_atomic_head_step_no_fork; first done.
-  iIntros (σ1 ns κs nt) "[Hσ Hκs] !>". iDestruct (gen_heap_valid with "Hσ Hl") as %?.
+  iIntros (σ1 ns κs nt) "[Hcred [Hσ Hκs]] !>". iDestruct (gen_heap_valid with "Hσ Hl") as %?.
   iSplit; first by eauto with head_step.
   iIntros (κ v2 σ2 efs Hstep); inv_head_step.
   iMod (gen_heap_update with "Hσ Hl") as "[$ Hl]".
+  iMod (cred_interp_incr with "[$]") as "($&_)".
   iModIntro. iSplit; first done. iSplit; first done. iFrame. by iApply "HΦ".
 Qed.
 Lemma wp_free s E l v :
@@ -283,9 +457,10 @@ Lemma twp_load s E l dq v :
   [[{ l ↦{dq} v }]] Load (Val $ LitV $ LitLoc l) @ s; E [[{ RET v; l ↦{dq} v }]].
 Proof.
   iIntros (Φ) "Hl HΦ". iApply twp_lift_atomic_head_step_no_fork; first done.
-  iIntros (σ1 ns κs nt) "[Hσ Hκs] !>". iDestruct (gen_heap_valid with "Hσ Hl") as %?.
+  iIntros (σ1 ns κs nt) "[Hcred [Hσ Hκs]] !>". iDestruct (gen_heap_valid with "Hσ Hl") as %?.
   iSplit; first by eauto with head_step.
   iIntros (κ v2 σ2 efs Hstep); inv_head_step.
+  iMod (cred_interp_incr with "[$]") as "($&_)".
   iModIntro; iSplit=> //. iSplit; first done. iFrame. by iApply "HΦ".
 Qed.
 Lemma wp_load s E l dq v :
@@ -300,10 +475,11 @@ Lemma twp_store s E l v' v :
   [[{ RET LitV LitUnit; l ↦ v }]].
 Proof.
   iIntros (Φ) "Hl HΦ". iApply twp_lift_atomic_head_step_no_fork; first done.
-  iIntros (σ1 ns κs nt) "[Hσ Hκs] !>". iDestruct (gen_heap_valid with "Hσ Hl") as %?.
+  iIntros (σ1 ns κs nt) "[Hcred [Hσ Hκs]] !>". iDestruct (gen_heap_valid with "Hσ Hl") as %?.
   iSplit; first by eauto with head_step.
   iIntros (κ v2 σ2 efs Hstep); inv_head_step.
   iMod (gen_heap_update with "Hσ Hl") as "[$ Hl]".
+  iMod (cred_interp_incr with "[$]") as "($&_)".
   iModIntro. iSplit; first done. iSplit; first done. iFrame. by iApply "HΦ".
 Qed.
 Lemma wp_store s E l v' v :
@@ -320,10 +496,11 @@ Lemma twp_cmpxchg_fail s E l dq v' v1 v2 :
   [[{ RET PairV v' (LitV $ LitBool false); l ↦{dq} v' }]].
 Proof.
   iIntros (?? Φ) "Hl HΦ". iApply twp_lift_atomic_head_step_no_fork; first done.
-  iIntros (σ1 ns κs nt) "[Hσ Hκs] !>". iDestruct (gen_heap_valid with "Hσ Hl") as %?.
+  iIntros (σ1 ns κs nt) "[Hcred [Hσ Hκs]] !>". iDestruct (gen_heap_valid with "Hσ Hl") as %?.
   iSplit; first by eauto with head_step.
   iIntros (κ v2' σ2 efs Hstep); inv_head_step.
   rewrite bool_decide_false //.
+  iMod (cred_interp_incr with "[$]") as "($&_)".
   iModIntro; iSplit; first done. iSplit; first done. iFrame. by iApply "HΦ".
 Qed.
 Lemma wp_cmpxchg_fail s E l dq v' v1 v2 :
@@ -341,11 +518,12 @@ Lemma twp_cmpxchg_suc s E l v1 v2 v' :
   [[{ RET PairV v' (LitV $ LitBool true); l ↦ v2 }]].
 Proof.
   iIntros (?? Φ) "Hl HΦ". iApply twp_lift_atomic_head_step_no_fork; first done.
-  iIntros (σ1 ns κs nt) "[Hσ Hκs] !>". iDestruct (gen_heap_valid with "Hσ Hl") as %?.
+  iIntros (σ1 ns κs nt) "[Hcred [Hσ Hκs]] !>". iDestruct (gen_heap_valid with "Hσ Hl") as %?.
   iSplit; first by eauto with head_step.
   iIntros (κ v2' σ2 efs Hstep); inv_head_step.
   rewrite bool_decide_true //.
   iMod (gen_heap_update with "Hσ Hl") as "[$ Hl]".
+  iMod (cred_interp_incr with "[$]") as "($&_)".
   iModIntro. iSplit; first done. iSplit; first done. iFrame. by iApply "HΦ".
 Qed.
 Lemma wp_cmpxchg_suc s E l v1 v2 v' :
@@ -362,10 +540,11 @@ Lemma twp_faa s E l i1 i2 :
   [[{ RET LitV (LitInt i1); l ↦ LitV (LitInt (i1 + i2)) }]].
 Proof.
   iIntros (Φ) "Hl HΦ". iApply twp_lift_atomic_head_step_no_fork; first done.
-  iIntros (σ1 ns κs nt) "[Hσ Hκs] !>". iDestruct (gen_heap_valid with "Hσ Hl") as %?.
+  iIntros (σ1 ns κs nt) "[Hcred [Hσ Hκs]] !>". iDestruct (gen_heap_valid with "Hσ Hl") as %?.
   iSplit; first by eauto with head_step.
   iIntros (κ e2 σ2 efs Hstep); inv_head_step.
   iMod (gen_heap_update with "Hσ Hl") as "[$ Hl]".
+  iMod (cred_interp_incr with "[$]") as "($&_)".
   iModIntro. do 2 (iSplit; first done). iFrame. by iApply "HΦ".
 Qed.
 Lemma wp_faa s E l i1 i2 :
@@ -382,10 +561,11 @@ Lemma wp_new_proph s E :
   {{{ pvs p, RET (LitV (LitProphecy p)); proph p pvs }}}.
 Proof.
   iIntros (Φ) "_ HΦ". iApply wp_lift_atomic_head_step_no_fork; first done.
-  iIntros (σ1 ns κ κs nt) "[Hσ HR] !>". iSplit; first by eauto with head_step.
+  iIntros (σ1 ns κ κs nt) "[Hcred [Hσ HR]] !>". iSplit; first by eauto with head_step.
   iIntros "!>" (v2 σ2 efs Hstep). inv_head_step.
   rename select proph_id into p.
   iMod (proph_map_new_proph p with "HR") as "[HR Hp]"; first done.
+  iMod (cred_interp_incr with "[$]") as "($&_)".
   iModIntro; iSplit; first done. iFrame. by iApply "HΦ".
 Qed.
 
@@ -441,19 +621,26 @@ Proof.
   (* TODO we should try to use a generic lifting lemma (and avoid [wp_unfold])
      here, since this breaks the WP abstraction. *)
   iIntros (A He) "Hp WPe". rewrite !wp_unfold /wp_pre /= He. simpl in *.
-  iIntros (q σ1 ns κ κs nt) "[Hσ Hκ] HNC". destruct κ as [|[p' [w' v']] κ' _] using rev_ind.
-  - iMod ("WPe" $! q σ1 ns [] κs nt with "[$Hσ $Hκ] [$]") as "[Hs WPe]". iModIntro. iSplit.
+  iIntros (q σ1 ns κ κs nt) "[Hcred [Hσ Hκ]] HNC".
+  destruct κ as [|[p' [w' v']] κ' _] using rev_ind.
+  - iMod ("WPe" $! q σ1 ns [] κs nt with "[$Hcred $Hσ $Hκ] [$]") as "HWpe".
+    iModIntro. iApply (step_fupdN_wand with "HWpe"). iNext.
+    iIntros "[Hs WPe]".
+    iSplit.
     { iDestruct "Hs" as "%". iPureIntro. destruct s; [ by apply resolve_reducible | done]. }
     iIntros (e2 σ2 efs step). exfalso. apply step_resolve in step; last done.
     inv_head_step. match goal with H: ?κs ++ [_] = [] |- _ => by destruct κs end.
   - rewrite -assoc.
-    iMod ("WPe" $! q σ1 0 _ _ nt with "[$Hσ $Hκ] [$]") as "[Hs WPe]". iModIntro. iSplit.
+    iMod ("WPe" $! q σ1 ns _ _ nt with "[$Hcred $Hσ $Hκ] [$]") as "HWpe".
+    iModIntro. iApply (step_fupdN_wand with "HWpe"). iNext.
+    iIntros "[Hs WPe]".
+    iSplit.
     { iDestruct "Hs" as %?. iPureIntro. destruct s; [ by apply resolve_reducible | done]. }
     iIntros (e2 σ2 efs step). apply step_resolve in step; last done.
     inv_head_step; simplify_list_eq.
     iMod ("WPe" $! (Val w') σ2 efs with "[%]") as "WPe".
     { by eexists [] _ _. }
-    iModIntro. iNext. iModIntro. iMod "WPe" as ">[[$ Hκ] WPe]".
+    iDestruct "WPe" as "[[$ [$ Hκ]] WPe]".
     iMod (proph_map_resolve_proph p' (w',v') κs with "[$Hκ $Hp]") as (vs' ->) "[$ HPost]".
     iModIntro. rewrite !wp_unfold /wp_pre /=. iDestruct "WPe" as "[HΦ $]".
     iIntros.

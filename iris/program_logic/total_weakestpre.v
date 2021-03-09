@@ -205,17 +205,19 @@ Qed.
 Lemma twp_wp s E e Φ : WP e @ s; E [{ Φ }] -∗ WP e @ s; E {{ Φ }}.
 Proof.
   iIntros "H". iLöb as "IH" forall (E e Φ).
-  rewrite wp_unfold twp_unfold /wp_pre /twp_pre. destruct (to_val e) as [v|]=>//.
+  rewrite wp_unfold twp_unfold /wp_pre /twp_pre. destruct (to_val e) as [v|]=>//=.
   { rewrite ncfupd_eq /ncfupd_def. iFrame. }
   iIntros (q σ1 ns κ κs nt) "Hσ HNC".
   rewrite ncfupd_eq /ncfupd_def.
-  iMod ("H" with "Hσ HNC") as "([% H]&HNC)". iIntros "!>". iSplitR.
+  iMod ("H" with "Hσ HNC") as "([% H]&HNC)". iIntros "!>".
+  iModIntro. iApply step_fupdN_intro; first set_solver+.
+  iModIntro. iModIntro. iNext.
+  iSplitR.
   { destruct s; eauto using reducible_no_obs_reducible. }
   iIntros (e2 σ2 efs) "Hstep". iMod ("H" with "Hstep HNC") as  "((Heq & Hσ & H & Hfork) & HNC)".
   iDestruct "Heq" as %->.
   iApply fupd_mask_intro; [set_solver+|]. iIntros "Hclose".
-  iIntros "!>!>". iApply step_fupdN_intro=>//. iModIntro. iMod "Hclose" as "_".
-  iModIntro. iFrame "Hσ". iSplitL "H".
+  iFrame "Hσ". iSplitL "H".
   { by iApply "IH". }
   iFrame.
   iApply (@big_sepL_impl with "Hfork").
