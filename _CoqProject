@@ -45,7 +45,8 @@ iris/algebra/gmultiset.v
 iris/algebra/coPset.v
 iris/algebra/proofmode_classes.v
 iris/algebra/ufrac.v
-iris/algebra/namespace_map.v
+iris/algebra/reservation_map.v
+iris/algebra/dyn_reservation_map.v
 iris/algebra/lib/excl_auth.v
 iris/algebra/lib/frac_auth.v
 iris/algebra/lib/ufrac_auth.v
