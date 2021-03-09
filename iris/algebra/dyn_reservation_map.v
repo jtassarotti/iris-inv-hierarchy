@@ -8,11 +8,12 @@ coPset] which represent the right to allocate a map entry at any position [k ∈
 E].  Unlike [reservation_map], [dyn_reservation_map] supports dynamically
 allocating these tokens, including infinite sets of them.  This is useful when
 syncing the keys of this map with another API that dynamically allocates names:
-we can first reserve a fresh infinite set of tokens here, then allocate a new
-*in that set* with the other API, and then use our tokens to allocate the same
-name here.  In effect, we have performed synchronized allocation of the same
-name across two maps, without the other API having to have dedicated support for
-this.
+we can first reserve a fresh infinite set [E] of tokens here, then allocate a
+new name *in [E]* with the other API (assuming it offers the usual "allocate a
+fresh name in an infinite set" API), and then use our tokens to allocate the
+same name here.  In effect, we have performed synchronized allocation of the
+same name across two maps, without the other API having to have dedicated
+support for this.
 
 The key connectives are [dyn_reservation_map_data k a] (the "points-to"
 assertion of this map), which associates data [a : A] with a key [k : positive],

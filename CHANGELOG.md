@@ -12,6 +12,16 @@ lemma.
   (`dfrac`) instead of a fraction (`frac`). Normal fractions are now denoted
   `●{#q} a` and `●V{#q} a`. Lemmas affected by this have been renamed such that
   the "frac" in their name has been changed into "dfrac".
+* Generalize `namespace_map` to `reservation_map` which enhances `gmap positive
+  A` with a notion of 'tokens' that enable allocating a particular name in the
+  map. See [algebra.reservation_map](iris/algebra/reservation_map.v) for further
+  information.
+* Add `dyn_reservation_map` which further extends `reservation_map` with the
+  ability to dynamically allocate an infinite set of tokens. This is useful to
+  perform synchronized allocation of the same name in two maps/APIs without
+  dedicated support from one of the involved maps/APIs. See
+  [algebra.dyn_reservation_map](iris/algebra/dyn_reservation_map.v) for further
+  information.
 
 **Changes in `base_logic`:**
 
