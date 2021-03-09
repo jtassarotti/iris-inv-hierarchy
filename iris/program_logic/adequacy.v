@@ -214,6 +214,19 @@ Proof.
   right; exists (t2' ++ e3 :: t2'' ++ efs), σ3, κ; econstructor; eauto.
 Qed.
 
+(** This simpler form of adequacy requires the [irisG] instance that you use
+everywhere to syntactically be of the form
+{|
+  iris_invG := ...;
+  state_interp σ _ κs _ := ...;
+  fork_post v := ...;
+  num_laters_per_step _ := 0;
+  state_interp_mono _ _ _ _ := fupd_intro _ _;
+|}
+In other words, the state interpretation must ignore [ns] and [nt], the number
+of laters per step must be 0, and the proof of [state_interp_mono] must have
+this specific proof term.
+*)
 Corollary wp_adequacy Σ Λ `{!invPreG Σ} s e σ φ :
   (∀ `{Hinv : !invG Σ} κs,
      ⊢ |={⊤}=> ∃
