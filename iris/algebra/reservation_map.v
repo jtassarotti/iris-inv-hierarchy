@@ -91,11 +91,11 @@ Section cmra.
 
   Global Instance reservation_map_data_ne i : NonExpansive (@reservation_map_data A i).
   Proof. solve_proper. Qed.
-  Global Instance reservation_map_data_proper N :
-    Proper ((≡) ==> (≡)) (@reservation_map_data A N).
+  Global Instance reservation_map_data_proper k :
+    Proper ((≡) ==> (≡)) (@reservation_map_data A k).
   Proof. solve_proper. Qed.
-  Global Instance reservation_map_data_discrete N a :
-    Discrete a → Discrete (reservation_map_data N a).
+  Global Instance reservation_map_data_discrete k a :
+    Discrete a → Discrete (reservation_map_data k a).
   Proof. intros. apply ReservationMap_discrete; apply _. Qed.
   Global Instance reservation_map_token_discrete E : Discrete (@reservation_map_token A E).
   Proof. intros. apply ReservationMap_discrete; apply _. Qed.
@@ -210,25 +210,25 @@ Section cmra.
   Canonical Structure reservation_mapUR :=
     Ucmra (reservation_map A) reservation_map_ucmra_mixin.
 
-  Global Instance reservation_map_data_core_id N a :
-    CoreId a → CoreId (reservation_map_data N a).
+  Global Instance reservation_map_data_core_id k a :
+    CoreId a → CoreId (reservation_map_data k a).
   Proof. do 2 constructor; simpl; auto. apply core_id_core, _. Qed.
 
-  Lemma reservation_map_data_valid N a : ✓ (reservation_map_data N a) ↔ ✓ a.
+  Lemma reservation_map_data_valid k a : ✓ (reservation_map_data k a) ↔ ✓ a.
   Proof. rewrite reservation_map_valid_eq /= singleton_valid. set_solver. Qed.
   Lemma reservation_map_token_valid E : ✓ (reservation_map_token E).
   Proof. rewrite reservation_map_valid_eq /=. split; first done. by left. Qed.
-  Lemma reservation_map_data_op N a b :
-    reservation_map_data N (a ⋅ b) = reservation_map_data N a ⋅ reservation_map_data N b.
+  Lemma reservation_map_data_op k a b :
+    reservation_map_data k (a ⋅ b) = reservation_map_data k a ⋅ reservation_map_data k b.
   Proof.
       by rewrite {2}/op /reservation_map_op_instance /reservation_map_data /= singleton_op left_id_L.
   Qed.
-  Lemma reservation_map_data_mono N a b :
-    a ≼ b → reservation_map_data N a ≼ reservation_map_data N b.
+  Lemma reservation_map_data_mono k a b :
+    a ≼ b → reservation_map_data k a ≼ reservation_map_data k b.
   Proof. intros [c ->]. rewrite reservation_map_data_op. apply cmra_included_l. Qed.
-  Global Instance reservation_map_data_is_op N a b1 b2 :
+  Global Instance reservation_map_data_is_op k a b1 b2 :
     IsOp a b1 b2 →
-    IsOp' (reservation_map_data N a) (reservation_map_data N b1) (reservation_map_data N b2).
+    IsOp' (reservation_map_data k a) (reservation_map_data k b1) (reservation_map_data k b2).
   Proof. rewrite /IsOp' /IsOp=> ->. by rewrite reservation_map_data_op. Qed.
 
   Lemma reservation_map_token_union E1 E2 :

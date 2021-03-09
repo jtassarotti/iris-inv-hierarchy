@@ -217,12 +217,12 @@ Section cmra.
   Canonical Structure dyn_reservation_mapUR :=
     Ucmra (dyn_reservation_map A) dyn_reservation_map_ucmra_mixin.
 
-  Global Instance dyn_reservation_map_data_core_id N a :
-    CoreId a → CoreId (dyn_reservation_map_data N a).
+  Global Instance dyn_reservation_map_data_core_id k a :
+    CoreId a → CoreId (dyn_reservation_map_data k a).
   Proof. do 2 constructor; simpl; auto. apply core_id_core, _. Qed.
 
-  Lemma dyn_reservation_map_data_valid N a :
-    ✓ (dyn_reservation_map_data N a) ↔ ✓ a.
+  Lemma dyn_reservation_map_data_valid k a :
+    ✓ (dyn_reservation_map_data k a) ↔ ✓ a.
   Proof.
     rewrite dyn_reservation_map_valid_eq /= singleton_valid.
     split; first naive_solver. intros Ha.
@@ -235,17 +235,17 @@ Section cmra.
     rewrite dyn_reservation_map_valid_eq /=. split; first naive_solver.
     intros Hinf. do 2 (split; first done). by left.
   Qed.
-  Lemma dyn_reservation_map_data_op N a b :
-    dyn_reservation_map_data N (a ⋅ b) = dyn_reservation_map_data N a ⋅ dyn_reservation_map_data N b.
+  Lemma dyn_reservation_map_data_op k a b :
+    dyn_reservation_map_data k (a ⋅ b) = dyn_reservation_map_data k a ⋅ dyn_reservation_map_data k b.
   Proof.
       by rewrite {2}/op /dyn_reservation_map_op_instance /dyn_reservation_map_data /= singleton_op left_id_L.
   Qed.
-  Lemma dyn_reservation_map_data_mono N a b :
-    a ≼ b → dyn_reservation_map_data N a ≼ dyn_reservation_map_data N b.
+  Lemma dyn_reservation_map_data_mono k a b :
+    a ≼ b → dyn_reservation_map_data k a ≼ dyn_reservation_map_data k b.
   Proof. intros [c ->]. rewrite dyn_reservation_map_data_op. apply cmra_included_l. Qed.
-  Global Instance dyn_reservation_map_data_is_op N a b1 b2 :
+  Global Instance dyn_reservation_map_data_is_op k a b1 b2 :
     IsOp a b1 b2 →
-    IsOp' (dyn_reservation_map_data N a) (dyn_reservation_map_data N b1) (dyn_reservation_map_data N b2).
+    IsOp' (dyn_reservation_map_data k a) (dyn_reservation_map_data k b1) (dyn_reservation_map_data k b2).
   Proof. rewrite /IsOp' /IsOp=> ->. by rewrite dyn_reservation_map_data_op. Qed.
 
   Lemma dyn_reservation_map_token_union E1 E2 :
