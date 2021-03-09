@@ -293,7 +293,7 @@ Section cmra.
     - eapply set_infinite_subseteq, HE2inf. set_solver.
     - intros i. rewrite left_id_L. destruct (Hdisj i) as [?|Hi]; first by left.
       destruct (mf !! i) as [p|] eqn:Hp; last by left.
-      apply elem_of_dom_2 in Hp. right. set_solver.
+      apply (elem_of_dom_2 (D:=coPset)) in Hp. right. set_solver.
   Qed.
   Lemma dyn_reservation_map_reserve' :
     ε ~~>: (λ x, ∃ E, set_infinite E ∧ x = dyn_reservation_map_token E).
