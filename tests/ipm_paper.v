@@ -9,6 +9,8 @@ From iris.deprecated.program_logic Require Import hoare.
 From iris.heap_lang Require Import proofmode notation.
 Set Default Proof Using "Type".
 
+Unset Mangle Names.
+
 (** The proofs from Section 3.1 *)
 Section demo.
   Context {M : ucmra}.

@@ -8,6 +8,8 @@ ICFP 2018 *)
 From iris.bi Require Import monpred.
 From iris.proofmode Require Import tactics monpred.
 
+Unset Mangle Names.
+
 Lemma example_1 {PROP : bi} {A : Type} (P : PROP) (Φ Ψ : A → PROP) :
   P ∗ (∃ a, Φ a ∨ Ψ a) -∗ ∃ a, (P ∗ Φ a) ∨ (P ∗ Ψ a).
 Proof.

@@ -10,6 +10,8 @@ Set Default Proof Using "Type".
 (** This is the introductory example from the "Iris from the Ground Up" journal
 paper. *)
 
+Unset Mangle Names.
+
 Definition one_shot_example : val := λ: <>,
   let: "x" := ref NONE in (
   (* tryset *) (λ: "n",

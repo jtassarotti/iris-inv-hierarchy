@@ -5,6 +5,8 @@ From iris.heap_lang Require Export lang.
 From iris.heap_lang Require Import proofmode notation.
 Set Default Proof Using "Type".
 
+Unset Mangle Names.
+
 Section list_reverse.
 Context `{!heapG Σ}.
 Implicit Types l : loc.

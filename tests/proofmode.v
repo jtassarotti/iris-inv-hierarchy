@@ -1,6 +1,8 @@
 From iris.proofmode Require Import tactics intro_patterns.
 Set Default Proof Using "Type".
 
+Unset Mangle Names.
+
 Section tests.
 Context {PROP : bi}.
 Implicit Types P Q R : PROP.
