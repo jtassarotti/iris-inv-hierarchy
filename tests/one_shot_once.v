@@ -10,6 +10,8 @@ Set Default Proof Using "Type".
 (** This is the introductory example from Ralf's PhD thesis.
 The difference to [one_shot] is that [set] asserts to be called only once. *)
 
+Unset Mangle Names.
+
 Definition one_shot_example : val := λ: <>,
   let: "x" := ref NONE in (
   (* set *) (λ: "n",

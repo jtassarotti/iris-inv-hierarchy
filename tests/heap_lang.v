@@ -5,6 +5,8 @@ From iris.heap_lang Require Import lang adequacy proofmode notation.
 From iris.heap_lang Require Import lang.
 Set Default Proof Using "Type".
 
+Unset Mangle Names.
+
 Section tests.
   Context `{!heapG Σ}.
   Implicit Types P Q : iProp Σ.

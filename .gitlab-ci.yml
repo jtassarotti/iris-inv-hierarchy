@@ -31,6 +31,7 @@ build-coq.dev:
   <<: *template
   variables:
     OPAM_PINS: "coq version dev"
+    MANGLE_NAMES: "1"
 
 build-coq.8.13.1:
   <<: *template
