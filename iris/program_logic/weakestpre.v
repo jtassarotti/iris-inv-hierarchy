@@ -178,8 +178,8 @@ Proof. iIntros "H". iApply (wp_strong_mono s s E with "H"); auto. Qed.
 Lemma wp_fupd s E e Φ : WP e @ s; E {{ v, fupd E E (Φ v) }} ⊢ WP e @ s; E {{ Φ }}.
 Proof. iIntros "H". iApply (wp_strong_mono s s E with "H"); auto. by iIntros (v) ">H". Qed.
 
-Lemma wp_ncatomic E1 E2 e Φ `{!Atomic StronglyAtomic e} :
-  (|NC={E1,E2}=> WP e @ NotStuck; E2 {{ v, |NC={E2,E1}=> Φ v }}) ⊢ WP e @ NotStuck; E1 {{ Φ }}.
+Lemma wp_ncatomic s E1 E2 e Φ `{!Atomic StronglyAtomic e} :
+  (|NC={E1,E2}=> WP e @ s; E2 {{ v, |NC={E2,E1}=> Φ v }}) ⊢ WP e @ s; E1 {{ Φ }}.
 Proof.
   iIntros "H". rewrite !wp_unfold /wp_pre ncfupd_eq /ncfupd_def.
   destruct (to_val e) as [v|] eqn:He.
@@ -216,8 +216,8 @@ Proof.
     iMod ("H" with "[$]") as "(H&HNC)".
     iModIntro. iFrame "Hσ Hefs". iFrame. by iApply wp_value_fupd'.
 Qed.
-Lemma wp_atomic E1 E2 e Φ `{!Atomic StronglyAtomic e} :
-  (|={E1,E2}=> WP e @ E2 {{ v, |={E2,E1}=> Φ v }}) ⊢ WP e @ E1 {{ Φ }}.
+Lemma wp_atomic s E1 E2 e Φ `{!Atomic StronglyAtomic e} :
+  (|={E1,E2}=> WP e @ s; E2 {{ v, |={E2,E1}=> Φ v }}) ⊢ WP e @ s; E1 {{ Φ }}.
 Proof.
   iIntros "H". iApply wp_ncatomic; auto. iMod "H". iModIntro. iApply (wp_strong_mono with "H"); eauto.
   iIntros (?) "H". iModIntro. iMod "H". eauto.
@@ -450,18 +450,18 @@ Section proofmode_classes.
       fupd_frame_r wand_elim_r fupd_wp.
   Qed.
 
-  Global Instance elim_modal_ncfupd_wp_atomic p E1 E2 e P Φ :
+  Global Instance elim_modal_ncfupd_wp_atomic p s E1 E2 e P Φ :
     ElimModal (Atomic StronglyAtomic e) p false (|NC={E1,E2}=> P) P
-            (WP e @ E1 {{ Φ }}) (WP e @ E2 {{ v, |NC={E2,E1}=> Φ v }})%I | 100.
+            (WP e @ s; E1 {{ Φ }}) (WP e @ s; E2 {{ v, |NC={E2,E1}=> Φ v }})%I | 100.
   Proof.
     intros ?. by rewrite /ElimModal intuitionistically_if_elim
       ncfupd_frame_r wand_elim_r wp_ncatomic.
   Qed.
 
-  Global Instance elim_modal_fupd_wp_atomic p E1 E2 e P Φ :
+  Global Instance elim_modal_fupd_wp_atomic p s E1 E2 e P Φ :
     ElimModal (Atomic StronglyAtomic e) p false
             (|={E1,E2}=> P) P
-            (WP e @ E1 {{ Φ }}) (WP e @ E2 {{ v, |={E2,E1}=> Φ v }})%I | 100.
+            (WP e @ s; E1 {{ Φ }}) (WP e @ s; E2 {{ v, |={E2,E1}=> Φ v }})%I | 100.
   Proof.
     intros ?. rewrite intuitionistically_if_elim
       fupd_frame_r wand_elim_r wp_atomic; eauto.
@@ -471,10 +471,10 @@ Section proofmode_classes.
     AddModal (|={E}=> P) P (WP e @ s; E {{ Φ }}).
   Proof. by rewrite /AddModal fupd_frame_r wand_elim_r fupd_wp. Qed.
 
-  Global Instance elim_acc_ncfupd_wp {X} E1 E2 α β γ e Φ :
+  Global Instance elim_acc_ncfupd_wp {X} E1 E2 α β γ e s Φ :
     ElimAcc (X:=X) (Atomic StronglyAtomic e) (ncfupd E1 E2) (ncfupd E2 E1)
-            α β γ (WP e @ NotStuck; E1 {{ Φ }})
-            (λ x, WP e @ NotStuck; E2 {{ v, |NC={E2}=> β x ∗ (γ x -∗? Φ v) }})%I.
+            α β γ (WP e @ s; E1 {{ Φ }})
+            (λ x, WP e @ s; E2 {{ v, |NC={E2}=> β x ∗ (γ x -∗? Φ v) }})%I.
   Proof.
     iIntros (?) "Hinner >Hacc". iDestruct "Hacc" as (x) "[Hα Hclose]".
     iApply (wp_wand with "(Hinner Hα)").
