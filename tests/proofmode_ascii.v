@@ -5,6 +5,7 @@ From iris.base_logic.lib Require Import invariants cancelable_invariants na_inva
 From iris.bi Require Import ascii.
 
 Set Default Proof Using "Type".
+Unset Mangle Names.
 
 (* Remove this and the [Set Printing Raw Literals.] below once we require Coq
 8.14. *)

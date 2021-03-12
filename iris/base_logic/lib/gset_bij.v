@@ -139,7 +139,7 @@ Section gset_bij.
     gset_bij_own_auth γ (DfracOwn 1) ({[(a, b)]} ∪ L) ∗ gset_bij_own_elem γ a b.
   Proof.
     iIntros (??) "Hauth".
-    iAssert (gset_bij_own_auth γ (DfracOwn 1) ({[a, b]} ∪ L)) with "[> Hauth]" as "Hauth".
+    iAssert (gset_bij_own_auth γ (DfracOwn 1) ({[(a, b)]} ∪ L)) with "[> Hauth]" as "Hauth".
     { rewrite gset_bij_own_auth_eq. iApply (own_update with "Hauth").
       by apply gset_bij_auth_extend. }
     iModIntro. iSplit; [done|].

@@ -1,6 +1,8 @@
 From iris.proofmode Require Import tactics monpred.
 From iris.base_logic.lib Require Import invariants.
 
+Unset Mangle Names.
+
 Section tests.
   Context {I : biIndex} {PROP : bi}.
   Local Notation monPred := (monPred I PROP).

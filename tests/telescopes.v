@@ -2,6 +2,8 @@ From stdpp Require Import coPset namespaces.
 From iris.proofmode Require Import tactics.
 Set Default Proof Using "Type".
 
+Unset Mangle Names.
+
 Section basic_tests.
   Context {PROP : bi}.
   Implicit Types P Q R : PROP.

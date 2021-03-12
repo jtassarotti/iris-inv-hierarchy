@@ -2948,13 +2948,13 @@ Tactic Notation "iInvCore" constr(select) "with" constr(pats) "as" open_constr(H
     end in
   lazymatch type of select with
   | string =>
-     eapply @tac_inv_elim with (i:=select) (j:=H) (Pclose:=Pclose_pat);
+     notypeclasses refine (tac_inv_elim _ select H _ _ _ _ _ Pclose_pat _ _ _ _ _ _);
      [ (by iAssumptionCore) || fail "iInv: invariant" select "not found" |..]
   | ident  =>
-     eapply @tac_inv_elim with (i:=select) (j:=H) (Pclose:=Pclose_pat);
+     notypeclasses refine (tac_inv_elim _ select H _ _ _ _ _ Pclose_pat _ _ _ _ _ _);
      [ (by iAssumptionCore) || fail "iInv: invariant" select "not found" |..]
   | namespace =>
-     eapply @tac_inv_elim with (j:=H) (Pclose:=Pclose_pat);
+     notypeclasses refine (tac_inv_elim _ _ H _ _ _ _ _ Pclose_pat _ _ _ _ _ _);
      [ (by iAssumptionInv select) || fail "iInv: invariant" select "not found" |..]
   | _ => fail "iInv: selector" select "is not of the right type "
   end;

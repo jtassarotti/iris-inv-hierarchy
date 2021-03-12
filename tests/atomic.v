@@ -3,6 +3,8 @@ From iris.program_logic Require Export atomic.
 From iris.heap_lang Require Import proofmode notation lib.atomic_heap.
 Set Default Proof Using "Type".
 
+Unset Mangle Names.
+
 Section tests.
   Context `{!heapG Σ} {aheap: atomic_heap Σ}.
   Import atomic_heap.notation.

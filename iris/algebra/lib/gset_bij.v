@@ -108,7 +108,7 @@ Definition gset_bijUR A B `{Countable A, Countable B} : ucmra :=
 Definition gset_bij_auth `{Countable A, Countable B}
   (dq : dfrac) (L : gset (A * B)) : gset_bij A B := ●V{dq} L ⋅ ◯V L.
 Definition gset_bij_elem `{Countable A, Countable B}
-  (a : A) (b : B) : gset_bij A B := ◯V {[a, b]}.
+  (a : A) (b : B) : gset_bij A B := ◯V {[ (a, b) ]}.
 
 Section gset_bij.
   Context `{Countable A, Countable B}.

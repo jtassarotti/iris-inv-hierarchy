@@ -95,23 +95,20 @@ Section lemmas.
     unseal. iCombine "Hl1 Hl2" as "Hl". eauto with iFrame.
   Qed.
 
-  Lemma ghost_map_elem_elem_frac_ne γ k1 k2 dq1 dq2 v1 v2 :
+  Lemma ghost_map_elem_frac_ne γ k1 k2 dq1 dq2 v1 v2 :
     ¬ ✓ (dq1 ⋅ dq2) → k1 ↪[γ]{dq1} v1 -∗ k2 ↪[γ]{dq2} v2 -∗ ⌜k1 ≠ k2⌝.
   Proof.
     iIntros (?) "H1 H2"; iIntros (->).
     by iDestruct (ghost_map_elem_valid_2 with "H1 H2") as %[??].
   Qed.
-  Lemma ghost_map_elem_elem_ne γ k1 k2 dq2 v1 v2 :
+  Lemma ghost_map_elem_ne γ k1 k2 dq2 v1 v2 :
     k1 ↪[γ] v1 -∗ k2 ↪[γ]{dq2} v2 -∗ ⌜k1 ≠ k2⌝.
-  Proof. apply ghost_map_elem_elem_frac_ne. apply: exclusive_l. Qed.
+  Proof. apply ghost_map_elem_frac_ne. apply: exclusive_l. Qed.
 
   (** Make an element read-only. *)
-  Lemma ghost_map_elem_persist k γ q v :
-    k ↪[γ]{#q} v ==∗ k ↪[γ]□ v.
-  Proof.
-    unseal. iApply own_update.
-    apply gmap_view_persist.
-  Qed.
+  Lemma ghost_map_elem_persist k γ dq v :
+    k ↪[γ]{dq} v ==∗ k ↪[γ]□ v.
+  Proof. unseal. iApply own_update. apply gmap_view_persist. Qed.
 
   (** * Lemmas about [ghost_map_auth] *)
   Lemma ghost_map_alloc_strong P m :
@@ -192,6 +189,14 @@ Section lemmas.
   Proof.
     unseal. intros ?. rewrite -own_op.
     iApply own_update. apply: gmap_view_alloc; done.
+  Qed.
+  Lemma ghost_map_insert_persist {γ m} k v :
+    m !! k = None →
+    ghost_map_auth γ 1 m ==∗ ghost_map_auth γ 1 (<[k := v]> m) ∗ k ↪[γ]□ v.
+  Proof.
+    iIntros (?) "Hauth".
+    iMod (ghost_map_insert k with "Hauth") as "[$ Helem]"; first done.
+    iApply ghost_map_elem_persist. done.
   Qed.
 
   Lemma ghost_map_delete {γ m k v} :
